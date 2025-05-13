@@ -40,7 +40,7 @@ export default class Simulation{
             dt: 0.014,
             isViscous: false,
             BFECC: true,
-            isVR : false
+            isMouse : false
         }; // 컨트롤의 파라미터 초기값
         const controls = new Controls(this.options);
 
@@ -156,7 +156,8 @@ export default class Simulation{
         this.externalForce.update({
             cursor_size: this.options.cursor_size,
             mouse_force: this.options.mouse_force,
-            cellScale: this.cellScale
+            cellScale: this.cellScale,
+            isMouse : this.options.isMouse
         });
 
         let vel = this.fbos.vel_1;

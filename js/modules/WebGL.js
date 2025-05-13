@@ -9,7 +9,7 @@ export default class Webgl{
         this.props = props; // document.body를 받아옴.
 
         Common.init();
-        // Mouse.init();
+        Mouse.init();
         HandTracking.init();
 
         this.init();
@@ -61,7 +61,7 @@ export default class Webgl{
     }
 
     render(){
-        // Mouse.update();
+        Mouse.update();
         HandTracking.update();
         Common.update();
         this.output.update();

@@ -18,6 +18,7 @@ class HandTracking{
     async init(){
         
         await this.initialize();
+        console.log("Hand Tracking initialize");
         this.hands.setOptions({
             maxNumHands: 2,
             modelComplexity: 1,
@@ -26,7 +27,7 @@ class HandTracking{
         });
 
         this.hands.onResults(results => {
-            console.log('onResults');
+            //console.log('onResults');
             // 손 랜드마크 그리기
             if (results.multiHandLandmarks && results.multiHandedness) {
                 for (let i = 0; i < results.multiHandLandmarks.length; i++) {

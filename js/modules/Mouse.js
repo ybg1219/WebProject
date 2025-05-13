@@ -28,7 +28,7 @@ class Mouse{
     }
     onDocumentMouseMove( event ) {
         this.setCoords( event.clientX, event.clientY );
-        console.log(event.clientX, event.clientY);
+        // console.log('mouse pos', event.clientX, event.clientY);
     }
     onDocumentTouchStart( event ) {
         if ( event.touches.length === 1 ) {
