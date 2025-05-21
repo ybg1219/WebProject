@@ -11,7 +11,7 @@ import Pressure from "./Pressure";
 
 import Mouse from "./Mouse";
 import HandTracking from "./HandTracking";
-//import BodyTracking from "./BodyTracking";
+import BodyTracking from "./BodyTracking";
 
 export default class Simulation{
     constructor(props){
@@ -96,6 +96,11 @@ export default class Simulation{
             dst: this.fbos.vel_1,
         });
         this.externalForceRight = new ExternalForce({
+            cellScale: this.cellScale,
+            cursor_size: this.options.cursor_size,
+            dst: this.fbos.vel_1,
+        });
+        this.externalForceBody = new ExternalForce({
             cellScale: this.cellScale,
             cursor_size: this.options.cursor_size,
             dst: this.fbos.vel_1,
@@ -203,6 +208,14 @@ export default class Simulation{
                     diff: rightHand.diff
                 });
             }
+
+            this.externalForceBody.update({
+               cursor_size: this.options.cursor_size,
+               mouse_force: this.options.mouse_force,
+               cellScale: this.cellScale,
+               coords: BodyTracking.coords,
+               diff: BodyTracking.diff
+            });
         }
 
         let vel = this.fbos.vel_1;

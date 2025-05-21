@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import Common from "./Common";
-import { Pose } from "@mediapipe/pose";
+//import { Pose } from "@mediapipe/pose";
 import { Camera } from "@mediapipe/camera_utils";
 
 class BodyTracking {
@@ -35,12 +35,10 @@ class BodyTracking {
 
         this.pose.onResults(results => {
             if (results.poseLandmarks) {
-                const leftHip = results.poseLandmarks[23];
-                const rightHip = results.poseLandmarks[24];
+                const head = results.poseLandmarks[0];
 
-                const x = (1 - (leftHip.x + rightHip.x) / 2) * Common.width;
-                const y = ((leftHip.y + rightHip.y) / 2) * Common.height;
-
+                const x = Math.floor((1 - head.x) * Common.width);
+                const y = Math.floor(head.y * Common.height);
                 this.setCoords(x, y);
             }
         });

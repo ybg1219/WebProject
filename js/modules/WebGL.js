@@ -3,6 +3,7 @@ import Common from "./Common";
 import Output from "./Output";
 import Mouse from "./Mouse";
 import HandTracking from "./HandTracking";
+import BodyTracking from "./BodyTracking";
 
 export default class Webgl{
     constructor(props){
@@ -11,6 +12,7 @@ export default class Webgl{
         Common.init();
         Mouse.init();
         HandTracking.init();
+        BodyTracking.init();
 
         this.init();
         this.loop();
@@ -39,6 +41,7 @@ export default class Webgl{
 
         Mouse.update();
         HandTracking.update();
+        BodyTracking.update();
         Common.update();
         this.output.update();
 
@@ -76,8 +79,9 @@ export default class Webgl{
                     this.videoMesh.geometry.dispose();
                     this.videoMesh.material.dispose();
                 }
-                const vidScale = 0.0004; // 영상 사이즈 조절. 
-                const geometry = new THREE.PlaneGeometry(Common.width*vidScale, Common.height*vidScale);
+                const vidScale = 0.0003; // 영상 사이즈 조절. 
+                console.log(Common.width*vidScale, Common.height*vidScale)
+                const geometry = new THREE.PlaneGeometry(Common.width*vidScale/2, Common.height*vidScale);
                 const material = new THREE.MeshBasicMaterial({ map: this.videoTexture });
                 const mesh = new THREE.Mesh(geometry, material);
                 mesh.scale.x = -1;
