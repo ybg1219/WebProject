@@ -33,7 +33,6 @@ export default class Output{
         );
 
         this.scene.add(this.output);
-        // 카메라 추가.
     }
     addScene(mesh){
         this.scene.add(mesh);
@@ -49,6 +48,7 @@ export default class Output{
     }
 
     update(){
+        // console.log("output render")
         this.simulation.update();
         this.render();
     }

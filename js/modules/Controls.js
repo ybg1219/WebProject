@@ -10,6 +10,9 @@ export default class Controls{
         this.gui = new dat.GUI({width: 300});
         
         this.gui.add(this.params, "isMouse");
+        // .onChange(value => {
+        //     console.log("changed to", value);
+        // });;
         this.gui.add(this.params, "mouse_force",20, 200);
         this.gui.add(this.params, "cursor_size", 10, 200);
         this.gui.add(this.params, "isViscous");

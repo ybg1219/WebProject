@@ -8,6 +8,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 module.exports = {
     mode: "development", // 'production'을 사용하고 싶으면 변경
     entry: './js/main.js',
+    // devtool: 'source-map', // VM### 대신 경로가 뜸.
     output: {
         filename: 'main.min.js',
         path: path.resolve(__dirname, 'dist'),
@@ -40,9 +41,10 @@ module.exports = {
         ],
     },
     plugins: [
-        new HtmlWebpackPlugin({
-            template: './dist/index.html',
-        }),
+        // static directory나 htmlwebpackplugin 중 하나만 사용해야했다.. 특히 vm### 출력의 원인이었음.
+        // new HtmlWebpackPlugin({
+        //     template: './dist/index.html',
+        // }),
         // new CopyWebpackPlugin([
         //     {
         //       from: path.resolve(__dirname, 'node_modules/@mediapipe/hands'),
@@ -52,9 +54,9 @@ module.exports = {
         //   ])
     ],
     devServer: {
-        // static: {
-        //     directory: path.join(__dirname, 'dist'),
-        // },
+        static: {
+            directory: path.join(__dirname, 'dist'),
+        },
         host: '0.0.0.0',
         port: 3001,
         compress: false,

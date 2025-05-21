@@ -14,14 +14,43 @@ export default class Webgl{
 
         this.init();
         this.loop();
+        this.videoMesh;
 
         window.addEventListener("resize", this.resize.bind(this)); // 이벤트 타입과 콜백함수
     }
 
     init(){
-        this.props.$wrapper.prepend(Common.renderer.domElement);
+        this.props.$wrapper.prepend(Common.renderer.domElement); // document.body의 맨 앞에 추가됨. append와 반대.
         this.output = new Output();
         
+        this.showCam();
+    }
+
+    resize(){
+        Common.resize();
+        this.output.resize();
+        
+        this.showCam();
+    }
+
+    render(){
+        // console.log("web gl render");
+        // console.trace();
+
+        Mouse.update();
+        HandTracking.update();
+        Common.update();
+        this.output.update();
+
+    }
+
+    loop(){
+        this.render();
+        requestAnimationFrame(this.loop.bind(this)); // 콜백함수를 인자로 받음.
+    }
+
+    showCam(){
+
         //video 코드
         this.video = document.getElementById('input_video');
         // 생성해서 사용하는 video
@@ -32,43 +61,35 @@ export default class Webgl{
         // document.body.appendChild(this.video);
 
         navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                this.stream = stream;
-                this.video.srcObject = stream;
+        .then(stream => {
+            this.stream = stream;
+            this.video.srcObject = stream;
 
-                this.videoTexture = new THREE.VideoTexture(this.video);
-                this.videoTexture.minFilter = THREE.LinearFilter;
-                this.videoTexture.magFilter = THREE.LinearFilter;
-                if (this.videoTexture) {
-                    const geometry = new THREE.PlaneGeometry(Common.height/Common.width*0.4, Common.width/Common.width * 0.4);
-                    const material = new THREE.MeshBasicMaterial({ map: this.videoTexture });
-                    const mesh = new THREE.Mesh(geometry, material);
-                    mesh.scale.x = -1;
-                    mesh.position.set(0, 0.8, 0); // y축으로 위로 올림
-                    this.output.scene.add(mesh);
+            this.videoTexture = new THREE.VideoTexture(this.video);
+            this.videoTexture.minFilter = THREE.LinearFilter;
+            this.videoTexture.magFilter = THREE.LinearFilter;
+            if (this.videoTexture) {
+
+                // 이전 메쉬 삭제
+                if (this.videoMesh) {
+                    this.output.scene.remove(this.videoMesh);
+                    this.videoMesh.geometry.dispose();
+                    this.videoMesh.material.dispose();
                 }
-            })
-            .catch(err => {
-                console.error('웹캠 접근 실패:', err);
-                throw err;
-            });
-    }
-
-    resize(){
-        Common.resize();
-        this.output.resize();
-        
-    }
-
-    render(){
-        Mouse.update();
-        HandTracking.update();
-        Common.update();
-        this.output.update();
-    }
-
-    loop(){
-        this.render();
-        requestAnimationFrame(this.loop.bind(this)); // 콜백함수를 인자로 받음.
+                const vidScale = 0.0004; // 영상 사이즈 조절. 
+                const geometry = new THREE.PlaneGeometry(Common.width*vidScale, Common.height*vidScale);
+                const material = new THREE.MeshBasicMaterial({ map: this.videoTexture });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.scale.x = -1;
+                mesh.position.set(0, 0.8, 0); // y축으로 위로 올림
+                
+                this.videoMesh = mesh;
+                this.output.scene.add(this.videoMesh);
+            }
+        })
+        .catch(err => {
+            console.error('웹캠 접근 실패:', err);
+            throw err;
+        });
     }
 }

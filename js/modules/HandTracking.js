@@ -17,7 +17,21 @@ class HandTracking{
 
     async init(){
         
-        await this.initialize();
+        this.videoElement = document.getElementById('input_video');
+        // 핸드 트래킹 초기화 
+        // this.hands = new Hands({
+        //     locateFile: (file) => `/node_modules/@mediapipe/hands/${file}`
+        //   });
+
+        // CDN 코드
+        this.hands = await new Hands({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+        // 로컬 코드
+        // this.hands = new Hands({
+        //     locateFile: (file) => `/mediapipe/hands/${file}`
+        //   });
+        
         console.log("Hand Tracking initialize");
         this.hands.setOptions({
             maxNumHands: 2,
@@ -28,7 +42,7 @@ class HandTracking{
 
         this.hands.onResults(results => {
             //console.log('onResults');
-            // 손 랜드마크 그리기
+            // 손 랜드마크 위치 탐색된 경우.
             if (results.multiHandLandmarks && results.multiHandedness) {
                 for (let i = 0; i < results.multiHandLandmarks.length; i++) {
                     const landmarks = results.multiHandLandmarks[i];
@@ -52,31 +66,15 @@ class HandTracking{
         this.cameraStart();
     }
 
-    async initialize(){
-        this.videoElement = document.getElementById('input_video');
-        // 핸드 트래킹 초기화 
-        // this.hands = new Hands({
-        //     locateFile: (file) => `/node_modules/@mediapipe/hands/${file}`
-        //   });
-
-        // CDN 코드
-        this.hands = new Hands({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-        });
-        // 로컬 코드
-        // this.hands = new Hands({
-        //     locateFile: (file) => `/mediapipe/hands/${file}`
-        //   });
-    }
     cameraStart(){
         // 카메라 시작
         const camera = new Camera(this.videoElement, {
             onFrame: async () => {
               await this.hands.send({ image: this.videoElement });
             },
-            width: 1280,
-            height: 720
-          });
+            width: Common.width/10,
+            height: Common.height/10
+          }); 
         camera.start();
     }
 

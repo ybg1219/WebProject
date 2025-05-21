@@ -29,7 +29,7 @@ export default class Simulation{
             pressure_1: null,
         };
 
-        this.options = {
+        this.options = { // reference 값으로 변경 하자마자 값이 바뀜.
             iterations_poisson: 32,
             iterations_viscous: 32,
             mouse_force: 20,
@@ -43,7 +43,6 @@ export default class Simulation{
             isMouse : false
         }; // 컨트롤의 파라미터 초기값
         const controls = new Controls(this.options);
-
         this.fboSize = new THREE.Vector2();
         this.cellScale = new THREE.Vector2();
         this.boundarySpace = new THREE.Vector2();
@@ -144,8 +143,10 @@ export default class Simulation{
 
 
     update(){
+        // 전혀 값이 변경되지 않는다.. 어떻게 해야할까?
+        // console.log(this.options.isMouse, this.options.mouse_force);
 
-        if(this.options.isBounce){ // BFECC 실행 여부
+        if(this.options.isBounce){ // 경계 여부
             this.boundarySpace.set(0, 0);
         } else {
             this.boundarySpace.copy(this.cellScale);
