@@ -4,15 +4,25 @@ import Common from "./Common";
 // import { Camera } from "@mediapipe/camera_utils";     // MediaPipe용 Camera
 
 class HandTracking{
+
     constructor(){
-        this.handMoved = false;
-        this.coords = new THREE.Vector2();
-        this.coords_old = new THREE.Vector2();
-        this.diff = new THREE.Vector2();
-        this.timer = null;
-        this.count = 0;
+        this.handMoved = [false, false]; // 왼손, 오른손
+        this.handsData = [
+            {
+                coords: new THREE.Vector2(),
+                coords_old: new THREE.Vector2(),
+                diff: new THREE.Vector2(),
+                timer: null
+            },
+            {
+                coords: new THREE.Vector2(),
+                coords_old: new THREE.Vector2(),
+                diff: new THREE.Vector2(),
+                timer: null
+            }
+        ];
         this.videoElement = null;
-        this.hand = null
+        this.hands = null;
     }
 
     async init(){
@@ -57,8 +67,9 @@ class HandTracking{
                         // const x = Math.floor(indexTip.x * Common.width);
                         const x = Math.floor((1 - indexTip.x) * Common.width);
                         const y = Math.floor(indexTip.y * Common.height);
-                        this.setCoords(x, y);
-                        // console.log(x,y);
+                        
+                        const handIndex = handType === "Left" ? 0 : 1; // 왼손: 0, 오른손: 1
+                        this.setCoords(handIndex, x, y);
                     }
                 }   
             }
@@ -78,19 +89,44 @@ class HandTracking{
         camera.start();
     }
 
-    setCoords( x, y ) {
-        if(this.timer) clearTimeout(this.timer);
-        this.coords.set( ( x / Common.width ) * 2 - 1, - ( y / Common.height ) * 2 + 1 );
-        this.handMoved = true;
-        this.timer = setTimeout(() => {
-            this.handMoved = false;
-        }, 100);
-    }
-    update(){
-        this.diff.subVectors(this.coords, this.coords_old);
-        this.coords_old.copy(this.coords);
+    setCoords(index, x, y) {
+        const hand = this.handsData[index];
+        if (hand.timer) clearTimeout(hand.timer);// 이전에 돌아가던 타이머 제거.
 
-        if(this.coords_old.x === 0 && this.coords_old.y === 0) this.diff.set(0, 0);
+        hand.coords.set((x / Common.width) * 2 - 1, -(y / Common.height) * 2 + 1);
+        this.handMoved[index] = true;
+
+        hand.timer = setTimeout(() => {
+            this.handMoved[index] = false;
+        }, 100);// 0.1초 동안 움직이지 않으면 다시 false로 바꿈.
+    }
+    // setCoords( x, y ) {
+    //     if(this.timer) clearTimeout(this.timer); 
+    //     this.coords.set( ( x / Common.width ) * 2 - 1, - ( y / Common.height ) * 2 + 1 );
+    //     this.handMoved = true;
+    //     this.timer = setTimeout(() => {
+    //         this.handMoved = false;
+    //     }, 100); 
+    // }
+    update(){
+        for (let i = 0; i < this.handsData.length; i++) {
+            const hand = this.handsData[i];
+
+            hand.diff.subVectors(hand.coords, hand.coords_old); // diff 계산
+            hand.coords_old.copy(hand.coords);  // 이전 좌표값값 coords_old 저장.
+
+            if (hand.coords_old.x === 0 && hand.coords_old.y === 0) {
+                hand.diff.set(0, 0);
+            }
+        }
+    }
+
+    getHand(index) {
+        return {
+            coords: this.handsData[index].coords,
+            diff: this.handsData[index].diff,
+            moved: this.handMoved[index]
+        };
     }
 }
 

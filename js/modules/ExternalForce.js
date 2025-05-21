@@ -1,8 +1,8 @@
 import mouse_vert from "./glsl/sim/mouse.vert";
 import externalForce_frag from "./glsl/sim/externalForce.frag";
 import ShaderPass from "./ShaderPass";
-import Mouse from "./Mouse";
-import HandTracking from "./HandTracking";
+// import Mouse from "./Mouse"; // -> simulation에서 파라미터로 받고 있음.
+// import HandTracking from "./HandTracking";
 
 import * as THREE from "three";
 
@@ -51,26 +51,15 @@ export default class ExternalForce extends ShaderPass{
         const cursorSizeX = props.cursor_size * props.cellScale.x;
         const cursorSizeY = props.cursor_size * props.cellScale.y;
         
-        let forceX, forceY, centerX, centerY;
+        let forceX = 0, forceY = 0, centerX = 0, centerY = 0;
 
-        // console.log('[ExternalForce] update call - isMouse:', props.isMouse);
-        // console.trace();
-        // console.log(props.cursor_size);
-
-        if ( props.isMouse ){
-            forceX = Mouse.diff.x / 2 * props.mouse_force; // 이동속도 * 기본 마우스 force = 20
-            forceY = Mouse.diff.y / 2 * props.mouse_force;
-            console.log('mouse diff', forceX, forceY, props.isMouse);
-            centerX = Math.min(Math.max(Mouse.coords.x, -1 + cursorSizeX + props.cellScale.x * 2), 1 - cursorSizeX - props.cellScale.x * 2);
-            centerY = Math.min(Math.max(Mouse.coords.y, -1 + cursorSizeY + props.cellScale.y * 2), 1 - cursorSizeY - props.cellScale.y * 2);
-        }else{ 
-            forceX = HandTracking.diff.x / 2 * props.mouse_force*3; // 이동속도 * 기본 마우스 force = 20
-            forceY = HandTracking.diff.y / 2 * props.mouse_force*3;
-            console.log('hand diff', forceX, forceY, props.isMouse);
-            centerX = Math.min(Math.max(HandTracking.coords.x, -1 + cursorSizeX + props.cellScale.x * 2), 1 - cursorSizeX - props.cellScale.x * 2);
-            centerY = Math.min(Math.max(HandTracking.coords.y, -1 + cursorSizeY + props.cellScale.y * 2), 1 - cursorSizeY - props.cellScale.y * 2);
-            console.log('hand pos', HandTracking.coords.x, HandTracking.coords.y);
-        }
+            forceX = props.diff.x / 2 * props.mouse_force; // 이동속도 * 기본 마우스 force = 20
+            forceY = props.diff.y / 2 * props.mouse_force;
+            // console.log('hand diff', forceX, forceY, props.isMouse);
+            centerX = Math.min(Math.max(props.coords.x, -1 + cursorSizeX + props.cellScale.x * 2), 1 - cursorSizeX - props.cellScale.x * 2);
+            centerY = Math.min(Math.max(props.coords.y, -1 + cursorSizeY + props.cellScale.y * 2), 1 - cursorSizeY - props.cellScale.y * 2);
+            // console.log('hand pos', HandTracking.coords.x, HandTracking.coords.y);
+        
         const uniforms = this.mouse.material.uniforms;
 
         uniforms.force.value.set(forceX, forceY);

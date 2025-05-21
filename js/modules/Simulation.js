@@ -9,6 +9,10 @@ import Divergence from "./Divergence";
 import Poisson from "./Poisson";
 import Pressure from "./Pressure";
 
+import Mouse from "./Mouse";
+import HandTracking from "./HandTracking";
+//import BodyTracking from "./BodyTracking";
+
 export default class Simulation{
     constructor(props){
         this.props = props;
@@ -86,6 +90,17 @@ export default class Simulation{
             dst: this.fbos.vel_1,
         });
 
+        this.externalForceLeft = new ExternalForce({
+            cellScale: this.cellScale,
+            cursor_size: this.options.cursor_size,
+            dst: this.fbos.vel_1,
+        });
+        this.externalForceRight = new ExternalForce({
+            cellScale: this.cellScale,
+            cursor_size: this.options.cursor_size,
+            dst: this.fbos.vel_1,
+        });
+
         this.viscous = new Viscous({
             cellScale: this.cellScale,
             boundarySpace: this.boundarySpace,
@@ -154,12 +169,41 @@ export default class Simulation{
 
         this.advection.update(this.options);
 
-        this.externalForce.update({
-            cursor_size: this.options.cursor_size,
-            mouse_force: this.options.mouse_force,
-            cellScale: this.cellScale,
-            isMouse : this.options.isMouse
-        });
+        if (this.options.isMouse){
+            this.externalForce.update({
+                cursor_size: this.options.cursor_size,
+                mouse_force: this.options.mouse_force,
+                cellScale: this.cellScale,
+                coords: Mouse.coords,
+                diff: Mouse.diff
+            });
+        }else{
+            const leftHand = HandTracking.getHand(0);
+            const rightHand = HandTracking.getHand(1);
+
+            //console.log(leftHand, rightHand);
+            // 왼손
+            if (leftHand.moved) {
+                this.externalForceLeft.update({
+                    cursor_size: this.options.cursor_size,
+                    mouse_force: this.options.mouse_force,
+                    cellScale: this.cellScale,
+                    coords: leftHand.coords,
+                    diff: leftHand.diff
+                });
+            }
+
+            // 오른손
+            if (rightHand.moved) {
+                this.externalForceRight.update({
+                    cursor_size: this.options.cursor_size,
+                    mouse_force: this.options.mouse_force,
+                    cellScale: this.cellScale,
+                    coords: rightHand.coords,
+                    diff: rightHand.diff
+                });
+            }
+        }
 
         let vel = this.fbos.vel_1;
 
