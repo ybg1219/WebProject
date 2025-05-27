@@ -15,7 +15,7 @@ class Common{
 
         this.time = 0;
         this.delta = 0;
-
+        this.vidScale = 0.4;
     }
 
     init(){

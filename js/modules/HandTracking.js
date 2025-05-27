@@ -9,12 +9,14 @@ class HandTracking{
         this.handMoved = [false, false]; // 왼손, 오른손
         this.handsData = [
             {
+                landmarks : [],
                 coords: new THREE.Vector2(),
                 coords_old: new THREE.Vector2(),
                 diff: new THREE.Vector2(),
                 timer: null
             },
             {
+                landmarks : [],
                 coords: new THREE.Vector2(),
                 coords_old: new THREE.Vector2(),
                 diff: new THREE.Vector2(),
@@ -61,8 +63,9 @@ class HandTracking{
             
                     // 오른손만 빨간 점으로 검지 끝
                     if (handType === "Right") {
+
                         const indexTip = landmarks[8]; // 검지 끝
-                    //   drawHandLandmarks([indexTip], 'red', 10);
+                        //   drawHandLandmarks([indexTip], 'red', 10);
                         // console.log(indexTip.x*Common.width, indexTip.y*Common.height);
                         // const x = Math.floor(indexTip.x * Common.width);
                         const x = Math.floor((1 - indexTip.x) * Common.width);
@@ -70,11 +73,21 @@ class HandTracking{
                         
                         const handIndex = handType === "Left" ? 0 : 1; // 왼손: 0, 오른손: 1
                         this.setCoords(handIndex, x, y);
-                    }
+                    }                    
+                    drawHandLandmarks(  landmarks , 'red', 5);
                 }   
             }
         });
         this.cameraStart();
+    }
+    // 랜드마크 그리기 함수
+    drawHandLandmarks(landmarks, color, radius) {
+      for (const landmark of landmarks) {
+        canvasCtx.beginPath();
+        canvasCtx.arc(landmark.x * canvasElement.width, landmark.y * canvasElement.height, radius, 0, 2 * Math.PI);
+        canvasCtx.fillStyle = color;
+        canvasCtx.fill();
+      }
     }
 
     cameraStart(){
@@ -123,6 +136,7 @@ class HandTracking{
 
     getHand(index) {
         return {
+            landmarks : this.handsData[index].landmarks,
             coords: this.handsData[index].coords,
             diff: this.handsData[index].diff,
             moved: this.handMoved[index]

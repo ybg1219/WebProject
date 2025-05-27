@@ -6,6 +6,7 @@ import { Camera } from "@mediapipe/camera_utils";
 class BodyTracking {
 
     constructor() {
+        this.landmarks = [];
         this.coords = new THREE.Vector2();
         this.coords_old = new THREE.Vector2();
         this.diff = new THREE.Vector2();
@@ -34,11 +35,19 @@ class BodyTracking {
         console.log("Pose Tracking initialized");
 
         this.pose.onResults(results => {
+            this.landmarks = results.poseLandmarks;
             if (results.poseLandmarks) {
                 const head = results.poseLandmarks[0];
 
-                const x = Math.floor((1 - head.x) * Common.width);
-                const y = Math.floor(head.y * Common.height);
+                const leftShoulder = results.poseLandmarks[11];
+                const rightShoulder = results.poseLandmarks[12];
+                const leftHip = results.poseLandmarks[23];
+                const rightHip = results.poseLandmarks[24];
+
+                const point = (leftShoulder + rightShoulder + leftHip + rightHip)/4
+                console.log(point)
+                const x = Math.floor((1 - point.x) * Common.width);
+                const y = Math.floor(point.y * Common.height);
                 this.setCoords(x, y);
             }
         });

@@ -4,6 +4,8 @@ import Output from "./Output";
 import Mouse from "./Mouse";
 import HandTracking from "./HandTracking";
 import BodyTracking from "./BodyTracking";
+import VideoManager from "./VideoManager";
+import CanvasManager from "./CanvasManager";
 
 export default class Webgl{
     constructor(props){
@@ -13,38 +15,49 @@ export default class Webgl{
         Mouse.init();
         HandTracking.init();
         BodyTracking.init();
+        VideoManager.init(this.props.$wrapper, Common.width, Common.height);
+        CanvasManager.init(this.props.$wrapper, Common.width, Common.height);
+        
 
         this.init();
         this.loop();
-        this.videoMesh;
+        // this.videoMesh;
 
         window.addEventListener("resize", this.resize.bind(this)); // 이벤트 타입과 콜백함수
     }
 
-    init(){
+    async init(){
         this.props.$wrapper.prepend(Common.renderer.domElement); // document.body의 맨 앞에 추가됨. append와 반대.
         this.output = new Output();
-        
-        this.showCam();
+        await VideoManager.startCamera();
     }
 
     resize(){
         Common.resize();
         this.output.resize();
-        
-        this.showCam();
+
+        VideoManager.setSize( Common.width, Common.height);
+        CanvasManager.setSize( Common.width, Common.height);
+
+        // this.showCam();
     }
 
     render(){
-        // console.log("web gl render");
-        // console.trace();
-
         Mouse.update();
         HandTracking.update();
         BodyTracking.update();
         Common.update();
         this.output.update();
-
+        // 테스트 용
+        // const landmarks = [
+        //     { x: 0.5, y: 0.5 },  // 중앙
+        //     { x: 0.0, y: 0.0 },
+        //     { x: 0.7, y: 0.4 },
+        //     { x: 1.0, y: 1.0}
+            
+        // ];
+        CanvasManager.drawPoint(VideoManager.getElement(), BodyTracking.landmarks );
+        CanvasManager.drawLine(VideoManager.getElement(), BodyTracking.landmarks );
     }
 
     loop(){
@@ -52,48 +65,4 @@ export default class Webgl{
         requestAnimationFrame(this.loop.bind(this)); // 콜백함수를 인자로 받음.
     }
 
-    showCam(){
-
-        //video 코드
-        this.video = document.getElementById('input_video');
-        // 생성해서 사용하는 video
-        // this.video = document.createElement('video');
-        // this.video.autoplay = true;
-        // this.video.playsInline = true;
-        // this.video.style.display = 'none';
-        // document.body.appendChild(this.video);
-
-        navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            this.stream = stream;
-            this.video.srcObject = stream;
-
-            this.videoTexture = new THREE.VideoTexture(this.video);
-            this.videoTexture.minFilter = THREE.LinearFilter;
-            this.videoTexture.magFilter = THREE.LinearFilter;
-            if (this.videoTexture) {
-
-                // 이전 메쉬 삭제
-                if (this.videoMesh) {
-                    this.output.scene.remove(this.videoMesh);
-                    this.videoMesh.geometry.dispose();
-                    this.videoMesh.material.dispose();
-                }
-                const vidScale = 0.0003; // 영상 사이즈 조절. 
-                console.log(Common.width*vidScale, Common.height*vidScale)
-                const geometry = new THREE.PlaneGeometry(Common.width*vidScale/2, Common.height*vidScale);
-                const material = new THREE.MeshBasicMaterial({ map: this.videoTexture });
-                const mesh = new THREE.Mesh(geometry, material);
-                mesh.scale.x = -1;
-                mesh.position.set(0, 0.8, 0); // y축으로 위로 올림
-                
-                this.videoMesh = mesh;
-                this.output.scene.add(this.videoMesh);
-            }
-        })
-        .catch(err => {
-            console.error('웹캠 접근 실패:', err);
-            throw err;
-        });
-    }
 }

@@ -163,9 +163,7 @@ export default class Simulation{
 
 
     update(){
-        // 전혀 값이 변경되지 않는다.. 어떻게 해야할까?
-        // console.log(this.options.isMouse, this.options.mouse_force);
-
+        
         if(this.options.isBounce){ // 경계 여부
             this.boundarySpace.set(0, 0);
         } else {
@@ -183,6 +181,15 @@ export default class Simulation{
                 diff: Mouse.diff
             });
         }else{
+            this.externalForceBody.update({
+               cursor_size: this.options.cursor_size,
+               mouse_force: this.options.mouse_force,
+               cellScale: this.cellScale,
+               coords: BodyTracking.coords,
+               diff: BodyTracking.diff
+            });
+            // console.log("body" , BodyTracking.coords)
+// 
             const leftHand = HandTracking.getHand(0);
             const rightHand = HandTracking.getHand(1);
 
@@ -197,6 +204,7 @@ export default class Simulation{
                     diff: leftHand.diff
                 });
             }
+            // console.log("left" , leftHand.coords)
 
             // 오른손
             if (rightHand.moved) {
@@ -208,14 +216,8 @@ export default class Simulation{
                     diff: rightHand.diff
                 });
             }
+            // console.log("right", rightHand.coords)
 
-            this.externalForceBody.update({
-               cursor_size: this.options.cursor_size,
-               mouse_force: this.options.mouse_force,
-               cellScale: this.cellScale,
-               coords: BodyTracking.coords,
-               diff: BodyTracking.diff
-            });
         }
 
         let vel = this.fbos.vel_1;
