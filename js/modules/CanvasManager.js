@@ -1,6 +1,26 @@
+// import { DrawingUtils } from "https://cdn.skypack.dev/@mediapipe/tasks-vision@0.10.0";
+import {
+  drawLandmarks,
+  drawConnectors
+} from "@mediapipe/drawing_utils";
+
+const POSE_CONNECTIONS = [
+  [0, 1], [1, 2], [2, 3], [3, 7],
+  [0, 4], [4, 5], [5, 6], [6, 8],
+  [9, 10],
+  [11, 12], [11, 13], [13, 15],
+  [12, 14], [14, 16],
+  [15, 17], [16, 18],
+  [11, 23], [12, 24],
+  [23, 24], [23,25], [24,26],
+  [25,27], [27,29], [26,28], [28,30],
+  [29,31], [30,32]
+]; // mediapipe/pose에서 불러와야해서 그냥 정의해줌 ^^
+
+
 class CanvasManager {
     constructor() {
-        
+        this.drawingUtils = null;
     }
     init ($wrapper, width, height) {
         $wrapper.style.position = 'relative';
@@ -18,11 +38,14 @@ class CanvasManager {
 
         this.setSize(width, height);
         $wrapper.appendChild(this.canvas);
+        console.log(POSE_CONNECTIONS);
+        // this.drawUtils = window.drawUtils; 
+        // console.log(this.drawUtils);
     }
     getElement() {
         // 호출 시 
     // const { video, ctx } = VideoManager.getElement();
-    // anvasManager.draw(video, landmarks)
+    // CanvasManager.draw(video, landmarks)
         return { video: this.video, ctx: this.ctx };
     }
 
@@ -44,54 +67,94 @@ class CanvasManager {
         this.ctx.drawImage(video, -this.canvas.width, 0, this.canvas.width, this.canvas.height);
         this.ctx.restore();
     }
+
+    
     drawPoint(video, landmarks = []) {
-        
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        // this.ctx.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
-
         this.drawVideo(video);
-
-        landmarks.forEach(({ x, y }) => {
-            const px = (1-x) * this.canvas.width;
-            const py = y * this.canvas.height;
-            this.ctx.beginPath();
-            this.ctx.arc(px, py, 5, 0, Math.PI * 2);
-            this.ctx.fillStyle = 'red';
-            this.ctx.fill();
-        });
-    }
-    drawLine(video, landmarks = []) {
-        
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        // this.ctx.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
-
-        this.drawVideo(video);
-
-        if (landmarks.length > 1) {
-            this.ctx.beginPath();
-            landmarks.forEach(({ x, y }, index) => {
-                const px = (1 - x) * this.canvas.width;
-                const py = y * this.canvas.height;
-
-                if (index === 0) {
-                    this.ctx.moveTo(px, py);
-                } else {
-                    this.ctx.lineTo(px, py);
-                }
+        if (drawLandmarks) {
+            // 변환된 landmark 좌표값을 사용 (x: 0~1 범위 기준)
+            drawLandmarks(this.ctx, landmarks, {
+                radius: 3,
+                color: "red",
             });
-            this.ctx.strokeStyle = 'lime';
-            this.ctx.lineWidth = 2;
-            this.ctx.stroke();
+        } else {
+            console.warn('drawingUtils 또는 drawLandmarks가 정의되지 않았습니다.');
         }
-        landmarks.forEach(({ x, y }) => {
-            const px = (1-x) * this.canvas.width;
-            const py = y * this.canvas.height;
-            this.ctx.beginPath();
-            this.ctx.arc(px, py, 5, 0, Math.PI * 2);
-            this.ctx.fillStyle = 'red';
-            this.ctx.fill();
-        });
     }
+
+    drawLine(video, landmarks = []) {
+        this.ctx.save(); // 현재 캔버스 상태 저장
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.drawVideo(video); // 반전 전 비디오 먼저 그림
+
+        // 🔁 캔버스를 좌우 반전
+        this.ctx.translate(this.canvas.width, 0); // x축 이동
+        this.ctx.scale(-1, 1); // 좌우 반전
+
+        if (landmarks.length > 0) {
+            drawConnectors(this.ctx, landmarks, POSE_CONNECTIONS, {
+                color: "lime",
+                lineWidth: 2
+            });
+
+            drawLandmarks(this.ctx, landmarks, {
+                radius: 3,
+                color: "red",
+            });
+        }
+
+        this.ctx.restore(); // 상태 복원
+    }
+
+    // drawPoint(video, landmarks = []) {
+        
+    //     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    //     // this.ctx.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
+
+    //     this.drawVideo(video);
+
+    //     landmarks.forEach(({ x, y }) => {
+    //         const px = (1-x) * this.canvas.width;
+    //         const py = y * this.canvas.height;
+    //         this.ctx.beginPath();
+    //         this.ctx.arc(px, py, 5, 0, Math.PI * 2);
+    //         this.ctx.fillStyle = 'red';
+    //         this.ctx.fill();
+    //     });
+    // }
+    // drawLine(video, landmarks = []) {
+        
+    //     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    //     // this.ctx.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
+
+    //     this.drawVideo(video);
+
+    //     if (landmarks.length > 1) {
+    //         this.ctx.beginPath();
+    //         landmarks.forEach(({ x, y }, index) => {
+    //             const px = (1 - x) * this.canvas.width;
+    //             const py = y * this.canvas.height;
+
+    //             if (index === 0) {
+    //                 this.ctx.moveTo(px, py);
+    //             } else {
+    //                 this.ctx.lineTo(px, py);
+    //             }
+    //         });
+    //         this.ctx.strokeStyle = 'lime';
+    //         this.ctx.lineWidth = 2;
+    //         this.ctx.stroke();
+    //     }
+    //     landmarks.forEach(({ x, y }) => {
+    //         const px = (1-x) * this.canvas.width;
+    //         const py = y * this.canvas.height;
+    //         this.ctx.beginPath();
+    //         this.ctx.arc(px, py, 5, 0, Math.PI * 2);
+    //         this.ctx.fillStyle = 'red';
+    //         this.ctx.fill();
+    //     });
+    // }
 }
 
 export default new CanvasManager(); // instance return single ton

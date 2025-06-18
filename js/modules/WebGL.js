@@ -56,7 +56,7 @@ export default class Webgl{
         //     { x: 1.0, y: 1.0}
             
         // ];
-        CanvasManager.drawPoint(VideoManager.getElement(), BodyTracking.landmarks );
+        //CanvasManager.drawPoint(VideoManager.getElement(), BodyTracking.landmarks );
         CanvasManager.drawLine(VideoManager.getElement(), BodyTracking.landmarks );
     }
 

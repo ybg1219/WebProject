@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import Common from "./Common";
 // import { Hands} from "@mediapipe/hands";  // MediaPipe용 Hands
-// import { Camera } from "@mediapipe/camera_utils";     // MediaPipe용 Camera
+import { Camera } from "@mediapipe/camera_utils";     // MediaPipe용 Camera
 
 class HandTracking{
 

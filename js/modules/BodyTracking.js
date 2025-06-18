@@ -44,10 +44,11 @@ class BodyTracking {
                 const leftHip = results.poseLandmarks[23];
                 const rightHip = results.poseLandmarks[24];
 
-                const point = (leftShoulder + rightShoulder + leftHip + rightHip)/4
-                console.log(point)
-                const x = Math.floor((1 - point.x) * Common.width);
-                const y = Math.floor(point.y * Common.height);
+                const avgX = (leftShoulder.x + rightShoulder.x + leftHip.x + rightHip.x) / 4;
+                const avgY = (leftShoulder.y + rightShoulder.y + leftHip.y + rightHip.y) / 4;
+
+                const x = Math.floor((1 - avgX) * Common.width);
+                const y = Math.floor(avgY * Common.height);
                 this.setCoords(x, y);
             }
         });

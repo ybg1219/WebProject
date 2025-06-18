@@ -181,15 +181,15 @@ export default class Simulation{
                 diff: Mouse.diff
             });
         }else{
-            this.externalForceBody.update({
-               cursor_size: this.options.cursor_size,
-               mouse_force: this.options.mouse_force,
-               cellScale: this.cellScale,
-               coords: BodyTracking.coords,
-               diff: BodyTracking.diff
-            });
+            // this.externalForceBody.update({
+            //    cursor_size: this.options.cursor_size,
+            //    mouse_force: this.options.mouse_force,
+            //    cellScale: this.cellScale,
+            //    coords: BodyTracking.coords,
+            //    diff: BodyTracking.diff
+            // });
             // console.log("body" , BodyTracking.coords)
-// 
+
             const leftHand = HandTracking.getHand(0);
             const rightHand = HandTracking.getHand(1);
 
