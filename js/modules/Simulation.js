@@ -20,6 +20,9 @@ export default class Simulation{
         this.fbos = {
             vel_0: null,
             vel_1: null,
+            vel_body: null,
+            vel_left: null,
+            vel_right: null,
 
             // for calc next velocity with viscous
             vel_viscous0: null,
@@ -50,6 +53,42 @@ export default class Simulation{
         this.fboSize = new THREE.Vector2();
         this.cellScale = new THREE.Vector2();
         this.boundarySpace = new THREE.Vector2();
+        this.forceMergeG = new THREE.PlaneGeometry(2.0, 2.0);
+        this.forceMergeM = new THREE.RawShaderMaterial({
+            uniforms: {
+                forceA: { value: this.fbos.vel_body },
+                forceB: { value: this.fbos.vel_left },
+                forceC: { value: this.fbos.vel_right },
+            },
+            vertexShader: /* glsl */`
+                varying vec2 vUv;
+                attribute vec3 position;
+                void main() {
+                
+                    vUv = vec2(0.5)+(position.xy)*0.5;
+                    gl_Position = vec4(position.xy, 0.0 , 1.0);
+                }
+            `,
+            fragmentShader: /* glsl */`
+                precision highp float;
+                uniform sampler2D forceA;
+                uniform sampler2D forceB;
+                uniform sampler2D forceC;
+                varying vec2 vUv;
+
+                void main() {
+                    vec2 fA = texture2D(forceA, vUv).xy;
+                    vec2 fB = texture2D(forceB, vUv).xy;
+                    vec2 fC = texture2D(forceC, vUv).xy;
+
+                    vec2 avgForce = (fA + fB + fC) / 3.0;
+
+                    gl_FragColor = vec4(avgForce, 0.0, 1.0);
+                }
+            `
+        });
+        this.forceMerge = new THREE.Mesh(this.forceMergeG, this.forceMergeM);
+        this.scene.add(this.forceMerge);
 
         this.init();
     }
@@ -64,15 +103,14 @@ export default class Simulation{
     createAllFBO(){
         const type = ( /(iPad|iPhone|iPod)/g.test( navigator.userAgent ) ) ? THREE.HalfFloatType : THREE.FloatType;
         // / /g 정규식 리터럴 안에 문자 넣고, or 연산자 | 사용
-        for(let key in this.fbos){
+
+        for(let key in this.fbos){ // fbos 를 돌면서 fbo에 RT 할당.
             this.fbos[key] = new THREE.WebGLRenderTarget(
                 this.fboSize.x,
                 this.fboSize.y,
-                {
-                    type: type
-                }
-            )
-        }
+                { type: type }
+            );
+        }   
     }
 
     createShaderPass(){
@@ -93,17 +131,17 @@ export default class Simulation{
         this.externalForceLeft = new ExternalForce({
             cellScale: this.cellScale,
             cursor_size: this.options.cursor_size,
-            dst: this.fbos.vel_1,
+            dst: this.fbos.vel_left,
         });
         this.externalForceRight = new ExternalForce({
             cellScale: this.cellScale,
             cursor_size: this.options.cursor_size,
-            dst: this.fbos.vel_1,
+            dst: this.fbos.vel_right,
         });
         this.externalForceBody = new ExternalForce({
             cellScale: this.cellScale,
             cursor_size: this.options.cursor_size,
-            dst: this.fbos.vel_1,
+            dst: this.fbos.vel_body,
         });
 
         this.viscous = new Viscous({
@@ -161,7 +199,12 @@ export default class Simulation{
         }
     }
 
-
+    mergeForcesToVelocity() {
+        
+        Common.renderer.setRenderTarget(this.fbos.vel_1);
+        Common.renderer.render(this.scene, this.camera); // 반드시 full-screen quad로 구성된 scene
+        Common.renderer.setRenderTarget(null);
+    }
     update(){
         
         if(this.options.isBounce){ // 경계 여부
@@ -181,19 +224,19 @@ export default class Simulation{
                 diff: Mouse.diff
             });
         }else{
-            this.externalForceBody.update({
-               cursor_size: this.options.cursor_size,
-               mouse_force: this.options.mouse_force,
-               cellScale: this.cellScale,
-               coords: BodyTracking.coords,
-               diff: BodyTracking.diff
-            });
+            // this.externalForceBody.update({
+            //    cursor_size: this.options.cursor_size,
+            //    mouse_force: this.options.mouse_force,
+            //    cellScale: this.cellScale,
+            //    coords: BodyTracking.coords,
+            //    diff: BodyTracking.diff
+            // });
             // console.log("body" , BodyTracking.coords)
-// 
+
             const leftHand = HandTracking.getHand(0);
             const rightHand = HandTracking.getHand(1);
 
-            //console.log(leftHand, rightHand);
+            // console.log(leftHand, rightHand);
             // 왼손
             if (leftHand.moved) {
                 this.externalForceLeft.update({
@@ -217,10 +260,10 @@ export default class Simulation{
                 });
             }
             // console.log("right", rightHand.coords)
-
+            //  this.mergeForcesToVelocity();
         }
 
-        let vel = this.fbos.vel_1;
+        let vel = this.fbos.vel_1; // vel_1말고 나머지 생성해서 다 더하고 cliping하면 되나?
 
         if(this.options.isViscous){
             vel = this.viscous.update({

@@ -15,12 +15,30 @@ class BodyTracking {
 
         this.videoElement = null;
         this.pose = null;
+
+        this.handMoved = [false, false]; // 왼손, 오른손
+        this.handsData = [
+            {
+                landmarks : [],
+                coords: new THREE.Vector2(),
+                coords_old: new THREE.Vector2(),
+                diff: new THREE.Vector2(),
+                timer: null
+            },
+            {
+                landmarks : [],
+                coords: new THREE.Vector2(),
+                coords_old: new THREE.Vector2(),
+                diff: new THREE.Vector2(),
+                timer: null
+            }
+        ];
     }
 
     async init() {
         this.videoElement = document.getElementById('input_video');
 
-        this.pose = await new Pose({
+        this.pose = new Pose({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
         });
 
@@ -44,10 +62,12 @@ class BodyTracking {
                 const leftHip = results.poseLandmarks[23];
                 const rightHip = results.poseLandmarks[24];
 
-                const point = (leftShoulder + rightShoulder + leftHip + rightHip)/4
-                console.log(point)
-                const x = Math.floor((1 - point.x) * Common.width);
-                const y = Math.floor(point.y * Common.height);
+                const avgX = (leftShoulder.x + rightShoulder.x + leftHip.x + rightHip.x) / 4;
+                const avgY = (leftShoulder.y + rightShoulder.y + leftHip.y + rightHip.y) / 4;
+
+                const x = Math.floor((1 - head.x) * Common.width);
+                const y = Math.floor(head.y * Common.height);
+                // console.log(x,y);
                 this.setCoords(x, y);
             }
         });
@@ -77,6 +97,17 @@ class BodyTracking {
         }, 100);
     }
 
+    setCoords(index, x, y) { // hand용
+            const hand = this.handsData[index];
+            if (hand.timer) clearTimeout(hand.timer);// 이전에 돌아가던 타이머 제거.
+    
+            hand.coords.set((x / Common.width) * 2 - 1, -(y / Common.height) * 2 + 1);
+            this.handMoved[index] = true;
+    
+            hand.timer = setTimeout(() => {
+                this.handMoved[index] = false;
+            }, 100);// 0.1초 동안 움직이지 않으면 다시 false로 바꿈.
+        }
     update() {
         this.diff.subVectors(this.coords, this.coords_old);
         this.coords_old.copy(this.coords);
@@ -91,6 +122,15 @@ class BodyTracking {
             coords: this.coords,
             diff: this.diff,
             moved: this.moved
+        };
+    }
+
+    getHand(index) {
+        return {
+            landmarks : this.handsData[index].landmarks,
+            coords: this.handsData[index].coords,
+            diff: this.handsData[index].diff,
+            moved: this.handMoved[index]
         };
     }
 }

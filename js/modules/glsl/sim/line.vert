@@ -12,3 +12,4 @@ void main(){
     pos.xy = abs(pos.xy) - px * 1.0; // 셀 한칸 만큼 당겨옴
     pos.xy *= n; // 부호 복구
     gl_Position = vec4(pos, 1.0);
+}

@@ -18,16 +18,20 @@ export default class Webgl{
         VideoManager.init(this.props.$wrapper, Common.width, Common.height);
         CanvasManager.init(this.props.$wrapper, Common.width, Common.height);
         
+        window.addEventListener("resize", this.resize.bind(this)); // 이벤트 타입과 콜백함수
 
         this.init();
         this.loop();
         // this.videoMesh;
 
-        window.addEventListener("resize", this.resize.bind(this)); // 이벤트 타입과 콜백함수
     }
 
     async init(){
         this.props.$wrapper.prepend(Common.renderer.domElement); // document.body의 맨 앞에 추가됨. append와 반대.
+
+        this.stats = new Stats(); // 프레임 확인용.
+        document.body.appendChild(this.stats.dom);
+
         this.output = new Output();
         await VideoManager.startCamera();
     }
@@ -61,7 +65,9 @@ export default class Webgl{
     }
 
     loop(){
+        if (this.stats) this.stats.begin();
         this.render();
+        if (this.stats) this.stats.end();
         requestAnimationFrame(this.loop.bind(this)); // 콜백함수를 인자로 받음.
     }
 

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import Common from "./Common";
-// import { Hands} from "@mediapipe/hands";  // MediaPipe용 Hands
-// import { Camera } from "@mediapipe/camera_utils";     // MediaPipe용 Camera
+import { Hands} from "@mediapipe/hands";  // MediaPipe용 Hands
+import { Camera } from "@mediapipe/camera_utils";     // MediaPipe용 Camera
 
 class HandTracking{
 
@@ -36,7 +36,7 @@ class HandTracking{
         //   });
 
         // CDN 코드
-        this.hands = await new Hands({
+        this.hands = new Hands({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
         });
         // 로컬 코드
@@ -44,7 +44,7 @@ class HandTracking{
         //     locateFile: (file) => `/mediapipe/hands/${file}`
         //   });
         
-        console.log("Hand Tracking initialize");
+        console.log("Hand Tracking initialize", this.hands);
         this.hands.setOptions({
             maxNumHands: 2,
             modelComplexity: 1,
@@ -53,7 +53,7 @@ class HandTracking{
         });
 
         this.hands.onResults(results => {
-            //console.log('onResults');
+            console.log('onResults', results.multiHandLandmarks);
             // 손 랜드마크 위치 탐색된 경우.
             if (results.multiHandLandmarks && results.multiHandedness) {
                 for (let i = 0; i < results.multiHandLandmarks.length; i++) {
@@ -70,11 +70,11 @@ class HandTracking{
                         // const x = Math.floor(indexTip.x * Common.width);
                         const x = Math.floor((1 - indexTip.x) * Common.width);
                         const y = Math.floor(indexTip.y * Common.height);
-                        
+                        console.log(x,y);
                         const handIndex = handType === "Left" ? 0 : 1; // 왼손: 0, 오른손: 1
                         this.setCoords(handIndex, x, y);
                     }                    
-                    drawHandLandmarks(  landmarks , 'red', 5);
+                    this.drawHandLandmarks(  landmarks , 'red', 5);
                 }   
             }
         });
