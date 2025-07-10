@@ -12,6 +12,9 @@ module.exports = {
     output: {
         filename: 'main.min.js',
         path: path.resolve(__dirname, 'dist'),
+        environment: {
+            module: true, // ESM 사용 허용
+        },
     },
     module: {
         rules: [
@@ -62,5 +65,10 @@ module.exports = {
         compress: false,
         open: true,
         hot : false
-    }
+    },
+    target: ["web", "es2020"], // ESM 지원을 위해 반드시 필요
+    experiments: {
+        outputModule: true,      // module: true output을 허용
+        topLevelAwait: true, // MediaPipe task는 top-level await 필요
+    },
 };

@@ -18,6 +18,7 @@ const POSE_CONNECTIONS = [
 class CanvasManager {
     constructor() {
         this.drawingUtils = null;
+        this.drawingUtils = null;
     }
     init ($wrapper, width, height) {
         $wrapper.style.position = 'relative';
@@ -42,6 +43,7 @@ class CanvasManager {
     getElement() {
         // 호출 시 
     // const { video, ctx } = VideoManager.getElement();
+    // CanvasManager.draw(video, landmarks)
     // CanvasManager.draw(video, landmarks)
         return { video: this.video, ctx: this.ctx };
     }
@@ -81,7 +83,33 @@ class CanvasManager {
 
     drawLine(video, landmarks = []) {
         this.ctx.save(); // 현재 캔버스 상태 저장
+        this.ctx.save(); // 현재 캔버스 상태 저장
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.drawVideo(video); // 반전 전 비디오 먼저 그림
+
+        // 🔁 캔버스를 좌우 반전
+        this.ctx.translate(this.canvas.width, 0); // x축 이동
+        this.ctx.scale(-1, 1); // 좌우 반전
+
+        if (landmarks.length > 0) {
+            drawConnectors(this.ctx, landmarks, POSE_CONNECTIONS, {
+                color: "lime",
+                lineWidth: 2
+            });
+
+            drawLandmarks(this.ctx, landmarks, {
+                radius: 3,
+                color: "red",
+            });
+        }
+
+        this.ctx.restore(); // 상태 복원
+    }
+
+    // drawPoint(video, landmarks = []) {
+        
+    //     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    //     // this.ctx.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
         this.drawVideo(video); // 반전 전 비디오 먼저 그림
 
         // 🔁 캔버스를 좌우 반전
@@ -109,6 +137,7 @@ class CanvasManager {
     //     // this.ctx.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
 
     //     this.drawVideo(video);
+    //     this.drawVideo(video);
 
     //     landmarks.forEach(({ x, y }) => {
     //         const px = (1-x) * this.canvas.width;
@@ -131,7 +160,47 @@ class CanvasManager {
     //         landmarks.forEach(({ x, y }, index) => {
     //             const px = (1 - x) * this.canvas.width;
     //             const py = y * this.canvas.height;
+    //     landmarks.forEach(({ x, y }) => {
+    //         const px = (1-x) * this.canvas.width;
+    //         const py = y * this.canvas.height;
+    //         this.ctx.beginPath();
+    //         this.ctx.arc(px, py, 5, 0, Math.PI * 2);
+    //         this.ctx.fillStyle = 'red';
+    //         this.ctx.fill();
+    //     });
+    // }
+    // drawLine(video, landmarks = []) {
+        
+    //     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    //     // this.ctx.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
 
+    //     this.drawVideo(video);
+
+    //     if (landmarks.length > 1) {
+    //         this.ctx.beginPath();
+    //         landmarks.forEach(({ x, y }, index) => {
+    //             const px = (1 - x) * this.canvas.width;
+    //             const py = y * this.canvas.height;
+
+    //             if (index === 0) {
+    //                 this.ctx.moveTo(px, py);
+    //             } else {
+    //                 this.ctx.lineTo(px, py);
+    //             }
+    //         });
+    //         this.ctx.strokeStyle = 'lime';
+    //         this.ctx.lineWidth = 2;
+    //         this.ctx.stroke();
+    //     }
+    //     landmarks.forEach(({ x, y }) => {
+    //         const px = (1-x) * this.canvas.width;
+    //         const py = y * this.canvas.height;
+    //         this.ctx.beginPath();
+    //         this.ctx.arc(px, py, 5, 0, Math.PI * 2);
+    //         this.ctx.fillStyle = 'red';
+    //         this.ctx.fill();
+    //     });
+    // }
     //             if (index === 0) {
     //                 this.ctx.moveTo(px, py);
     //             } else {

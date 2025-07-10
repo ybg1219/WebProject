@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "webpack-dev-server --port 3001 --hot --host 0.0.0.0",
+    "dev": "webpack-dev-server --port 3001 --host 0.0.0.0",
     "build": "webpack --mode production",
     "deploy": "npm run build && gh-pages -d dist"
   },
@@ -23,7 +23,9 @@
   "dependencies": {
     "@babel/runtime": "^7.27.1",
     "@mediapipe/camera_utils": "^0.3.1675466862",
+    "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/hands": "^0.4.1675469240",
+    "@mediapipe/tasks-vision": "^0.10.22-rc.20250304",
     "dat.gui": "^0.7.6",
     "terser-webpack-plugin": "^2.3.0",
     "three": "^0.161.0",

@@ -249,6 +249,7 @@ export default class Simulation{
             });
             // console.log("body" , BodyTracking.coords)
 
+
             const leftHand = HandTracking.getHand(0);
             const rightHand = HandTracking.getHand(1);
 
