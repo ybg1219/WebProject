@@ -12,6 +12,7 @@ import Pressure from "./Pressure";
 import Mouse from "./Mouse";
 import HandTracking from "./HandTracking";
 import BodyTracking from "./BodyTracking";
+import Tracking from "./Tracking";
 
 export default class Simulation{
     constructor(props){
@@ -88,7 +89,7 @@ export default class Simulation{
             `
         });
         this.forceMerge = new THREE.Mesh(this.forceMergeG, this.forceMergeM);
-        this.scene.add(this.forceMerge);
+        // this.scene.add(this.forceMerge);
 
         this.init();
     }
@@ -128,6 +129,12 @@ export default class Simulation{
             dst: this.fbos.vel_1,
         });
 
+        this.externalForceTracking = new ExternalForce({
+            cellScale: this.cellScale,
+            cursor_size: this.options.cursor_size,
+            dst: this.fbos.vel_1,
+        });
+
         this.externalForceLeft = new ExternalForce({
             cellScale: this.cellScale,
             cursor_size: this.options.cursor_size,
@@ -141,7 +148,7 @@ export default class Simulation{
         this.externalForceBody = new ExternalForce({
             cellScale: this.cellScale,
             cursor_size: this.options.cursor_size,
-            dst: this.fbos.vel_body,
+            dst: this.fbos.vel_1,
         });
 
         this.viscous = new Viscous({
@@ -224,13 +231,22 @@ export default class Simulation{
                 diff: Mouse.diff
             });
         }else{
-            // this.externalForceBody.update({
-            //    cursor_size: this.options.cursor_size,
-            //    mouse_force: this.options.mouse_force,
-            //    cellScale: this.cellScale,
-            //    coords: BodyTracking.coords,
-            //    diff: BodyTracking.diff
+
+            // this.externalForceTracking.update({
+            //     cursor_size: this.options.cursor_size,
+            //     mouse_force: this.options.mouse_force,
+            //     cellScale: this.cellScale,
+            //     coords: Tracking.coords,
+            //     diff: Tracking.diff
             // });
+
+            this.externalForceBody.update({
+               cursor_size: this.options.cursor_size,
+               mouse_force: this.options.mouse_force,
+               cellScale: this.cellScale,
+               coords: BodyTracking.coords,
+               diff: BodyTracking.diff
+            });
             // console.log("body" , BodyTracking.coords)
 
             const leftHand = HandTracking.getHand(0);
@@ -263,7 +279,7 @@ export default class Simulation{
             //  this.mergeForcesToVelocity();
         }
 
-        let vel = this.fbos.vel_1; // vel_1말고 나머지 생성해서 다 더하고 cliping하면 되나?
+        let vel = this.fbos.vel_1;
 
         if(this.options.isViscous){
             vel = this.viscous.update({

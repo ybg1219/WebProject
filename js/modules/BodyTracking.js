@@ -97,17 +97,17 @@ class BodyTracking {
         }, 100);
     }
 
-    setCoords(index, x, y) { // hand용
-            const hand = this.handsData[index];
-            if (hand.timer) clearTimeout(hand.timer);// 이전에 돌아가던 타이머 제거.
-    
-            hand.coords.set((x / Common.width) * 2 - 1, -(y / Common.height) * 2 + 1);
-            this.handMoved[index] = true;
-    
-            hand.timer = setTimeout(() => {
-                this.handMoved[index] = false;
-            }, 100);// 0.1초 동안 움직이지 않으면 다시 false로 바꿈.
-        }
+    // setCoords(index, x, y) { // hand용
+    //     const hand = this.handsData[index];
+    //     if (hand.timer) clearTimeout(hand.timer);// 이전에 돌아가던 타이머 제거.
+
+    //     hand.coords.set((x / Common.width) * 2 - 1, -(y / Common.height) * 2 + 1);
+    //     this.handMoved[index] = true;
+
+    //     hand.timer = setTimeout(() => {
+    //         this.handMoved[index] = false;
+    //     }, 100);// 0.1초 동안 움직이지 않으면 다시 false로 바꿈.
+    // }
     update() {
         this.diff.subVectors(this.coords, this.coords_old);
         this.coords_old.copy(this.coords);

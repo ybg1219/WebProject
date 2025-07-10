@@ -4,6 +4,7 @@ import Output from "./Output";
 import Mouse from "./Mouse";
 import HandTracking from "./HandTracking";
 import BodyTracking from "./BodyTracking";
+import Tracking from "./Tracking";
 import VideoManager from "./VideoManager";
 import CanvasManager from "./CanvasManager";
 
@@ -13,8 +14,10 @@ export default class Webgl{
 
         Common.init();
         Mouse.init();
-        HandTracking.init();
+        // HandTracking.init();
         BodyTracking.init();
+        // Tracking.init();
+
         VideoManager.init(this.props.$wrapper, Common.width, Common.height);
         CanvasManager.init(this.props.$wrapper, Common.width, Common.height);
         
@@ -48,8 +51,9 @@ export default class Webgl{
 
     render(){
         Mouse.update();
-        HandTracking.update();
+        // HandTracking.update();
         BodyTracking.update();
+        // Tracking.update();
         Common.update();
         this.output.update();
         // 테스트 용
@@ -60,8 +64,10 @@ export default class Webgl{
         //     { x: 1.0, y: 1.0}
             
         // ];
-        CanvasManager.drawPoint(VideoManager.getElement(), BodyTracking.landmarks );
+        // CanvasManager.drawPoint(VideoManager.getElement(), BodyTracking.landmarks );
         CanvasManager.drawLine(VideoManager.getElement(), BodyTracking.landmarks );
+        // CanvasManager.drawLine(VideoManager.getElement(), Tracking.landmarks );
+
     }
 
     loop(){

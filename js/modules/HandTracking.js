@@ -74,7 +74,7 @@ class HandTracking{
                         const handIndex = handType === "Left" ? 0 : 1; // 왼손: 0, 오른손: 1
                         this.setCoords(handIndex, x, y);
                     }                    
-                    this.drawHandLandmarks(  landmarks , 'red', 5);
+                    // this.drawHandLandmarks(  landmarks , 'red', 5);
                 }   
             }
         });
