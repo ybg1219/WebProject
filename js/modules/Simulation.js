@@ -8,6 +8,7 @@ import Viscous from "./Viscous";
 import Divergence from "./Divergence";
 import Poisson from "./Poisson";
 import Pressure from "./Pressure";
+import Density from "./Density";
 
 import Mouse from "./Mouse";
 import HandTracking from "./HandTracking";
@@ -19,6 +20,8 @@ export default class Simulation{
         this.props = props;
 
         this.fbos = {
+            density_0: null,
+            density_1: null,
             vel_0: null,
             vel_1: null,
             vel_body: null,
@@ -185,6 +188,16 @@ export default class Simulation{
             dst: this.fbos.vel_0,
             dt: this.options.dt,
         });
+
+        this.density = new Density({ // Density constructor radius 추가됨. 조절 여부?
+            cellScale: this.cellScale,
+            boundarySpace: this.boundarySpace,
+            vel: this.fbos.vel_0,
+            den: this.fbos.density_0,
+            dst: this.fbos.density_1,
+            fboSize: this.fboSize,
+            dt: this.options.dt,
+        });
     }
 
     calcSize(){
@@ -213,6 +226,7 @@ export default class Simulation{
         Common.renderer.setRenderTarget(null);
     }
     update(){
+        
         
         if(this.options.isBounce){ // 경계 여부
             this.boundarySpace.set(0, 0);
@@ -297,5 +311,9 @@ export default class Simulation{
         });
 
         this.pressure.update({ vel , pressure});
+
+        let den = this.fbos.density_0;
+        vel = this.fbos.vel_1;
+        this.density.update({ vel, den, sourcePos : BodyTracking.coords});
     }
 }
