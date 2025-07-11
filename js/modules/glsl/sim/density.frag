@@ -22,7 +22,7 @@ void main() {
     
     // velocity debugging
     // vec2 vel = vec2(0.2,  0.0);
-    vel = vel * 0.5 + 0.5;
+    // vel = vel * 0.5 + 0.5;
     // gl_FragColor = vec4(vel.x, vel.y, 0.0, 1.0);
     vec2 uv2 = uv - vel * dt * ratio;
     //uv2 = clamp(uv2, vec2(0.0), vec2(1.0)); // 👈 꼭 추가해보자
