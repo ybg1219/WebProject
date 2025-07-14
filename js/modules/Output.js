@@ -23,7 +23,7 @@ export default class Output{
                 fragmentShader: color_frag,
                 uniforms: {
                     density: {
-                        value: this.simulation.fbos.density_1.texture
+                        value: this.simulation.fbos.gradient.texture
                     },
                     boundarySpace: {
                         value: new THREE.Vector2()

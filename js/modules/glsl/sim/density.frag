@@ -9,6 +9,7 @@ varying vec2 uv;
 
 uniform float dt;
 uniform vec2 fboSize;
+uniform vec2 px;
 
 void main() {
     // 시작 시 초기값때문에 중심부분 색칠됨.
@@ -26,7 +27,10 @@ void main() {
     // gl_FragColor = vec4(vel.x, vel.y, 0.0, 1.0);
     vec2 uv2 = uv - vel * dt * ratio;
     //uv2 = clamp(uv2, vec2(0.0), vec2(1.0)); // 👈 꼭 추가해보자
-    vec4 dv = texture2D(density, uv2); // 과거 밀도
+
+    // 확산 계수 lambda로 확산 정도 조절
+    float lambda = 0.93;
+    vec4 dv = lambda*texture2D(density, uv2); // 과거 밀도
     // gl_FragColor = dv; // 기존 밀도 덮어쓰기
 
     // 2. 연기 소싱
@@ -38,19 +42,5 @@ void main() {
 
     // 3. 밀도 결과 = 이동된 밀도 + 소싱
     gl_FragColor = vec4(dv + addedDensity); // r=g=b=a로 밀도 저장
-    // gl_FragColor = vec4( addedDensity); // r=g=b=a로 밀도 저장
     
 }
-
-// // 현재 위치의 속도
-// vec2 vel = texture2D(velocity, uv).xy;
-
-// // 속도 방향으로 살짝 이동된 위치에서 거리 계산 (offset 소싱)
-// vec2 advectedPos = sourcePos + vel * dt; // dt는 0.1 정도로 테스트해봐도 좋아
-
-// float d = distance(uv, advectedPos);
-// float falloff = 1.0 - smoothstep(0.0, radius, d);
-
-// float addedDensity = strength * falloff;
-
-// gl_FragColor = vec4(addedDensity); // 움직인 소싱 위치 기준으로 연기 추가

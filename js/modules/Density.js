@@ -57,7 +57,7 @@ export default class Density extends ShaderPass{
         super.init();
     }
 
-    update({ vel, den, sourcePos }) {
+    update({ vel, sourcePos }) {
 
         // 아래 처럼 커서 사이즈 생각해서 clipping.
         // centerX = Math.min(Math.max(props.coords.x, -1 + cursorSizeX + props.cellScale.x * 2), 1 - cursorSizeX - props.cellScale.x * 2);

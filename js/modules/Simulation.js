@@ -9,6 +9,7 @@ import Divergence from "./Divergence";
 import Poisson from "./Poisson";
 import Pressure from "./Pressure";
 import Density from "./Density";
+import Gradient from "./Gradient";
 
 import Mouse from "./Mouse";
 import HandTracking from "./HandTracking";
@@ -38,6 +39,8 @@ export default class Simulation{
             // for calc poisson equation 
             pressure_0: null,
             pressure_1: null,
+
+            gradient : null,
         };
 
         this.options = { // reference 값으로 변경 하자마자 값이 바뀜.
@@ -198,6 +201,15 @@ export default class Simulation{
             fboSize: this.fboSize,
             dt: this.options.dt,
         });
+
+        this.gradient = new Gradient({ // Density constructor radius 추가됨. 조절 여부?
+            cellScale: this.cellScale,
+            boundarySpace: this.boundarySpace,
+            src: this.fbos.density_0,
+            dst: this.fbos.gradient,
+            fboSize: this.fboSize,
+            dt: this.options.dt,
+        });
     }
 
     calcSize(){
@@ -312,8 +324,9 @@ export default class Simulation{
 
         this.pressure.update({ vel , pressure});
 
-        let den = this.fbos.density_0;
         vel = this.fbos.vel_1;
-        this.density.update({ vel, den, sourcePos : BodyTracking.coords});
+        this.density.update({ vel, sourcePos : BodyTracking.coords});
+
+        this.gradient.update()
     }
 }
