@@ -15,7 +15,19 @@ export default class Density extends ShaderPass{
                 fragmentShader: density_frag,
                 uniforms: {
                     
-                    sourcePos: {
+                    head: {
+                        value: new THREE.Vector2(0.0, 0.0)
+                    },
+                    left: {
+                        value: new THREE.Vector2(0.0, 0.0)
+                    },
+                    right: {
+                        value: new THREE.Vector2(0.0, 0.0)
+                    },
+                    center: {
+                        value: new THREE.Vector2(0.0, 0.0)
+                    },
+                    bottom: {
                         value: new THREE.Vector2(0.0, 0.0)
                     },
                     radius: {
@@ -62,17 +74,26 @@ export default class Density extends ShaderPass{
         // 아래 처럼 커서 사이즈 생각해서 clipping.
         // centerX = Math.min(Math.max(props.coords.x, -1 + cursorSizeX + props.cellScale.x * 2), 1 - cursorSizeX - props.cellScale.x * 2);
         // centerY = Math.min(Math.max(props.coords.y, -1 + cursorSizeY + props.cellScale.y * 2), 1 - cursorSizeY - props.cellScale.y * 2);
-            
-
-        // sourcePos 변환
-        const uvPos = new THREE.Vector2(
-            (sourcePos.x + 1.0) * 0.5,
-            (sourcePos.y + 1.0) * 0.5
-        );
-
+        
+        
         // 유니폼 갱신
         this.uniforms.velocity.value = vel.texture;
-        this.uniforms.sourcePos.value = uvPos;
+        
+        // 여러 개의 소스 위치를 0~1로 변환해서 각 유니폼에 전달
+        const toUv = ({ x, y }) => new THREE.Vector2((x + 1.0) * 0.5, (y + 1.0) * 0.5);
+
+        this.uniforms.head.value = toUv(sourcePos.head);
+        this.uniforms.left.value = toUv(sourcePos.left);
+        this.uniforms.right.value = toUv(sourcePos.right);
+        this.uniforms.center.value = toUv(sourcePos.center);
+        this.uniforms.bottom.value = toUv(sourcePos.bottom);
+
+        // sourcePos 변환
+        // const uvPos = new THREE.Vector2(
+        //     (sourcePos.x + 1.0) * 0.5,
+        //     (sourcePos.y + 1.0) * 0.5
+        // );
+        // this.uniforms.head.value = uvPos;
 
         // Ping-Pong 스왑
         const den0 = this.props.output0;
