@@ -34,7 +34,7 @@ void main(){
         vec2 spot_old2 = spot_new3 - vel_2 * dt * ratio;
         // gl_FragColor = vec4(spot_old2, 0.0, 0.0);
         vec2 newVel2 = texture2D(velocity, spot_old2).xy; 
-        float lambda = 0.3; // 확산 계수 조절
+        float lambda = 0.8; // 확산 계수 조절
         gl_FragColor = vec4(newVel2, 0.0, 0.0)*lambda;
     }
 }

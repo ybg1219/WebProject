@@ -56,6 +56,9 @@ class BodyTracking {
             if (results.poseLandmarks) {
                 const head = results.poseLandmarks[0];
 
+                const leftHand = results.poseLandmarks[15];
+                const rightHand = results.poseLandmarks[16];
+
                 const leftShoulder = results.poseLandmarks[11];
                 const rightShoulder = results.poseLandmarks[12];
                 const leftHip = results.poseLandmarks[23];
@@ -66,16 +69,17 @@ class BodyTracking {
 
                 const avgX = (leftShoulder.x + rightShoulder.x + leftHip.x + rightHip.x) / 4;
                 const avgY = (leftShoulder.y + rightShoulder.y + leftHip.y + rightHip.y) / 4;
-
+                const neckX = (leftShoulder.x + rightShoulder.x) / 2;
+                const neckY = (leftShoulder.y + rightShoulder.y) / 2;
                 const footX = (leftFoot.x + rightFoot.x) / 2;
                 const footY = (leftFoot.y + rightFoot.y) / 2;
 
                 // console.log(x,y);
                 this.setCoord(head.x, head.y);
                 this.setBodyCoords(0, head.x, head.y);
-                this.setBodyCoords(1, leftShoulder.x, leftShoulder.y);
-                this.setBodyCoords(2, rightShoulder.x, rightShoulder.y);
-                this.setBodyCoords(3, avgX, avgY);
+                this.setBodyCoords(1, leftHand.x, leftHand.y);
+                this.setBodyCoords(2, rightHand.x, rightHand.y);
+                this.setBodyCoords(3, neckX, neckY);
                 this.setBodyCoords(4, footX, footY);
             }
         });

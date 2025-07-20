@@ -21,6 +21,35 @@ float computeFalloff(vec2 p, vec2 center) {
     return pow(1.0 - smoothstep(0.0, radius, d), 2.0);
 }
 
+float drawLine(vec2 uv, vec2 a, vec2 b, float radius) {
+    float minDist = 1.0;
+    const int steps = 10;
+
+    for (int i = 0; i <= steps; i++) {
+        float t = float(i) / float(steps);
+        vec2 p = mix(a, b, t);
+        float d = distance(uv, p);
+        float falloff = pow(1.0 - smoothstep(0.0, radius, d), 2.0);
+        minDist = max(minDist, falloff);
+    }
+    return minDist;
+}
+
+// SDF 기반 선 거리 계산 함수
+float sdLine(vec2 p, vec2 a, vec2 b) {
+    vec2 pa = p - a;
+    vec2 ba = b - a;
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * h);
+}
+
+// SDF 기반 선 falloff 계산
+float sdfLineFalloff(vec2 p, vec2 a, vec2 b, float radius) {
+    float d = sdLine(p, a, b);
+    return pow(1.0 - smoothstep(0.0, radius, d), 2.0);
+}
+
+
 void main() {
     // 시작 시 초기값때문에 중심부분 색칠됨.
     // 찌그러짐 수정 필요.
@@ -56,6 +85,19 @@ void main() {
     source += strength * computeFalloff(uv, right);
     source += strength * computeFalloff(uv, center);
     source += strength * computeFalloff(uv, bottom);
+
+    // 선 소싱 (점들 사이를 연결)
+    // source += strength * drawLine(uv, head, center, 1.0);
+    // source += strength * drawLine(uv, left, center, 1.0);
+    // source += strength * drawLine(uv, right, center, 1.0);
+    // source += strength * drawLine(uv, bottom, center, 1.0);
+
+    // 2. 선 소스 (SDF 기반)
+    source += strength * sdfLineFalloff(uv, head, center, radius);
+    source += strength * sdfLineFalloff(uv, left, center, radius);
+    source += strength * sdfLineFalloff(uv, right, center, radius);
+    source += strength * sdfLineFalloff(uv, bottom, center, radius);
+
 
     // 3. 밀도 결과 = 이동된 밀도 + 소싱
     gl_FragColor = vec4(dv + source); // r=g=b=a로 밀도 저장
