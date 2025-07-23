@@ -1,12 +1,15 @@
 precision highp float;
+#define MAX_POSITIONS 10
 
 uniform sampler2D velocity;
 uniform sampler2D density;
-uniform vec2 head;  // 소싱 중심 (0~1)
-uniform vec2 left;  // 소싱 중심 (0~1)
-uniform vec2 right;  // 소싱 중심 (0~1)
-uniform vec2 center;  // 소싱 중심 (0~1)
-uniform vec2 bottom;  // 소싱 중심 (0~1)
+// uniform vec2 head;  // 소싱 중심 (0~1)
+// uniform vec2 left;  // 소싱 중심 (0~1)
+// uniform vec2 right;  // 소싱 중심 (0~1)
+// uniform vec2 center;  // 소싱 중심 (0~1)
+// uniform vec2 bottom;  // 소싱 중심 (0~1)
+
+uniform vec2 positions[MAX_POSITIONS]; // 최대 10개의 vec2 위치를 받는 배열
 
 uniform float radius;    // 소싱 반경
 uniform float strength;  // 밀도 증가량
@@ -39,7 +42,7 @@ float drawLine(vec2 uv, vec2 a, vec2 b, float radius) {
 float sdLine(vec2 p, vec2 a, vec2 b) {
     vec2 pa = p - a;
     vec2 ba = b - a;
-    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 0.7);
     return length(pa - ba * h);
 }
 
@@ -59,11 +62,6 @@ void main() {
     // 1. 과거 밀도 위치 추적 (Advection for density)
     vec2 ratio = max(fboSize.x, fboSize.y) / fboSize;
     vec2 vel = texture2D(velocity, uv).xy;
-    
-    // velocity debugging
-    // vec2 vel = vec2(0.2,  0.0);
-    // vel = vel * 0.5 + 0.5;
-    // gl_FragColor = vec4(vel.x, vel.y, 0.0, 1.0);
     vec2 uv2 = uv - vel * dt * ratio;
     //uv2 = clamp(uv2, vec2(0.0), vec2(1.0)); // 👈 꼭 추가해보자
 
@@ -73,31 +71,19 @@ void main() {
     // gl_FragColor = dv; // 기존 밀도 덮어쓰기
 
     // 2. 연기 소싱
-    // float d = distance(uv, head);
-    // float falloff = pow(1.0 - smoothstep(0.0, radius, d), 2.0); //1.0- smoothstep(0.0, radius, d); 
-    // // (변화 시작, 끝,  현재값) 변화 시작 값보다 작으면 0 sigmoid 형태
-    // float addedDensity = strength * falloff;
-    // // float addedDensity = smoothstep(0.0, 1.0, strength * falloff);
-
     float source = 0.0;
-    source += strength * computeFalloff(uv, head);
-    source += strength * computeFalloff(uv, left);
-    source += strength * computeFalloff(uv, right);
-    source += strength * computeFalloff(uv, center);
-    source += strength * computeFalloff(uv, bottom);
+    for (int i =0;i < 5; i++) { // 최대 길이 10
+        if (positions[i].x < 0.0 || positions[i].y < 0.0) continue;
+        source += strength * computeFalloff(uv, positions[i])*0.4;
+    }
 
-    // 선 소싱 (점들 사이를 연결)
-    // source += strength * drawLine(uv, head, center, 1.0);
-    // source += strength * drawLine(uv, left, center, 1.0);
-    // source += strength * drawLine(uv, right, center, 1.0);
-    // source += strength * drawLine(uv, bottom, center, 1.0);
-
+    vec2 center = positions[3];
     // 2. 선 소스 (SDF 기반)
-    source += strength * sdfLineFalloff(uv, head, center, radius);
-    source += strength * sdfLineFalloff(uv, left, center, radius);
-    source += strength * sdfLineFalloff(uv, right, center, radius);
-    source += strength * sdfLineFalloff(uv, bottom, center, radius);
-
+    for (int i =0; i < 5 ; i++){ // center 제외 하고 계산
+        if (positions[i].x < 0.0 || positions[i].y < 0.0) continue;
+        if (i == 4) continue;
+        source += strength * sdfLineFalloff(uv, positions[i], center, radius) *0.2;
+    }
 
     // 3. 밀도 결과 = 이동된 밀도 + 소싱
     gl_FragColor = vec4(dv + source); // r=g=b=a로 밀도 저장

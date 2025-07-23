@@ -16,6 +16,15 @@ class BodyTracking {
         this.videoElement = null;
         this.pose = null;
 
+        // this.bodyKeys = {
+        //     HEAD: 0,
+        //     LEFT: 1,
+        //     RIGHT: 2,
+        //     CENTER: 3,
+        //     BOTTOM: 4
+        // };
+        this.bodyKeys = ["head", "leftHand", "rightHand", "center", "foot"];
+
         this.handsData = [ this.createData(), this.createData()];
         
         this.bodysData = [ this.createData(), this.createData()
@@ -23,7 +32,7 @@ class BodyTracking {
         ] // head, left, right, center, bottom
     }
 
-    createData() {
+    createData() { // factory pattern
             return {
                 coords: new THREE.Vector2(),
                 coords_old: new THREE.Vector2(),
@@ -76,11 +85,17 @@ class BodyTracking {
 
                 // console.log(x,y);
                 this.setCoord(head.x, head.y);
-                this.setBodyCoords(0, head.x, head.y);
-                this.setBodyCoords(1, leftHand.x, leftHand.y);
-                this.setBodyCoords(2, rightHand.x, rightHand.y);
-                this.setBodyCoords(3, neckX, neckY);
-                this.setBodyCoords(4, footX, footY);
+
+                // body key 에 원하는 키 추가하고, 아래 코드 나중에 for 문으로 변경.
+                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[0]), head.x, head.y);
+                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[1]), leftHand.x, leftHand.y);
+                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[2]), rightHand.x, rightHand.y);
+                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[3]), neckX, neckY);
+                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[4]), footX, footY);
+                // this.bodyKeys.forEach((key, i) => {
+                //     const point = landmarksMap[key];
+                //     this.setBodyCoords(i, point.x, point.y);
+                // });
             }
         });
 
@@ -156,7 +171,16 @@ class BodyTracking {
             //landmarks : this.handsData[index].landmarks,
             coords: this.bodysData[index].coords,
             diff: this.bodysData[index].diff,
-            moved: this.bodysData[index]
+            moved: this.bodysData[index].moved
+        };
+    }
+    getWholeBody() {
+        console.log(this.bodysData.map(c => c.coords.clone()));
+        return {
+            //landmarks : this.handsData[index].landmarks,
+            coords: this.bodysData.map(c => c.coords.clone()), //this.bodyKeys.map((_, i) => this.bodysData[i].coords.clone()),
+            diff: this.bodysData.map(d => d.diff.clone()),
+            moved: this.bodysData.map(m => m.moved) // coords와 diff는 three.vector2 객체이므로 clone 필요.
         };
     }
 

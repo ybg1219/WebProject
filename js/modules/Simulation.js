@@ -325,18 +325,11 @@ export default class Simulation{
         this.pressure.update({ vel , pressure});
 
         vel = this.fbos.vel_1;
+        const wholeBody = BodyTracking.getWholeBody()
         this.density.update(
         {   vel: vel,
-            sourcePos: 
-            {
-                head: BodyTracking.getBody(0).coords ,
-                left: BodyTracking.getBody(1).coords,
-                right: BodyTracking.getBody(2).coords,
-                center: BodyTracking.getBody(3).coords,
-                bottom: BodyTracking.getBody(4).coords
-            }
+            sourcePos: wholeBody.coords
         });
-        // console.log(BodyTracking.getBody(0).coords );
 
         this.gradient.update()
     }

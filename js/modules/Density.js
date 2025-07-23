@@ -15,23 +15,26 @@ export default class Density extends ShaderPass{
                 fragmentShader: density_frag,
                 uniforms: {
                     
-                    head: {
-                        value: new THREE.Vector2(0.0, 0.0)
-                    },
-                    left: {
-                        value: new THREE.Vector2(0.0, 0.0)
-                    },
-                    right: {
-                        value: new THREE.Vector2(0.0, 0.0)
-                    },
-                    center: {
-                        value: new THREE.Vector2(0.0, 0.0)
-                    },
-                    bottom: {
-                        value: new THREE.Vector2(0.0, 0.0)
-                    },
+                    // head: {
+                    //     value: new THREE.Vector2(0.0, 0.0)
+                    // },
+                    // left: {
+                    //     value: new THREE.Vector2(0.0, 0.0)
+                    // },
+                    // right: {
+                    //     value: new THREE.Vector2(0.0, 0.0)
+                    // },
+                    // center: {
+                    //     value: new THREE.Vector2(0.0, 0.0)
+                    // },
+                    // bottom: {
+                    //     value: new THREE.Vector2(0.0, 0.0)
+                    // },
+                    positions : {
+                        value : null
+                    }, 
                     radius: {
-                        value : 0.1
+                        value : 0.2
                     },
                     strength : {
                         value : 0.9
@@ -61,12 +64,16 @@ export default class Density extends ShaderPass{
             output0: simProps.den,
             output1: simProps.dst
         })
+        this.landmarkMaxSize = 10;
+        this.posArray = null;
         this.init();
     }
 
 
     init(simProps){
         super.init();
+        this.uniforms.positions.value = new Float32Array(this.landmarkMaxSize * 2);
+        this.posArray = new Float32Array(20); // sourcePos initialize 0 automatically
     }
 
     update({ vel, sourcePos }) {
@@ -82,18 +89,15 @@ export default class Density extends ShaderPass{
         // 여러 개의 소스 위치를 0~1로 변환해서 각 유니폼에 전달
         const toUv = ({ x, y }) => new THREE.Vector2((x + 1.0) * 0.5, (y + 1.0) * 0.5);
 
-        this.uniforms.head.value = toUv(sourcePos.head);
-        this.uniforms.left.value = toUv(sourcePos.left);
-        this.uniforms.right.value = toUv(sourcePos.right);
-        this.uniforms.center.value = toUv(sourcePos.center);
-        this.uniforms.bottom.value = toUv(sourcePos.bottom);
+        if ( sourcePos> this.landmarkMaxSize ) { console.log("out of range sourcePos landmarkMaxSize") } 
 
-        // sourcePos 변환
-        // const uvPos = new THREE.Vector2(
-        //     (sourcePos.x + 1.0) * 0.5,
-        //     (sourcePos.y + 1.0) * 0.5
-        // );
-        // this.uniforms.head.value = uvPos;
+        sourcePos.forEach((pos, i) => {
+            const uv = toUv(pos);
+            this.posArray[i * 2] = uv.x;
+            this.posArray[i * 2 + 1] = uv.y;
+        }); // cast 2d vector to glsl array
+
+        this.uniforms.positions.value = this.posArray;
 
         // Ping-Pong 스왑
         const den0 = this.props.output0;
