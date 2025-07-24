@@ -25,9 +25,6 @@ export default class Simulation{
             density_1: null,
             vel_0: null,
             vel_1: null,
-            vel_body: null,
-            vel_left: null,
-            vel_right: null,
 
             // for calc next velocity with viscous
             vel_viscous0: null,
@@ -60,42 +57,7 @@ export default class Simulation{
         this.fboSize = new THREE.Vector2();
         this.cellScale = new THREE.Vector2();
         this.boundarySpace = new THREE.Vector2();
-        this.forceMergeG = new THREE.PlaneGeometry(2.0, 2.0);
-        this.forceMergeM = new THREE.RawShaderMaterial({
-            uniforms: {
-                forceA: { value: this.fbos.vel_body },
-                forceB: { value: this.fbos.vel_left },
-                forceC: { value: this.fbos.vel_right },
-            },
-            vertexShader: /* glsl */`
-                varying vec2 vUv;
-                attribute vec3 position;
-                void main() {
-                
-                    vUv = vec2(0.5)+(position.xy)*0.5;
-                    gl_Position = vec4(position.xy, 0.0 , 1.0);
-                }
-            `,
-            fragmentShader: /* glsl */`
-                precision highp float;
-                uniform sampler2D forceA;
-                uniform sampler2D forceB;
-                uniform sampler2D forceC;
-                varying vec2 vUv;
-
-                void main() {
-                    vec2 fA = texture2D(forceA, vUv).xy;
-                    vec2 fB = texture2D(forceB, vUv).xy;
-                    vec2 fC = texture2D(forceC, vUv).xy;
-
-                    vec2 avgForce = (fA + fB + fC) / 3.0;
-
-                    gl_FragColor = vec4(avgForce, 0.0, 1.0);
-                }
-            `
-        });
-        this.forceMerge = new THREE.Mesh(this.forceMergeG, this.forceMergeM);
-        // this.scene.add(this.forceMerge);
+        
 
         this.init();
     }
@@ -144,12 +106,12 @@ export default class Simulation{
         this.externalForceLeft = new ExternalForce({
             cellScale: this.cellScale,
             cursor_size: this.options.cursor_size,
-            dst: this.fbos.vel_left,
+            dst: this.fbos.vel_1,
         });
         this.externalForceRight = new ExternalForce({
             cellScale: this.cellScale,
             cursor_size: this.options.cursor_size,
-            dst: this.fbos.vel_right,
+            dst: this.fbos.vel_1,
         });
         this.externalForceBody = new ExternalForce({
             cellScale: this.cellScale,
@@ -215,7 +177,7 @@ export default class Simulation{
     calcSize(){
         const width = Math.round(this.options.resolution * Common.width);
         const height = Math.round(this.options.resolution * Common.height);
-
+        console.log(`격자 해상도 : ${width} x ${height}`)
         const px_x = 1.0 / width;
         const px_y = 1.0 / height;
 
@@ -265,19 +227,22 @@ export default class Simulation{
             //     coords: Tracking.coords,
             //     diff: Tracking.diff
             // });
-
+            const head = BodyTracking.getBody(0);
             this.externalForceBody.update({
                cursor_size: this.options.cursor_size,
                mouse_force: this.options.mouse_force,
                cellScale: this.cellScale,
-               coords: BodyTracking.coords,
-               diff: BodyTracking.diff
+               coords: head.coords,
+               diff: head.diff
             });
-            // console.log("body" , BodyTracking.coords)
+            console.log("body" , head.moved)
 
 
-            const leftHand = HandTracking.getHand(0);
-            const rightHand = HandTracking.getHand(1);
+            // const leftHand = HandTracking.getHand(0);
+            // const rightHand = HandTracking.getHand(1);
+
+            const leftHand = BodyTracking.getBody(1);
+            const rightHand = BodyTracking.getBody(2);
 
             // console.log(leftHand, rightHand);
             // 왼손
@@ -290,7 +255,7 @@ export default class Simulation{
                     diff: leftHand.diff
                 });
             }
-            // console.log("left" , leftHand.coords)
+            console.log("left" , leftHand.moved);
 
             // 오른손
             if (rightHand.moved) {
@@ -302,7 +267,7 @@ export default class Simulation{
                     diff: rightHand.diff
                 });
             }
-            // console.log("right", rightHand.coords)
+            console.log("right", rightHand.moved);
             //  this.mergeForcesToVelocity();
         }
 

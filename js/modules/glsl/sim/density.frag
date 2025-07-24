@@ -3,11 +3,6 @@ precision highp float;
 
 uniform sampler2D velocity;
 uniform sampler2D density;
-// uniform vec2 head;  // 소싱 중심 (0~1)
-// uniform vec2 left;  // 소싱 중심 (0~1)
-// uniform vec2 right;  // 소싱 중심 (0~1)
-// uniform vec2 center;  // 소싱 중심 (0~1)
-// uniform vec2 bottom;  // 소싱 중심 (0~1)
 
 uniform vec2 positions[MAX_POSITIONS]; // 최대 10개의 vec2 위치를 받는 배열
 
@@ -73,15 +68,15 @@ void main() {
     // 2. 연기 소싱
     float source = 0.0;
     for (int i =0;i < 5; i++) { // 최대 길이 10
-        if (positions[i].x < 0.0 || positions[i].y < 0.0) continue;
+        if (positions[i].x <= 0.0 || positions[i].y <= 0.0) continue;
         source += strength * computeFalloff(uv, positions[i])*0.4;
     }
 
     vec2 center = positions[3];
     // 2. 선 소스 (SDF 기반)
     for (int i =0; i < 5 ; i++){ // center 제외 하고 계산
-        if (positions[i].x < 0.0 || positions[i].y < 0.0) continue;
-        if (i == 4) continue;
+        if (positions[i].x <= 0.0 || positions[i].y <= 0.0) continue;
+        if (i == 3) continue; // i = 3일때 center
         source += strength * sdfLineFalloff(uv, positions[i], center, radius) *0.2;
     }
 

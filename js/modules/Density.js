@@ -15,21 +15,6 @@ export default class Density extends ShaderPass{
                 fragmentShader: density_frag,
                 uniforms: {
                     
-                    // head: {
-                    //     value: new THREE.Vector2(0.0, 0.0)
-                    // },
-                    // left: {
-                    //     value: new THREE.Vector2(0.0, 0.0)
-                    // },
-                    // right: {
-                    //     value: new THREE.Vector2(0.0, 0.0)
-                    // },
-                    // center: {
-                    //     value: new THREE.Vector2(0.0, 0.0)
-                    // },
-                    // bottom: {
-                    //     value: new THREE.Vector2(0.0, 0.0)
-                    // },
                     positions : {
                         value : null
                     }, 

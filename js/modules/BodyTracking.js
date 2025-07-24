@@ -164,6 +164,17 @@ class BodyTracking {
         if (this.coords_old.x === 0 && this.coords_old.y === 0) {
             this.diff.set(0, 0);
         }
+
+        // 전체 bodysData 각 원소별로 diff 계산
+        this.bodysData.forEach(body => {
+            body.diff.subVectors(body.coords, body.coords_old);
+            body.coords_old.copy(body.coords);
+
+            // 초기 프레임 등 0,0 일 경우 diff 초기화
+            if (body.coords_old.x === 0 && body.coords_old.y === 0) {
+                body.diff.set(0, 0);
+            }
+        });
     }
 
     getBody(index) {
@@ -175,7 +186,7 @@ class BodyTracking {
         };
     }
     getWholeBody() {
-        console.log(this.bodysData.map(c => c.coords.clone()));
+        // console.log(this.bodysData.map(c => c.coords.clone()));/
         return {
             //landmarks : this.handsData[index].landmarks,
             coords: this.bodysData.map(c => c.coords.clone()), //this.bodyKeys.map((_, i) => this.bodysData[i].coords.clone()),
