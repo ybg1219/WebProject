@@ -235,7 +235,7 @@ export default class Simulation{
                coords: head.coords,
                diff: head.diff
             });
-            console.log("body" , head.moved)
+            //console.log("body" , head.moved)
 
 
             // const leftHand = HandTracking.getHand(0);
@@ -255,7 +255,7 @@ export default class Simulation{
                     diff: leftHand.diff
                 });
             }
-            console.log("left" , leftHand.moved);
+            //console.log("left" , leftHand.moved);
 
             // 오른손
             if (rightHand.moved) {
@@ -267,8 +267,7 @@ export default class Simulation{
                     diff: rightHand.diff
                 });
             }
-            console.log("right", rightHand.moved);
-            //  this.mergeForcesToVelocity();
+            //console.log("right", rightHand.moved);
         }
 
         let vel = this.fbos.vel_1;
@@ -292,7 +291,10 @@ export default class Simulation{
         vel = this.fbos.vel_1;
         const wholeBody = BodyTracking.getWholeBody()
         this.density.update(
-        {   vel: vel,
+        {   
+            cursor_size: this.options.cursor_size,
+            cellScale: this.cellScale,
+            vel: vel,
             sourcePos: wholeBody.coords
         });
 

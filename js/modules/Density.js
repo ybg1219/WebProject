@@ -61,23 +61,30 @@ export default class Density extends ShaderPass{
         this.posArray = new Float32Array(20); // sourcePos initialize 0 automatically
     }
 
-    update({ vel, sourcePos }) {
-
-        // 아래 처럼 커서 사이즈 생각해서 clipping.
-        // centerX = Math.min(Math.max(props.coords.x, -1 + cursorSizeX + props.cellScale.x * 2), 1 - cursorSizeX - props.cellScale.x * 2);
-        // centerY = Math.min(Math.max(props.coords.y, -1 + cursorSizeY + props.cellScale.y * 2), 1 - cursorSizeY - props.cellScale.y * 2);
-        
+    update({ cursor_size ,cellScale, vel, sourcePos }) {
         
         // 유니폼 갱신
         this.uniforms.velocity.value = vel.texture;
+        const cursorSizeX = cursor_size * cellScale.x;
+        const cursorSizeY = cursor_size * cellScale.y;
         
         // 여러 개의 소스 위치를 0~1로 변환해서 각 유니폼에 전달
         const toUv = ({ x, y }) => new THREE.Vector2((x + 1.0) * 0.5, (y + 1.0) * 0.5);
 
-        if ( sourcePos> this.landmarkMaxSize ) { console.log("out of range sourcePos landmarkMaxSize") } 
+        // 커서 사이즈 반영하여 스크린에서 클리핑
+        const clipping = ({ x, y }) => new THREE.Vector2(
+            Math.min(Math.max(x, -1 + cursorSizeX + cellScale.x * 2), 1 - cursorSizeX - cellScale.x * 2),
+            Math.min(Math.max(y, -1 + cursorSizeY + cellScale.y * 2), 1 - cursorSizeY - cellScale.y * 2)
+        );
 
+        if (sourcePos.length > this.landmarkMaxSize) {
+            console.warn("sourcePos overflow: ", sourcePos.length, ">", this.landmarkMaxSize);
+        }
+
+        console.log(sourcePos);
         sourcePos.forEach((pos, i) => {
-            const uv = toUv(pos);
+            const clipped = clipping(pos);
+            const uv = toUv(clipped);
             this.posArray[i * 2] = uv.x;
             this.posArray[i * 2 + 1] = uv.y;
         }); // cast 2d vector to glsl array
