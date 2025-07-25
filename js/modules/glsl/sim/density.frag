@@ -54,9 +54,38 @@ void main() {
     // 커서 사이즈 반영하여 영역 제한 및 커서 사이즈 적용
     // + 연기 그라디언트 추가해보기
 
-    // 1. 과거 밀도 위치 추적 (Advection for density)
+    
+
+    // 0. 연기 소싱
+    float source = 0.0;
+    // 점 소스
+    for (int i =0;i < 5; i++) { // 최대 길이 10
+        if (positions[i].x <= 0.0 || positions[i].y <= 0.0) continue;
+        source += strength * computeFalloff(uv, positions[i])*0.4;
+    }
+
+    vec2 center = positions[3];
+    // 선 소스 (SDF 기반)
+    for (int i =0; i < 5 ; i++){ // center 제외 하고 계산
+        if (positions[i].x <= 0.0 || positions[i].y <= 0.0) continue;
+        if (i == 3) continue; // i = 3일때 center
+        source += strength * sdfLineFalloff(uv, positions[i], center, radius) *0.2;
+    }
+
+    
+    // 1. buoyancy 
+
     vec2 ratio = max(fboSize.x, fboSize.y) / fboSize;
     vec2 vel = texture2D(velocity, uv).xy;
+
+    float buoyancyCoefficient = 0.05;
+    vec2 gravity = vec2(0.0, -1.0); // 아래 방향
+    vec2 d = texture2D(density, uv).xy;
+    vec2 buoyancyForce = - buoyancyCoefficient * (d) * gravity;
+    vel += buoyancyForce;
+
+
+    // 2. 과거 밀도 위치 추적 (Advection for density)    
     vec2 uv2 = uv - vel * dt * ratio;
     //uv2 = clamp(uv2, vec2(0.0), vec2(1.0)); // 👈 꼭 추가해보자
 
@@ -65,22 +94,7 @@ void main() {
     vec4 dv = lambda*texture2D(density, uv2); // 과거 밀도
     // gl_FragColor = dv; // 기존 밀도 덮어쓰기
 
-    // 2. 연기 소싱
-    float source = 0.0;
-    for (int i =0;i < 5; i++) { // 최대 길이 10
-        if (positions[i].x <= 0.0 || positions[i].y <= 0.0) continue;
-        source += strength * computeFalloff(uv, positions[i])*0.4;
-    }
-
-    vec2 center = positions[3];
-    // 2. 선 소스 (SDF 기반)
-    for (int i =0; i < 5 ; i++){ // center 제외 하고 계산
-        if (positions[i].x <= 0.0 || positions[i].y <= 0.0) continue;
-        if (i == 3) continue; // i = 3일때 center
-        source += strength * sdfLineFalloff(uv, positions[i], center, radius) *0.2;
-    }
-
-    // 3. 밀도 결과 = 이동된 밀도 + 소싱
+    // 4. 밀도 결과 = 이동된 밀도 + 소싱
     gl_FragColor = vec4(dv + source); // r=g=b=a로 밀도 저장
     
 }
