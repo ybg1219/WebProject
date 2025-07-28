@@ -157,6 +157,7 @@ export default class Simulation{
         this.density = new Density({ // Density constructor radius 추가됨. 조절 여부?
             cellScale: this.cellScale,
             boundarySpace: this.boundarySpace,
+            cursor_size: this.options.cursor_size,
             vel: this.fbos.vel_0,
             den: this.fbos.density_0,
             dst: this.fbos.density_1,

@@ -14,26 +14,30 @@ uniform float dt;
 uniform vec2 fboSize;
 uniform vec2 px;
 
-float computeFalloff(vec2 p, vec2 center) {
-    float d = distance(p, center);
+// 공통 falloff 함수
+float falloff(float d, float radius) {
     return pow(1.0 - smoothstep(0.0, radius, d), 2.0);
 }
 
-float drawLine(vec2 uv, vec2 a, vec2 b, float radius) {
-    float minDist = 1.0;
-    const int steps = 10;
-
-    for (int i = 0; i <= steps; i++) {
-        float t = float(i) / float(steps);
-        vec2 p = mix(a, b, t);
-        float d = distance(uv, p);
-        float falloff = pow(1.0 - smoothstep(0.0, radius, d), 2.0);
-        minDist = max(minDist, falloff);
-    }
-    return minDist;
+// 종횡비 보정 함수
+vec2 normalizeToAspect(vec2 v) {
+    vec2 scale = max(px.x, px.y) / px;
+    return v * scale;
 }
 
-// SDF 기반 선 거리 계산 함수
+// 점 falloff (종횡비 고려)
+float computeFalloff(vec2 p, vec2 center, float radius) {
+    float scale = max(px.x, px.y);
+    radius *= scale; // px 단위 -> uv 단위
+
+    vec2 np = normalizeToAspect(p);
+    vec2 nc = normalizeToAspect(center);
+    float d = distance(np, nc);
+
+    return falloff(d, radius);
+}
+
+// 선 거리 계산 (SDF 기반)
 float sdLine(vec2 p, vec2 a, vec2 b) {
     vec2 pa = p - a;
     vec2 ba = b - a;
@@ -41,27 +45,30 @@ float sdLine(vec2 p, vec2 a, vec2 b) {
     return length(pa - ba * h);
 }
 
-// SDF 기반 선 falloff 계산
+// 선 falloff (종횡비 고려)
 float sdfLineFalloff(vec2 p, vec2 a, vec2 b, float radius) {
-    float d = sdLine(p, a, b);
-    return pow(1.0 - smoothstep(0.0, radius, d), 2.0);
-}
+    float scale = max(px.x, px.y);
+    radius *= scale;
 
+    vec2 np = normalizeToAspect(p);
+    vec2 na = normalizeToAspect(a);
+    vec2 nb = normalizeToAspect(b);
+
+    float d = sdLine(np, na, nb);
+    return falloff(d, radius);
+}
 
 void main() {
     // 시작 시 초기값때문에 중심부분 색칠됨.
     // 찌그러짐 수정 필요.
     // 커서 사이즈 반영하여 영역 제한 및 커서 사이즈 적용
-    // + 연기 그라디언트 추가해보기
-
-    
 
     // 0. 연기 소싱
     float source = 0.0;
     // 점 소스
     for (int i =0;i < 5; i++) { // 최대 길이 10
         if (positions[i].x <= 0.0 || positions[i].y <= 0.0) continue;
-        source += strength * computeFalloff(uv, positions[i])*0.4;
+        source += strength * computeFalloff(uv, positions[i], radius)*0.5;
     }
 
     vec2 center = positions[3];
@@ -69,30 +76,30 @@ void main() {
     for (int i =0; i < 5 ; i++){ // center 제외 하고 계산
         if (positions[i].x <= 0.0 || positions[i].y <= 0.0) continue;
         if (i == 3) continue; // i = 3일때 center
-        source += strength * sdfLineFalloff(uv, positions[i], center, radius) *0.2;
+        //source += strength * sdfLineFalloff(uv, positions[i], center, radius) *0.4;
     }
 
-    
     // 1. buoyancy 
 
     vec2 ratio = max(fboSize.x, fboSize.y) / fboSize;
     vec2 vel = texture2D(velocity, uv).xy;
 
-    float buoyancyCoefficient = 0.05;
-    vec2 gravity = vec2(0.0, -1.0); // 아래 방향
-    vec2 d = texture2D(density, uv).xy;
-    vec2 buoyancyForce = - buoyancyCoefficient * (d) * gravity;
-    vel += buoyancyForce;
+    // float buoyancyCoefficient = 0.05;
+    // vec2 gravity = vec2(0.0, -1.0); // 아래 방향
+    // vec2 d = texture2D(density, uv).xy;
+    // vec2 buoyancyForce = - buoyancyCoefficient * (d) * gravity;
+    // vel += buoyancyForce;
 
 
     // 2. 과거 밀도 위치 추적 (Advection for density)    
     vec2 uv2 = uv - vel * dt * ratio;
-    //uv2 = clamp(uv2, vec2(0.0), vec2(1.0)); // 👈 꼭 추가해보자
+    uv2 = clamp(uv2, vec2(0.0), vec2(1.0)); 
 
     // 확산 계수 lambda로 확산 정도 조절
     float lambda = 0.93;
-    vec4 dv = lambda*texture2D(density, uv2); // 과거 밀도
-    // gl_FragColor = dv; // 기존 밀도 덮어쓰기
+    float dv = lambda*texture2D(density, uv2).x; // 과거 밀도
+
+    // float result = smoothstep( dv + source, 0.0, 1.0);
 
     // 4. 밀도 결과 = 이동된 밀도 + 소싱
     gl_FragColor = vec4(dv + source); // r=g=b=a로 밀도 저장

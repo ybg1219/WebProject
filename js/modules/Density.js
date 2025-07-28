@@ -19,7 +19,7 @@ export default class Density extends ShaderPass{
                         value : null
                     }, 
                     radius: {
-                        value : 0.2
+                        value : 0.0
                     },
                     strength : {
                         value : 0.9
@@ -63,6 +63,8 @@ export default class Density extends ShaderPass{
 
     update({ cursor_size ,cellScale, vel, sourcePos }) {
         
+        this.uniforms.radius.value = cursor_size;
+        
         // 유니폼 갱신
         this.uniforms.velocity.value = vel.texture;
         const cursorSizeX = cursor_size * cellScale.x;
@@ -81,7 +83,7 @@ export default class Density extends ShaderPass{
             console.warn("sourcePos overflow: ", sourcePos.length, ">", this.landmarkMaxSize);
         }
 
-        console.log(sourcePos);
+        // console.log(sourcePos);/
         sourcePos.forEach((pos, i) => {
             const clipped = clipping(pos);
             const uv = toUv(clipped);
