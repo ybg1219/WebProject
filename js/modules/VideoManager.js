@@ -26,8 +26,18 @@ class VideoManager {
     }
 
     async startCamera() { 
-        try {
-            this.stream = await navigator.mediaDevices.getUserMedia({ video: true }); // 사용자에게 권한 요청하는 비동기함수.
+        try{
+            // this.width와 this.height 값의 절반을 해상도로 설정합니다.
+            const targetWidth = Math.floor(this.video.width / 2);
+            const targetHeight = Math.floor(this.video.height / 2);
+            
+            const constraints = {
+                video: {
+                    width: { ideal: targetWidth },
+                    height: { ideal: targetHeight }
+                }
+            };
+            this.stream = await navigator.mediaDevices.getUserMedia(constraints); // 사용자에게 권한 요청하는 비동기함수.
             this.video.srcObject = this.stream;
         } catch (err) {
             console.error('웹캠 접근 실패:', err);

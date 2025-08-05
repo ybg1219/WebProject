@@ -21,7 +21,7 @@ export default class Webgl{
         
         // register resize
         window.addEventListener("resize", this.resize.bind(this)); // 이벤트 타입과 콜백함수
-        
+
         this.init(); // 비동기 초기화 함수 분리
         this.loop();
     }
@@ -64,7 +64,6 @@ export default class Webgl{
         // CanvasManager.drawPoint(VideoManager.getElement(), BodyTracking.landmarks );
         // CanvasManager.drawLine(VideoManager.getElement(), BodyTracking.landmarks );
         CanvasManager.drawLine(VideoManager.getElement(), Tracking.landmarks );
-
     }
 
     loop(){

@@ -6,6 +6,7 @@ class Tracking {
     constructor() {
         this.handLandmarker = null;
         this.poseLandmarker = null;
+        this.landmarks = [];
         this.video = null;
         this.ctx = null;
         
@@ -70,7 +71,8 @@ class Tracking {
                 // const x = (1 - head.x) * Common.width;
                 // const y = head.y * Common.height;
                 // this.setCoords(this.bodyData, x, y);
-                const poseLandmarks = poseResult.landmarks[0];
+                this.landmarks = poseResult.landmarks[0];
+                const poseLandmarks = this.landmarks;
 
                 const head = poseLandmarks[0];
                 const leftHand = poseLandmarks[15];
