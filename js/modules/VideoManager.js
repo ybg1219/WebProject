@@ -1,6 +1,7 @@
 class VideoManager {
     constructor() {
-        
+        this.video = null;
+        this.stream = null;
     }
     init($wrapper, width, height){
         this.video = document.getElementById('input_video');
@@ -17,23 +18,22 @@ class VideoManager {
     }
 
     setSize(width, height) {
+        if (!this.video) return;
         this.video.width = width;
         this.video.height = height;
         this.video.style.width = `${width}px`;
         this.video.style.height = `${height}px`;
     }
 
-    startCamera() {
-        return navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                this.stream = stream;
-                this.video.srcObject = stream;
-            })
-            .catch(err => {
-                console.error('웹캠 접근 실패:', err);
-                throw err;
-            });
+    async startCamera() { 
+        try {
+            this.stream = await navigator.mediaDevices.getUserMedia({ video: true }); // 사용자에게 권한 요청하는 비동기함수.
+            this.video.srcObject = this.stream;
+        } catch (err) {
+            console.error('웹캠 접근 실패:', err);
+            throw err;
         }
+    }
 
     getElement() {
         return this.video;

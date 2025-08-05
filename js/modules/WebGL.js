@@ -12,32 +12,36 @@ export default class Webgl{
     constructor(props){
         this.props = props; // document.body를 받아옴.
 
+        // 공통인 렌더러 요소들 초기화
         Common.init();
-        Mouse.init();
-        // HandTracking.init();
-        BodyTracking.init();
-        // Tracking.init();
 
+        // 비디오와 캔버스 초기화
         VideoManager.init(this.props.$wrapper, Common.width, Common.height);
         CanvasManager.init(this.props.$wrapper, Common.width, Common.height);
         
+        // register resize
         window.addEventListener("resize", this.resize.bind(this)); // 이벤트 타입과 콜백함수
-
-        this.init();
+        
+        this.init(); // 비동기 초기화 함수 분리
         this.loop();
-        // this.videoMesh;
-
     }
 
-    async init(){
+    async init() {
+        // 렌더러 dom 에 추가
         this.props.$wrapper.prepend(Common.renderer.domElement); // document.body의 맨 앞에 추가됨. append와 반대.
 
+        // fps 확인 dom 에 추가
         this.stats = new Stats(); // 프레임 확인용.
         document.body.appendChild(this.stats.dom);
 
+        // 시뮬레이션 아웃풋 초기화 및 입력 모듈 초기화
         this.output = new Output();
         await VideoManager.startCamera();
+
+        Mouse.init();
+        Tracking.init();   // 카메라 시작 후 실행해야함.
     }
+    
 
     resize(){
         Common.resize();
@@ -52,21 +56,14 @@ export default class Webgl{
     render(){
         Mouse.update();
         // HandTracking.update();
-        BodyTracking.update();
-        // Tracking.update();
+        // BodyTracking.update();
+        Tracking.update();
         Common.update();
         this.output.update();
-        // 테스트 용
-        // const landmarks = [
-        //     { x: 0.5, y: 0.5 },  // 중앙
-        //     { x: 0.0, y: 0.0 },
-        //     { x: 0.7, y: 0.4 },
-        //     { x: 1.0, y: 1.0}
-            
-        // ];
+        
         // CanvasManager.drawPoint(VideoManager.getElement(), BodyTracking.landmarks );
-        CanvasManager.drawLine(VideoManager.getElement(), BodyTracking.landmarks );
-        // CanvasManager.drawLine(VideoManager.getElement(), Tracking.landmarks );
+        // CanvasManager.drawLine(VideoManager.getElement(), BodyTracking.landmarks );
+        CanvasManager.drawLine(VideoManager.getElement(), Tracking.landmarks );
 
     }
 

@@ -228,7 +228,9 @@ export default class Simulation{
             //     coords: Tracking.coords,
             //     diff: Tracking.diff
             // });
-            const head = BodyTracking.getBody(0);
+            // const head = BodyTracking.getBody(0);
+            const head = Tracking.getBody(0);
+
             this.externalForceBody.update({
                cursor_size: this.options.cursor_size,
                mouse_force: this.options.mouse_force,
@@ -242,8 +244,11 @@ export default class Simulation{
             // const leftHand = HandTracking.getHand(0);
             // const rightHand = HandTracking.getHand(1);
 
-            const leftHand = BodyTracking.getBody(1);
-            const rightHand = BodyTracking.getBody(2);
+            // const leftHand = BodyTracking.getBody(1);
+            // const rightHand = BodyTracking.getBody(2);
+            
+            const leftHand = Tracking.getBody(1);
+            const rightHand = Tracking.getBody(2);
 
             // console.log(leftHand, rightHand);
             // 왼손
@@ -290,7 +295,9 @@ export default class Simulation{
         this.pressure.update({ vel , pressure});
 
         vel = this.fbos.vel_1;
-        const wholeBody = BodyTracking.getWholeBody()
+        // const wholeBody = BodyTracking.getWholeBody()
+        const wholeBody = Tracking.getWholeBody()
+
         this.density.update(
         {   
             cursor_size: this.options.cursor_size,
