@@ -50,7 +50,7 @@ class BodyTracking {
         //     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
         // });
 
-        this.pose = new pose({
+        this.pose = new Pose({
             locateFile: (file) => {
                 return `/mediapipe/pose/${file}`; // 나중에 webpack이 복사해줄 경로
             }
@@ -113,8 +113,8 @@ class BodyTracking {
             onFrame: async () => {
                 await this.pose.send({ image: this.videoElement });
             },
-            width: Common.width / 10,
-            height: Common.height / 10
+            width: Common.width / 4,
+            height: Common.height / 4
         });
         camera.start();
     }
