@@ -30,6 +30,7 @@ class Tracking {
         };
     }
 
+    
     async init() {
         this.video = document.getElementById("input_video");
         
@@ -50,7 +51,8 @@ class Tracking {
             baseOptions: {
                 modelAssetPath: `/mediapipe/models/pose_landmarker_lite.task`
             },
-            runningMode: "VIDEO"
+            runningMode: "VIDEO",
+            numPoses: 4
         });
 
         this.startTracking();
@@ -58,51 +60,20 @@ class Tracking {
 
     startTracking() {
         this.running = true;
-
+        this.offscreen = document.createElement("canvas");
+        const scale = 0.25;
+        this.offscreen.width = this.video.videoWidth * scale;
+        this.offscreen.height = this.video.videoHeight * scale;
+        this.offctx = this.offscreen.getContext("2d");
+        
         const process = async () => {
             if (!this.running) return;
 
             const now = performance.now();
-
+            this.offctx.drawImage(this.video, 0, 0, this.offscreen.width, this.offscreen.height);
             // Pose
-            const poseResult = await this.poseLandmarker.detectForVideo(this.video, now);
-            if (poseResult.landmarks && poseResult.landmarks.length > 0) {
-                // const head = poseResult.landmarks[0];
-                // const x = (1 - head.x) * Common.width;
-                // const y = head.y * Common.height;
-                // this.setCoords(this.bodyData, x, y);
-                this.landmarks = poseResult.landmarks[0];
-                const poseLandmarks = this.landmarks;
-
-                const head = poseLandmarks[0];
-                const leftHand = poseLandmarks[15];
-                const rightHand = poseLandmarks[16];
-                
-                const leftShoulder = poseLandmarks[11];
-                const rightShoulder = poseLandmarks[12];
-                const leftHip = poseLandmarks[23];
-                const rightHip = poseLandmarks[24];
-                
-                const leftFoot = poseLandmarks[29];
-                const rightFoot = poseLandmarks[30];
-
-                const avgX = (leftShoulder.x + rightShoulder.x + leftHip.x + rightHip.x) / 4;
-                const avgY = (leftShoulder.y + rightShoulder.y + leftHip.y + rightHip.y) / 4;
-                const neckX = (leftShoulder.x + rightShoulder.x) / 2;
-                const neckY = (leftShoulder.y + rightShoulder.y) / 2;
-                const footX = (leftFoot.x + rightFoot.x) / 2;
-                const footY = (leftFoot.y + rightFoot.y) / 2;
-
-                // console.log(x,y);
-                // this.setCoord(head.x, head.y);
-
-                // body key 에 원하는 키 추가하고, 아래 코드 나중에 for 문으로 변경.
-                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[0]), head.x, head.y);
-                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[1]), leftHand.x, leftHand.y);
-                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[2]), rightHand.x, rightHand.y);
-                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[3]), neckX, neckY);
-                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[4]), footX, footY);
-            }
+            const result = await this.poseLandmarker.detectForVideo(this.offscreen, now);
+            this.handlePoseResult(result);
 
             // Hands
             // const handResult = this.handLandmarker.detectForVideo(this.video, now);
@@ -119,6 +90,53 @@ class Tracking {
         };
 
         process();
+    }
+    handlePoseResult(poseResult){
+        if (!poseResult.landmarks || poseResult.landmarks.length === 0) return;
+        this.landmarks = poseResult.landmarks;
+        
+        poseResult.landmarks.forEach((personLandmarks, personIndex) => {
+            if (!personLandmarks || personLandmarks.length < 33) return;
+            console.log(`Person ${personIndex}:`, personLandmarks);
+            // const head = poseResult.landmarks[0];
+            // const x = (1 - head.x) * Common.width;
+            // const y = head.y * Common.height;
+            // this.setCoords(this.bodyData, x, y);
+            const poseLandmarks = personLandmarks;
+
+            const head = poseLandmarks[0];
+            const leftHand = poseLandmarks[15];
+            const rightHand = poseLandmarks[16];
+            
+            const leftShoulder = poseLandmarks[11];
+            const rightShoulder = poseLandmarks[12];
+            const leftHip = poseLandmarks[23];
+            const rightHip = poseLandmarks[24];
+            
+            const leftFoot = poseLandmarks[29];
+            const rightFoot = poseLandmarks[30];
+
+            const avgX = (leftShoulder.x + rightShoulder.x + leftHip.x + rightHip.x) / 4;
+            const avgY = (leftShoulder.y + rightShoulder.y + leftHip.y + rightHip.y) / 4;
+            const neckX = (leftShoulder.x + rightShoulder.x) / 2;
+            const neckY = (leftShoulder.y + rightShoulder.y) / 2;
+            const footX = (leftFoot.x + rightFoot.x) / 2;
+            const footY = (leftFoot.y + rightFoot.y) / 2;
+
+            // console.log(x,y);
+            // this.setCoord(head.x, head.y);
+
+            // body key 에 원하는 키 추가하고, 아래 코드 나중에 for 문으로 변경.
+            this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[0]), head.x, head.y);
+            this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[1]), leftHand.x, leftHand.y);
+            this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[2]), rightHand.x, rightHand.y);
+            this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[3]), neckX, neckY);
+            this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[4]), footX, footY);
+        });
+    }
+
+    getLandmarks() {
+        return this.landmarks || [];
     }
 
     stopTracking() {

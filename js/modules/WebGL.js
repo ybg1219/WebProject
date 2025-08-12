@@ -36,11 +36,13 @@ export default class Webgl{
 
         // 시뮬레이션 아웃풋 초기화 및 입력 모듈 초기화
         this.output = new Output();
-        await VideoManager.startCamera();
+        //await VideoManager.startCamera();
+        await VideoManager.loadVideoFile("/videos/Demo.mp4"); // 여기에 mp4 파일 경로
+
 
         Mouse.init();
-        BodyTracking.init();
-        // Tracking.init();   // 카메라 시작 후 실행해야함.
+        // BodyTracking.init();
+        Tracking.init();   // 카메라 시작 후 실행해야함.
     }
     
 
@@ -57,14 +59,15 @@ export default class Webgl{
     render(){
         Mouse.update();
         // HandTracking.update();
-        BodyTracking.update();
-        // Tracking.update();
+        // BodyTracking.update();
+        Tracking.update();
         Common.update();
         this.output.update();
         
         // CanvasManager.drawPoint(VideoManager.getElement(), BodyTracking.landmarks );
-        CanvasManager.drawLine(VideoManager.getElement(), BodyTracking.landmarks );
+        // CanvasManager.drawLine(VideoManager.getElement(), BodyTracking.landmarks );
         // CanvasManager.drawLine(VideoManager.getElement(), Tracking.landmarks );
+        CanvasManager.drawLine(VideoManager.getElement(), Tracking.getLandmarks() );
     }
 
     loop(){

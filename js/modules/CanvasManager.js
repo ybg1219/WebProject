@@ -81,29 +81,64 @@ class CanvasManager {
     //     }
     // }
 
-    drawLine(video, landmarks = []) {
-        this.ctx.save(); // 현재 캔버스 상태 저장
+    // drawLine(video, landmarks = []) {
+    //     this.ctx.save(); // 현재 캔버스 상태 저장
+    //     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    //     this.drawVideo(video); // 반전 전 비디오 먼저 그림
+
+    //     // 🔁 캔버스를 좌우 반전
+    //     this.ctx.translate(this.canvas.width, 0); // x축 이동
+    //     this.ctx.scale(-1, 1); // 좌우 반전
+
+    //     if (landmarks.length > 0) {
+    //         drawConnectors(this.ctx, landmarks, POSE_CONNECTIONS, {
+    //             color: "lime",
+    //             lineWidth: 2
+    //         });
+
+    //         drawLandmarks(this.ctx, landmarks, {
+    //             radius: 3,
+    //             color: "red",
+    //         });
+    //     }
+
+    //     this.ctx.restore(); // 상태 복원
+    // }
+    drawLine(video, allLandmarks = []) { 
+        this.ctx.save();
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.drawVideo(video); // 반전 전 비디오 먼저 그림
+        this.drawVideo(video);
 
-        // 🔁 캔버스를 좌우 반전
-        this.ctx.translate(this.canvas.width, 0); // x축 이동
-        this.ctx.scale(-1, 1); // 좌우 반전
+        // 좌우 반전
+        this.ctx.translate(this.canvas.width, 0);
+        this.ctx.scale(-1, 1);
 
-        if (landmarks.length > 0) {
-            drawConnectors(this.ctx, landmarks, POSE_CONNECTIONS, {
-                color: "lime",
-                lineWidth: 2
-            });
+        if (allLandmarks.length > 0) {
+            allLandmarks.forEach((personLandmarks, idx) => {
+                // 색상을 사람마다 다르게 (optional)
+                const color = this.getColorForPerson(idx);
 
-            drawLandmarks(this.ctx, landmarks, {
-                radius: 3,
-                color: "red",
+                drawConnectors(this.ctx, personLandmarks, POSE_CONNECTIONS, {
+                    color,
+                    lineWidth: 2
+                });
+
+                drawLandmarks(this.ctx, personLandmarks, {
+                    radius: 3,
+                    color,
+                });
             });
         }
 
-        this.ctx.restore(); // 상태 복원
+        this.ctx.restore();
     }
+
+    // 사람별 랜덤 색상 생성
+    getColorForPerson(idx) {
+        const colors = ["lime", "cyan", "yellow", "magenta", "orange"];
+        return colors[idx % colors.length];
+    }
+
 
     // drawPoint(video, landmarks = []) {
         

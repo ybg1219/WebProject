@@ -45,6 +45,15 @@ class VideoManager {
         }
     }
 
+    async loadVideoFile(filePath) {
+            this.video.src = filePath;  // public 또는 dist에 있는 mp4 경로
+            this.video.loop = true;     // 반복 재생
+            this.video.autoplay = true; // 자동 재생
+            this.video.muted = true;    // 브라우저 자동재생 정책 우회
+            await this.video.play();
+        }
+    
+
     getElement() {
         return this.video;
     }
