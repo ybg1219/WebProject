@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import Common from "./Common";
-//import { Pose } from "@mediapipe/pose";
+import { Pose } from "@mediapipe/pose";
 import { Camera } from "@mediapipe/camera_utils";
 
 class BodyTracking {
@@ -46,8 +46,14 @@ class BodyTracking {
     async init() {
         this.videoElement = document.getElementById('input_video');
 
+        // this.pose = new Pose({
+        //     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        // });
+
         this.pose = new Pose({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+            locateFile: (file) => {
+                return `/mediapipe/pose/${file}`; // 나중에 webpack이 복사해줄 경로
+            }
         });
 
         this.pose.setOptions({
@@ -107,8 +113,8 @@ class BodyTracking {
             onFrame: async () => {
                 await this.pose.send({ image: this.videoElement });
             },
-            width: Common.width / 10,
-            height: Common.height / 10
+            width: Common.width / 4,
+            height: Common.height / 4
         });
         camera.start();
     }

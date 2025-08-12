@@ -39,7 +39,8 @@ export default class Webgl{
         await VideoManager.startCamera();
 
         Mouse.init();
-        Tracking.init();   // 카메라 시작 후 실행해야함.
+        BodyTracking.init();
+        // Tracking.init();   // 카메라 시작 후 실행해야함.
     }
     
 
@@ -56,14 +57,14 @@ export default class Webgl{
     render(){
         Mouse.update();
         // HandTracking.update();
-        // BodyTracking.update();
-        Tracking.update();
+        BodyTracking.update();
+        // Tracking.update();
         Common.update();
         this.output.update();
         
         // CanvasManager.drawPoint(VideoManager.getElement(), BodyTracking.landmarks );
-        // CanvasManager.drawLine(VideoManager.getElement(), BodyTracking.landmarks );
-        CanvasManager.drawLine(VideoManager.getElement(), Tracking.landmarks );
+        CanvasManager.drawLine(VideoManager.getElement(), BodyTracking.landmarks );
+        // CanvasManager.drawLine(VideoManager.getElement(), Tracking.landmarks );
     }
 
     loop(){

@@ -48,13 +48,22 @@ module.exports = {
         // new HtmlWebpackPlugin({
         //     template: './dist/index.html',
         // }),
-        // new CopyWebpackPlugin([
-        //     {
-        //       from: path.resolve(__dirname, 'node_modules/@mediapipe/hands'),
-        //       to: 'hands',
-        //       ignore: ['**/*.ts'] // TS 파일 제외
-        //     }
-        //   ])
+        new CopyWebpackPlugin([
+            {
+            from: path.resolve(__dirname, 'node_modules/@mediapipe/pose'),
+            to: 'mediapipe/pose', // hands 폴더로 복사
+            // globOptions: {
+            //     ignore: ['**/*.ts'] // 타입스크립트 소스는 제외
+            // }
+            },
+            {
+            from: path.resolve(__dirname, 'node_modules/@mediapipe/camera_utils'),
+            to: 'mediapipe/camera',
+            // globOptions: {
+            //     ignore: ['**/*.ts']
+            // }
+            }
+    ])
     ],
     devServer: {
         static: {
