@@ -115,8 +115,9 @@ class CanvasManager {
 
         if (allLandmarks.length > 0) {
             allLandmarks.forEach((personLandmarks, idx) => {
-                // 색상을 사람마다 다르게 (optional)
+                // 색상 & 라벨
                 const color = this.getColorForPerson(idx);
+                const label = `Person ${idx + 1}`; // 필요하면 이름 배열로 대체 가능
 
                 drawConnectors(this.ctx, personLandmarks, POSE_CONNECTIONS, {
                     color,
@@ -127,6 +128,9 @@ class CanvasManager {
                     radius: 3,
                     color,
                 });
+
+                // 바운딩 박스 + 라벨 그리기
+                this.drawBox(personLandmarks, color, label);
             });
         }
 
@@ -138,6 +142,33 @@ class CanvasManager {
         const colors = ["lime", "cyan", "yellow", "magenta", "orange"];
         return colors[idx % colors.length];
     }
+
+    // 바운딩 박스 + 라벨
+    drawBox(personLandmarks, color = "lime", label = "") {
+        if (!personLandmarks || personLandmarks.length === 0) return;
+
+        const xs = personLandmarks.map(p => p.x * this.canvas.width);
+        const ys = personLandmarks.map(p => p.y * this.canvas.height);
+
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+
+        // 라벨 배경
+        this.ctx.fillStyle = color;
+        this.ctx.fillRect(minX, minY - 20, this.ctx.measureText(label).width + 10, 20);
+
+        // 라벨 텍스트
+        this.ctx.fillStyle = "black";
+        this.ctx.font = "14px Arial";
+        this.ctx.fillText(label, minX + 5, minY - 5);
+    }
+
 
 
     // drawPoint(video, landmarks = []) {
