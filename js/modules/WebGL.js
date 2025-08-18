@@ -67,7 +67,10 @@ export default class Webgl{
         // CanvasManager.drawPoint(VideoManager.getElement(), BodyTracking.landmarks );
         // CanvasManager.drawLine(VideoManager.getElement(), BodyTracking.landmarks );
         // CanvasManager.drawLine(VideoManager.getElement(), Tracking.landmarks );
-        CanvasManager.drawLine(VideoManager.getElement(), Tracking.getLandmarks() );
+        const landmarks = Tracking.getLandmarks();
+        if (landmarks.length > 0) {
+            CanvasManager.drawLine(VideoManager.getElement(), landmarks);
+        }
     }
 
     loop(){

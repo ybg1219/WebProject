@@ -10,13 +10,13 @@ class Tracking {
         this.video = null;
         this.ctx = null;
         
-        this.bodyKeys = ["head", "leftHand", "rightHand", "center", "foot"];
+        this.bodyKeys = ["head", "leftHand", "rightHand", "center", "heap", "leftFoot", "rightFoot"];
 
         this.handsData = [this.createData(), this.createData()];
         this.bodysData = [ this.createData(), this.createData()
-            ,this.createData(), this.createData(), this.createData()
-        ] // head, left, right, center, bottom
-
+            ,this.createData(), this.createData(), this.createData(), this.createData(), this.createData()
+        ] // head, left, right, center, heap, left foot, rightfoot
+        
         this.running = false;
     }
 
@@ -116,27 +116,31 @@ class Tracking {
             const leftFoot = poseLandmarks[29];
             const rightFoot = poseLandmarks[30];
 
-            const avgX = (leftShoulder.x + rightShoulder.x + leftHip.x + rightHip.x) / 4;
-            const avgY = (leftShoulder.y + rightShoulder.y + leftHip.y + rightHip.y) / 4;
+            const heapX = (leftHip.x + rightHip.x) / 2;
+            const heapY = (leftHip.y + rightHip.y) / 2;
             const neckX = (leftShoulder.x + rightShoulder.x) / 2;
             const neckY = (leftShoulder.y + rightShoulder.y) / 2;
-            const footX = (leftFoot.x + rightFoot.x) / 2;
-            const footY = (leftFoot.y + rightFoot.y) / 2;
 
             // console.log(x,y);
             // this.setCoord(head.x, head.y);
 
             // body key 에 원하는 키 추가하고, 아래 코드 나중에 for 문으로 변경.
-            this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[0]), head.x, head.y);
-            this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[1]), leftHand.x, leftHand.y);
-            this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[2]), rightHand.x, rightHand.y);
-            this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[3]), neckX, neckY);
-            this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[4]), footX, footY);
+            this.setBodyCoords(0, head.x, head.y);
+            this.setBodyCoords(1, leftHand.x, leftHand.y);
+            this.setBodyCoords(2, rightHand.x, rightHand.y);
+            this.setBodyCoords(3, neckX, neckY);
+            this.setBodyCoords(4, heapX, heapY);
+            this.setBodyCoords(5, leftFoot.x, leftFoot.y);
+            this.setBodyCoords(6, rightFoot.x, rightFoot.y);
         });
     }
 
     getLandmarks() {
-        return this.landmarks || [];
+        // landmarks가 정의되지 않았으면 빈 배열 반환
+        if (!this.landmarks || !Array.isArray(this.landmarks)) {
+            return [];
+        }
+        return this.landmarks;
     }
 
     stopTracking() {
@@ -157,10 +161,12 @@ class Tracking {
     
     setBodyCoords(index, x, y){
         
+        const body = this.bodysData[index];
+        if(!body) return;
+
         x = Math.floor((1 - x) * Common.width);
         y = Math.floor(y * Common.height);
 
-        const body = this.bodysData[index];
         if (body.timer) clearTimeout(body.timer);// 이전에 돌아가던 타이머 제거.
 
         body.coords.set((x / Common.width) * 2 - 1, -(y / Common.height) * 2 + 1);
