@@ -220,60 +220,47 @@ export default class Simulation{
                 diff: Mouse.diff
             });
         }else{
+            // Tracking 모듈로부터 모든 감지된 사람의 데이터를 가져옵니다.
+            const people = Tracking.getPeople();
 
-            // this.externalForceTracking.update({
-            //     cursor_size: this.options.cursor_size,
-            //     mouse_force: this.options.mouse_force,
-            //     cellScale: this.cellScale,
-            //     coords: Tracking.coords,
-            //     diff: Tracking.diff
-            // });
-            // const head = BodyTracking.getBody(0);
-            const head = Tracking.getBody(0);
+            // 감지된 각 사람에 대해 반복합니다.
+            people.forEach(person => {
+                // 각 사람의 머리, 왼손, 오른손 데이터를 가져옵니다.
+                const { head, leftHand, rightHand } = person;
 
-            this.externalForceBody.update({
-               cursor_size: this.options.cursor_size,
-               mouse_force: this.options.mouse_force,
-               cellScale: this.cellScale,
-               coords: head.coords,
-               diff: head.diff
+                // 머리에 대한 상호작용
+                if (head && head.moved) {
+                    this.externalForceBody.update({
+                        cursor_size: this.options.cursor_size,
+                        mouse_force: this.options.mouse_force,
+                        cellScale: this.cellScale,
+                        coords: head.coords,
+                        diff: head.diff
+                    });
+                }
+
+                // 왼손에 대한 상호작용
+                if (leftHand && leftHand.moved) {
+                    this.externalForceLeft.update({
+                        cursor_size: this.options.cursor_size,
+                        mouse_force: this.options.mouse_force,
+                        cellScale: this.cellScale,
+                        coords: leftHand.coords,
+                        diff: leftHand.diff
+                    });
+                }
+
+                // 오른손에 대한 상호작용
+                if (rightHand && rightHand.moved) {
+                    this.externalForceRight.update({
+                        cursor_size: this.options.cursor_size,
+                        mouse_force: this.options.mouse_force,
+                        cellScale: this.cellScale,
+                        coords: rightHand.coords,
+                        diff: rightHand.diff
+                    });
+                }
             });
-            //console.log("body" , head.moved)
-
-
-            // const leftHand = HandTracking.getHand(0);
-            // const rightHand = HandTracking.getHand(1);
-
-            // const leftHand = BodyTracking.getBody(1);
-            // const rightHand = BodyTracking.getBody(2);
-            
-            const leftHand = Tracking.getBody(1);
-            const rightHand = Tracking.getBody(2);
-
-            // console.log(leftHand, rightHand);
-            // 왼손
-            if (leftHand.moved) {
-                this.externalForceLeft.update({
-                    cursor_size: this.options.cursor_size,
-                    mouse_force: this.options.mouse_force,
-                    cellScale: this.cellScale,
-                    coords: leftHand.coords,
-                    diff: leftHand.diff
-                });
-            }
-            //console.log("left" , leftHand.moved);
-
-            // 오른손
-            if (rightHand.moved) {
-                this.externalForceRight.update({
-                    cursor_size: this.options.cursor_size,
-                    mouse_force: this.options.mouse_force,
-                    cellScale: this.cellScale,
-                    coords: rightHand.coords,
-                    diff: rightHand.diff
-                });
-            }
-            //console.log("right", rightHand.moved);
         }
 
         let vel = this.fbos.vel_1;
@@ -296,14 +283,18 @@ export default class Simulation{
 
         vel = this.fbos.vel_1;
         // const wholeBody = BodyTracking.getWholeBody()
-        const wholeBody = Tracking.getWholeBody()
-
+        //const wholeBody = Tracking.getWholeBody()
+        const allBodyCoords = Tracking.getPeople().flatMap(person =>
+            Object.values(person)
+                .filter(Boolean)
+                .map(part => part.coords.clone())
+        );
         this.density.update(
         {   
             cursor_size: this.options.cursor_size,
             cellScale: this.cellScale,
             vel: vel,
-            sourcePos: wholeBody.coords
+            sourcePos: allBodyCoords
         });
 
         this.gradient.update()

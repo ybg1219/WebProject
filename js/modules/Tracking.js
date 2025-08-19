@@ -12,24 +12,39 @@ class Tracking {
         
         this.bodyKeys = ["head", "leftHand", "rightHand", "center", "heap", "leftFoot", "rightFoot"];
 
-        this.handsData = [this.createData(), this.createData()];
-        this.bodysData = [ this.createData(), this.createData()
-            ,this.createData(), this.createData(), this.createData(), this.createData(), this.createData()
-        ] // head, left, right, center, heap, left foot, rightfoot
-        
+        //this.handsData = [this.createData(), this.createData()];
+        this.bodysData = [ ] // head, left, right, center, heap, left foot, rightfoot
+
+        this.peopleData = [];  // -> 각 사람(person)의 bodyKey 데이터를 담음
+
         this.running = false;
     }
 
-    createData() {
+    /**
+     * 신체 부위 하나의 데이터 구조를 생성합니다.
+     * @returns {{coords: THREE.Vector2, coords_old: THREE.Vector2, diff: THREE.Vector2, timer: number, moved: boolean}}
+     */
+    createPartData() {
         return {
-            coords: new THREE.Vector2(),
-            coords_old: new THREE.Vector2(),
-            diff: new THREE.Vector2(),
-            timer: null,
-            moved: false
+            coords: new THREE.Vector2(), // 현재 좌표
+            coords_old: new THREE.Vector2(), // 이전 프레임 좌표
+            diff: new THREE.Vector2(), // 좌표 변화량
+            timer: null, // 움직임 감지를 위한 타이머
+            moved: false // 움직임 여부
         };
     }
 
+    /**
+     * 한 사람(person)의 전체 신체 데이터 구조를 생성합니다.
+     * @returns {Object.<string, {coords: THREE.Vector2, coords_old: THREE.Vector2, diff: THREE.Vector2, timer: number, moved: boolean}>}
+     */
+    createPersonData() {
+        const person = {};
+        this.bodyKeys.forEach(key => {
+            person[key] = this.createPartData();
+        });
+        return person;
+    }
     
     async init() {
         this.video = document.getElementById("input_video");
@@ -52,87 +67,146 @@ class Tracking {
                 modelAssetPath: `/mediapipe/models/pose_landmarker_lite.task`
             },
             runningMode: "VIDEO",
-            numPoses: 4
+            numPoses: 2
         });
 
         this.startTracking();
     }
-
+    /**
+     * 비디오 프레임에서 포즈 추적을 시작합니다.
+     */
     startTracking() {
+        if (this.running) return;
         this.running = true;
-        this.offscreen = document.createElement("canvas");
-        const scale = 0.25;
-        this.offscreen.width = this.video.videoWidth * scale;
-        this.offscreen.height = this.video.videoHeight * scale;
-        this.offctx = this.offscreen.getContext("2d");
-        
+
+        // 성능 향상을 위해 저해상도 캔버스 사용
+        const offscreen = document.createElement("canvas");
+        const scale = 0.5;
+        offscreen.width = this.video.videoWidth * scale;
+        offscreen.height = this.video.videoHeight * scale;
+        const offctx = offscreen.getContext("2d");
+
         const process = async () => {
             if (!this.running) return;
 
             const now = performance.now();
-            this.offctx.drawImage(this.video, 0, 0, this.offscreen.width, this.offscreen.height);
-            // Pose
-            const result = await this.poseLandmarker.detectForVideo(this.offscreen, now);
+            offctx.drawImage(this.video, 0, 0, offscreen.width, offscreen.height);
+            
+            // 비디오 프레임에서 포즈 감지
+            const result = await this.poseLandmarker.detectForVideo(offscreen, now);
             this.handlePoseResult(result);
-
-            // Hands
-            // const handResult = this.handLandmarker.detectForVideo(this.video, now);
-            // if (handResult.landmarks && handResult.landmarks.length > 0) {
-            //     handResult.landmarks.forEach((landmarks, i) => {
-            //         const indexTip = landmarks[8];
-            //         const x = (1 - indexTip.x) * Common.width;
-            //         const y = indexTip.y * Common.height;
-            //         this.setCoords(this.handsData[i], x, y);
-            //     });
-            // }
 
             requestAnimationFrame(process);
         };
 
         process();
     }
-    handlePoseResult(poseResult){
-        if (!poseResult.landmarks || poseResult.landmarks.length === 0) return;
+
+    /**
+     * 감지된 포즈 결과를 처리하여 각 사람의 데이터를 업데이트합니다.
+     * @param {Object} poseResult - MediaPipe PoseLandmarker의 감지 결과
+     */
+    handlePoseResult(poseResult) {
+        if (!poseResult.landmarks || poseResult.landmarks.length === 0) {
+            return;
+        }
         this.landmarks = poseResult.landmarks;
         
-        poseResult.landmarks.forEach((personLandmarks, personIndex) => {
-            if (!personLandmarks || personLandmarks.length < 33) return;
-            console.log(`Person ${personIndex}:`, personLandmarks);
-            // const head = poseResult.landmarks[0];
-            // const x = (1 - head.x) * Common.width;
-            // const y = head.y * Common.height;
-            // this.setCoords(this.bodyData, x, y);
-            const poseLandmarks = personLandmarks;
 
-            const head = poseLandmarks[0];
-            const leftHand = poseLandmarks[15];
-            const rightHand = poseLandmarks[16];
-            
-            const leftShoulder = poseLandmarks[11];
-            const rightShoulder = poseLandmarks[12];
-            const leftHip = poseLandmarks[23];
-            const rightHip = poseLandmarks[24];
-            
-            const leftFoot = poseLandmarks[29];
-            const rightFoot = poseLandmarks[30];
+        // 감지된 사람 수만큼 순회
+        this.peopleData = poseResult.landmarks.map((personLandmarks, personIndex) => {
+            // 이전에 추적되던 사람이 있다면 해당 데이터 재사용, 없다면 새로 생성
+            const personData = this.peopleData[personIndex] || this.createPersonData();
 
-            const heapX = (leftHip.x + rightHip.x) / 2;
-            const heapY = (leftHip.y + rightHip.y) / 2;
+            if (!personLandmarks || personLandmarks.length < 33) return personData;
+
+            // 주요 랜드마크 추출
+            const head = personLandmarks[0];
+            const leftHand = personLandmarks[15];
+            const rightHand = personLandmarks[16];
+            const leftShoulder = personLandmarks[11];
+            const rightShoulder = personLandmarks[12];
+            const leftHip = personLandmarks[23];
+            const rightHip = personLandmarks[24];
+            const leftFoot = personLandmarks[29];
+            const rightFoot = personLandmarks[30];
+
+            // 중간 지점 계산
             const neckX = (leftShoulder.x + rightShoulder.x) / 2;
             const neckY = (leftShoulder.y + rightShoulder.y) / 2;
+            const heapX = (leftHip.x + rightHip.x) / 2;
+            const heapY = (leftHip.y + rightHip.y) / 2;
 
-            // console.log(x,y);
-            // this.setCoord(head.x, head.y);
-
-            // body key 에 원하는 키 추가하고, 아래 코드 나중에 for 문으로 변경.
-            this.setBodyCoords(0, head.x, head.y);
-            this.setBodyCoords(1, leftHand.x, leftHand.y);
-            this.setBodyCoords(2, rightHand.x, rightHand.y);
-            this.setBodyCoords(3, neckX, neckY);
-            this.setBodyCoords(4, heapX, heapY);
-            this.setBodyCoords(5, leftFoot.x, leftFoot.y);
-            this.setBodyCoords(6, rightFoot.x, rightFoot.y);
+            // 각 신체 부위 좌표 업데이트
+            this.updatePartCoords(personData.head, head.x, head.y);
+            this.updatePartCoords(personData.leftHand, leftHand.x, leftHand.y);
+            this.updatePartCoords(personData.rightHand, rightHand.x, rightHand.y);
+            this.updatePartCoords(personData.center, neckX, neckY);
+            this.updatePartCoords(personData.heap, heapX, heapY);
+            this.updatePartCoords(personData.leftFoot, leftFoot.x, leftFoot.y);
+            this.updatePartCoords(personData.rightFoot, rightFoot.x, rightFoot.y);
+            
+            return personData;
         });
+    }
+
+    /**
+     * 특정 신체 부위의 좌표와 움직임 상태를 업데이트합니다.
+     * @param {Object} partData - 업데이트할 신체 부위 데이터 객체 (예: personData.head)
+     * @param {number} x - 랜드마크의 x 좌표 (0.0 ~ 1.0)
+     * @param {number} y - 랜드마크의 y 좌표 (0.0 ~ 1.0)
+     */
+    updatePartCoords(partData, x, y) {
+        if (!partData) return;
+
+        // 타이머가 있다면 초기화
+        if (partData.timer) clearTimeout(partData.timer);
+
+        // 스크린 좌표로 변환
+        const screenX = (1 - x) * Common.width;
+        const screenY = y * Common.height;
+
+        // WebGL 좌표계(-1.0 ~ 1.0)로 변환하여 저장
+        partData.coords.set((screenX / Common.width) * 2 - 1, -(screenY / Common.height) * 2 + 1);
+        partData.moved = true;
+
+        // 100ms 후 움직임 상태를 false로 변경
+        partData.timer = setTimeout(() => {
+            partData.moved = false;
+        }, 100);
+    }
+
+    /**
+     * 매 프레임마다 호출되어 각 신체 부위의 좌표 변화량을 계산합니다.
+     */
+    update() {
+        this.peopleData.forEach(person => {
+            this.bodyKeys.forEach(key => {
+                const part = person[key];
+                part.diff.subVectors(part.coords, part.coords_old);
+                part.coords_old.copy(part.coords);
+
+                // 첫 프레임에서 diff 값이 비정상적으로 커지는 것을 방지
+                if (part.coords_old.lengthSq() === 0) {
+                    part.diff.set(0, 0);
+                }
+            });
+        });
+    }
+
+    /**
+     * 추적을 중지합니다.
+     */
+    stopTracking() {
+        this.running = false;
+    }
+
+    /**
+     * 추적된 모든 사람의 데이터를 반환합니다.
+     * @returns {Array<Object>}
+     */
+    getPeople() {
+        return this.peopleData;
     }
 
     getLandmarks() {
@@ -141,10 +215,6 @@ class Tracking {
             return [];
         }
         return this.landmarks;
-    }
-
-    stopTracking() {
-        this.running = false;
     }
 
     setCoords(data, x, y) {
@@ -158,43 +228,24 @@ class Tracking {
         }, 100);
     }
 
-    
-    setBodyCoords(index, x, y){
-        
-        const body = this.bodysData[index];
-        if(!body) return;
+    // update() {
+    //     // hands
+    //     // for (let i = 0; i < this.handsData.length; i++) {
+    //     //     const hand = this.handsData[i];
+    //     //     hand.diff.subVectors(hand.coords, hand.coords_old);
+    //     //     hand.coords_old.copy(hand.coords);
+    //     // }
+    //     // 전체 bodysData 각 원소별로 diff 계산
+    //     this.bodysData.forEach(body => {
+    //         body.diff.subVectors(body.coords, body.coords_old);
+    //         body.coords_old.copy(body.coords);
 
-        x = Math.floor((1 - x) * Common.width);
-        y = Math.floor(y * Common.height);
-
-        if (body.timer) clearTimeout(body.timer);// 이전에 돌아가던 타이머 제거.
-
-        body.coords.set((x / Common.width) * 2 - 1, -(y / Common.height) * 2 + 1);
-        body.moved = true;
-
-        body.timer = setTimeout(() => {
-            body.moved = false;
-        }, 100);// 0.1초 동안 움직이지 않으면 다시 false로 바꿈.
-    }
-
-    update() {
-        // hands
-        // for (let i = 0; i < this.handsData.length; i++) {
-        //     const hand = this.handsData[i];
-        //     hand.diff.subVectors(hand.coords, hand.coords_old);
-        //     hand.coords_old.copy(hand.coords);
-        // }
-        // 전체 bodysData 각 원소별로 diff 계산
-        this.bodysData.forEach(body => {
-            body.diff.subVectors(body.coords, body.coords_old);
-            body.coords_old.copy(body.coords);
-
-            // 초기 프레임 등 0,0 일 경우 diff 초기화
-            if (body.coords_old.x === 0 && body.coords_old.y === 0) {
-                body.diff.set(0, 0);
-            }
-        });
-    }
+    //         // 초기 프레임 등 0,0 일 경우 diff 초기화
+    //         if (body.coords_old.x === 0 && body.coords_old.y === 0) {
+    //             body.diff.set(0, 0);
+    //         }
+    //     });
+    // }
 
     getBody(index) {
         return {
