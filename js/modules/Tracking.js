@@ -108,6 +108,8 @@ class Tracking {
      */
     handlePoseResult(poseResult) {
         if (!poseResult.landmarks || poseResult.landmarks.length === 0) {
+            this.peopleData = [];
+            this.landmarks = [];
             return;
         }
         this.landmarks = poseResult.landmarks;

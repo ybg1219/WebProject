@@ -1,10 +1,10 @@
 precision highp float;
-#define MAX_POSITIONS 10
+#define MAX_POSITIONS 20
 
 uniform sampler2D velocity;
 uniform sampler2D density;
 
-uniform vec2 positions[MAX_POSITIONS]; // 최대 10개의 vec2 위치를 받는 배열
+uniform vec2 positions[MAX_POSITIONS]; // 최대 20개의 vec2 위치를 받는 배열
 
 uniform float radius;    // 소싱 반경
 uniform float strength;  // 밀도 증가량
@@ -66,7 +66,7 @@ void main() {
     // 0. 연기 소싱
     float source = 0.0;
     // 점 소스
-    for (int i =0;i < 5; i++) { // 최대 길이 10
+    for (int i =0;i < MAX_POSITIONS; i++) { // 최대 길이 10
         if (positions[i].x <= 0.0 || positions[i].y <= 0.0) continue;
         source += strength * computeFalloff(uv, positions[i], radius)*0.5;
     }

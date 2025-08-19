@@ -49,7 +49,7 @@ export default class Density extends ShaderPass{
             output0: simProps.den,
             output1: simProps.dst
         })
-        this.landmarkMaxSize = 10;
+        this.landmarkMaxSize = 20;
         this.posArray = null;
         this.init();
     }
@@ -58,7 +58,7 @@ export default class Density extends ShaderPass{
     init(simProps){
         super.init();
         this.uniforms.positions.value = new Float32Array(this.landmarkMaxSize * 2);
-        this.posArray = new Float32Array(20); // sourcePos initialize 0 automatically
+        this.posArray = new Float32Array(this.landmarkMaxSize * 2); // sourcePos initialize 0 automatically
     }
 
     update({ cursor_size ,cellScale, vel, sourcePos }) {
