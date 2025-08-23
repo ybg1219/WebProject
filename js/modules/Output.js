@@ -6,12 +6,18 @@ import face_vert from "./glsl/sim/face.vert";
 import color_frag from "./glsl/sim/color.frag";
 
 export default class Output{
-    constructor(){
-        this.init();
+     /**
+     * @param {object} props - Webgl.js에서 전달받는 속성. { activeTracker, options }를 포함합니다.
+     */
+    constructor(props) {
+        this.init(props);
     }
 
-    init(){
-        this.simulation = new Simulation();
+    /**
+     * @param {object} props - 생성자에서 전달받은 활성화된 tracking 모듈
+     */
+    init(props) {
+        this.simulation = new Simulation(props);
 
         this.scene = new THREE.Scene();
         this.camera = new THREE.Camera();

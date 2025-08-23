@@ -67,43 +67,6 @@ class CanvasManager {
         this.ctx.restore();
     }
 
-    // drawPoint(video, landmarks = []) { // 좌우 반전 안되어있음.
-    //     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    //     this.drawVideo(video);
-    //     if (drawLandmarks) {
-    //         // 변환된 landmark 좌표값을 사용 (x: 0~1 범위 기준)
-    //         drawLandmarks(this.ctx, landmarks, {
-    //             radius: 3,
-    //             color: "red",
-    //         });
-    //     } else {
-    //         console.warn('drawingUtils 또는 drawLandmarks가 정의되지 않았습니다.');
-    //     }
-    // }
-
-    // drawLine(video, landmarks = []) {
-    //     this.ctx.save(); // 현재 캔버스 상태 저장
-    //     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    //     this.drawVideo(video); // 반전 전 비디오 먼저 그림
-
-    //     // 🔁 캔버스를 좌우 반전
-    //     this.ctx.translate(this.canvas.width, 0); // x축 이동
-    //     this.ctx.scale(-1, 1); // 좌우 반전
-
-    //     if (landmarks.length > 0) {
-    //         drawConnectors(this.ctx, landmarks, POSE_CONNECTIONS, {
-    //             color: "lime",
-    //             lineWidth: 2
-    //         });
-
-    //         drawLandmarks(this.ctx, landmarks, {
-    //             radius: 3,
-    //             color: "red",
-    //         });
-    //     }
-
-    //     this.ctx.restore(); // 상태 복원
-    // }
     drawLine(video, allLandmarks = []) { 
         this.ctx.save();
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -147,8 +110,11 @@ class CanvasManager {
     drawBox(personLandmarks, color = "lime", label = "") {
         if (!personLandmarks || personLandmarks.length === 0) return;
 
-        const xs = personLandmarks.map(p => p.x * this.canvas.width);
-        const ys = personLandmarks.map(p => p.y * this.canvas.height);
+        // [오류 수정] 유사 배열 객체를 진짜 배열로 변환하여 .map()을 안전하게 사용합니다.
+        const landmarksArray = Array.from(personLandmarks);
+
+        const xs = landmarksArray.map(p => p.x * this.canvas.width);
+        const ys = landmarksArray.map(p => p.y * this.canvas.height);
 
         const minX = Math.min(...xs);
         const maxX = Math.max(...xs);
@@ -168,57 +134,6 @@ class CanvasManager {
         this.ctx.font = "14px Arial";
         this.ctx.fillText(label, minX + 5, minY - 5);
     }
-
-
-
-    // drawPoint(video, landmarks = []) {
-        
-    //     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    //     // this.ctx.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
-
-    //     this.drawVideo(video);
-
-    //     landmarks.forEach(({ x, y }) => {
-    //         const px = (1-x) * this.canvas.width;
-    //         const py = y * this.canvas.height;
-    //         this.ctx.beginPath();
-    //         this.ctx.arc(px, py, 5, 0, Math.PI * 2);
-    //         this.ctx.fillStyle = 'red';
-    //         this.ctx.fill();
-    //     });
-    // }
-    // drawLine(video, landmarks = []) {
-        
-    //     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    //     // this.ctx.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
-
-    //     this.drawVideo(video);
-
-    //     if (landmarks.length > 1) {
-    //         this.ctx.beginPath();
-    //         landmarks.forEach(({ x, y }, index) => {
-    //             const px = (1 - x) * this.canvas.width;
-    //             const py = y * this.canvas.height;
-
-    //             if (index === 0) {
-    //                 this.ctx.moveTo(px, py);
-    //             } else {
-    //                 this.ctx.lineTo(px, py);
-    //             }
-    //         });
-    //         this.ctx.strokeStyle = 'lime';
-    //         this.ctx.lineWidth = 2;
-    //         this.ctx.stroke();
-    //     }
-    //     landmarks.forEach(({ x, y }) => {
-    //         const px = (1-x) * this.canvas.width;
-    //         const py = y * this.canvas.height;
-    //         this.ctx.beginPath();
-    //         this.ctx.arc(px, py, 5, 0, Math.PI * 2);
-    //         this.ctx.fillStyle = 'red';
-    //         this.ctx.fill();
-    //     });
-    // }
 }
 
 export default new CanvasManager(); // instance return single ton

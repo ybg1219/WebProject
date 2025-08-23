@@ -18,7 +18,8 @@ import Tracking from "./Tracking";
 
 export default class Simulation{
     constructor(props){
-        this.props = props;
+        //this.props = props;
+        this.activeTracker = props.activeTracker;
 
         this.fbos = {
             density_0: null,
@@ -200,9 +201,26 @@ export default class Simulation{
         Common.renderer.render(this.scene, this.camera); // 반드시 full-screen quad로 구성된 scene
         Common.renderer.setRenderTarget(null);
     }
+
+    /**
+     * 특정 신체 부위에 외부 힘을 적용하는 헬퍼 함수.
+     * @param {object} part - { coords, diff, moved } 속성을 가진 신체 부위 객체.
+     * @param {object} forceUpdater - 힘을 업데이트하는 셰이더 래퍼 객체.
+     */
+    applyExternalForce(part, forceUpdater) {
+        if (part && part.moved) {
+            forceUpdater.update({
+                cursor_size: this.options.cursor_size,
+                mouse_force: this.options.mouse_force,
+                cellScale: this.cellScale,
+                coords: part.coords,
+                diff: part.diff
+            });
+        }
+    }
+
     update(){
-        
-        
+        // --- 1. 경계 및 이류(Advection) 계산 ---
         if(this.options.isBounce){ // 경계 여부
             this.boundarySpace.set(0, 0);
         } else {
@@ -211,58 +229,21 @@ export default class Simulation{
 
         this.advection.update(this.options);
 
-        if (this.options.isMouse){
-            this.externalForce.update({
-                cursor_size: this.options.cursor_size,
-                mouse_force: this.options.mouse_force,
-                cellScale: this.cellScale,
-                coords: Mouse.coords,
-                diff: Mouse.diff
-            });
-        }else{
-            // Tracking 모듈로부터 모든 감지된 사람의 데이터를 가져옵니다.
-            const people = Tracking.getPeople();
-
-            // 감지된 각 사람에 대해 반복합니다.
+        // --- 2. 외부 힘(External Forces) 적용 ---
+        if (this.options.isMouse) {
+            this.applyExternalForce(Mouse, this.externalForce);
+        } else if (this.activeTracker) {
+            // activeTracker가 어떤 모듈이든 상관없이 getPeople()을 호출합니다.
+            const people = this.activeTracker.getPeople();
+            
             people.forEach(person => {
-                // 각 사람의 머리, 왼손, 오른손 데이터를 가져옵니다.
-                const { head, leftHand, rightHand } = person;
-
-                // 머리에 대한 상호작용
-                if (head && head.moved) {
-                    this.externalForceBody.update({
-                        cursor_size: this.options.cursor_size,
-                        mouse_force: this.options.mouse_force,
-                        cellScale: this.cellScale,
-                        coords: head.coords,
-                        diff: head.diff
-                    });
-                }
-
-                // 왼손에 대한 상호작용
-                if (leftHand && leftHand.moved) {
-                    this.externalForceLeft.update({
-                        cursor_size: this.options.cursor_size,
-                        mouse_force: this.options.mouse_force,
-                        cellScale: this.cellScale,
-                        coords: leftHand.coords,
-                        diff: leftHand.diff
-                    });
-                }
-
-                // 오른손에 대한 상호작용
-                if (rightHand && rightHand.moved) {
-                    this.externalForceRight.update({
-                        cursor_size: this.options.cursor_size,
-                        mouse_force: this.options.mouse_force,
-                        cellScale: this.cellScale,
-                        coords: rightHand.coords,
-                        diff: rightHand.diff
-                    });
-                }
+                this.applyExternalForce(person.head, this.externalForceBody);
+                this.applyExternalForce(person.leftHand, this.externalForceLeft);
+                this.applyExternalForce(person.rightHand, this.externalForceRight);
             });
         }
 
+        // --- 3. 유체 물리 계산 ---
         let vel = this.fbos.vel_1;
 
         if(this.options.isViscous){
@@ -281,14 +262,18 @@ export default class Simulation{
 
         this.pressure.update({ vel , pressure});
 
+        // --- 4. 밀도(Density) 업데이트 ---
         vel = this.fbos.vel_1;
-        // const wholeBody = BodyTracking.getWholeBody()
-        //const wholeBody = Tracking.getWholeBody()
-        const allBodyCoords = Tracking.getPeople().flatMap(person =>
-            Object.values(person)
-                .filter(Boolean)
-                .map(part => part.coords.clone())
-        );
+        let allBodyCoords = [];
+        if (this.activeTracker) {
+            // 단일/다중 모드 모두에서 동일한 코드로 모든 좌표를 가져옵니다.
+            allBodyCoords = this.activeTracker.getPeople().flatMap(person =>
+                Object.values(person)
+                    .filter(Boolean) // null이나 undefined인 부위는 제외
+                    .map(part => part.coords.clone())
+            );
+        }
+        
         this.density.update(
         {   
             cursor_size: this.options.cursor_size,

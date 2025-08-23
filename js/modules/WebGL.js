@@ -12,6 +12,11 @@ export default class Webgl{
     constructor(props){
         this.props = props; // document.body를 받아옴.
 
+        // --- 시뮬레이션 옵션 ---
+        this.options = {
+            isMultiPerson: true, // 이 값을 false로 바꾸면 단일 모드로 실행됩니다.
+        };
+
         // 공통인 렌더러 요소들 초기화
         Common.init();
 
@@ -22,8 +27,9 @@ export default class Webgl{
         // register resize
         window.addEventListener("resize", this.resize.bind(this)); // 이벤트 타입과 콜백함수
 
-        this.init(); // 비동기 초기화 함수 분리
-        this.loop();
+        this.init().then(() => {
+            this.loop();
+        });
     }
 
     async init() {
@@ -35,14 +41,26 @@ export default class Webgl{
         document.body.appendChild(this.stats.dom);
 
         // 시뮬레이션 아웃풋 초기화 및 입력 모듈 초기화
-        this.output = new Output();
         //await VideoManager.startCamera();
         await VideoManager.loadVideoFile("/videos/sample.mp4"); // 여기에 mp4 파일 경로
 
 
         Mouse.init();
-        // BodyTracking.init();
-        Tracking.init();   // 카메라 시작 후 실행해야함.
+        // --- 옵션에 따라 적절한 트래커를 초기화하고 activeTracker에 할당 ---
+        if (this.options.isMultiPerson) {
+            console.log("Initializing Multi-person Tracker");
+            this.activeTracker = Tracking;
+        } else {
+            console.log("Initializing Single-person Tracker");
+            this.activeTracker = BodyTracking;
+        }
+        await this.activeTracker.init(); // 활성화된 트래커만 초기화
+
+        // Output(FluidSimulation)에 활성화된 트래커 인스턴스를 전달합니다.
+        this.output = new Output({
+            activeTracker: this.activeTracker,
+            options: this.options
+        });
     }
     
 
@@ -58,17 +76,18 @@ export default class Webgl{
 
     render(){
         Mouse.update();
-        // HandTracking.update();
-        // BodyTracking.update();
-        Tracking.update();
+
+        // 활성화된 트래커의 update만 호출.
+        if (this.activeTracker) {
+            this.activeTracker.update();
+        }
+
         Common.update();
         this.output.update();
         
-        // CanvasManager.drawPoint(VideoManager.getElement(), BodyTracking.landmarks );
-        // CanvasManager.drawLine(VideoManager.getElement(), BodyTracking.landmarks );
-        // CanvasManager.drawLine(VideoManager.getElement(), Tracking.landmarks );
-        const landmarks = Tracking.getLandmarks();
-        if (landmarks.length > 0) {
+        // 랜드마크 그리기
+        const landmarks = this.activeTracker ? (this.activeTracker.getLandmarks ? this.activeTracker.getLandmarks() : this.activeTracker.landmarks) : [];
+        if (landmarks && landmarks.length > 0) {
             CanvasManager.drawLine(VideoManager.getElement(), landmarks);
         }
     }

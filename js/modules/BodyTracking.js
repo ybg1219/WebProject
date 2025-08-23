@@ -113,8 +113,8 @@ class BodyTracking {
             onFrame: async () => {
                 await this.pose.send({ image: this.videoElement });
             },
-            width: Common.width / 4,
-            height: Common.height / 4
+            width: Common.width,
+            height: Common.height
         });
         camera.start();
     }
@@ -200,6 +200,32 @@ class BodyTracking {
             moved: this.bodysData.map(m => m.moved) // coords와 diff는 three.vector2 객체이므로 clone 필요.
         };
     }
+
+    /* @returns {Array<Object>} [{ head: {...}, leftHand: {...}, ... }] 형태의 배열
+    */
+    getPeople() {
+        // bodysData가 비어있으면 아무도 감지되지 않은 것이므로 빈 배열을 반환합니다.
+        if (!this.bodysData || this.bodysData.length === 0) {
+            return [];
+        }
+
+        // bodysData 배열의 각 인덱스가 어떤 신체 부위를 의미하는지 명시합니다.
+        // 이 순서는 기존 getBody(index)를 호출하던 순서와 동일해야 합니다.
+        const person = {
+            head:       this.bodysData[0],
+            leftHand:   this.bodysData[1],
+            rightHand:  this.bodysData[2],
+            center:     this.bodysData[3],
+            heap:       this.bodysData[4],
+            leftFoot:   this.bodysData[5],
+            rightFoot:  this.bodysData[6]
+        };
+
+        // 한 명의 데이터를 배열로 감싸서 반환하여, 
+        // 다중 트래커의 [person1, person2, ...] 형태와 구조를 일치시킵니다.
+        return [person]; 
+    }
+
 
     getHand(index) {
         return {
