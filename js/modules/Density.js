@@ -9,8 +9,6 @@ export default class Density extends ShaderPass{
     constructor(simProps){
         super({
             material: {
-                // blending: THREE.AdditiveBlending,
-                // transparent: true,
                 vertexShader: face_vert,
                 fragmentShader: density_frag,
                 uniforms: {
@@ -83,7 +81,6 @@ export default class Density extends ShaderPass{
             console.warn("sourcePos overflow: ", sourcePos.length, ">", this.landmarkMaxSize);
         }
 
-        // console.log(sourcePos);/
         sourcePos.forEach((pos, i) => {
             const clipped = clipping(pos);
             const uv = toUv(clipped);

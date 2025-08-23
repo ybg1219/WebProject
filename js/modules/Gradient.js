@@ -31,7 +31,6 @@ export default class Gradient extends ShaderPass{
     }
 
     update(){
-        // this.uniforms.density.value = den.texture;
         super.update();
     }
 }

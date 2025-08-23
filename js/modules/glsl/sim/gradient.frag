@@ -14,8 +14,8 @@ void main(){
 
     vec2 grad = vec2(dR - dL, dT - dB) * 0.5;
     grad *= 2.0; // scaling
-    // float mag = length(grad); // gradient 크기
-    // vec3 color = vec3(grad.x * 0.5 + 0.5, grad.y * 0.5 + 0.5, mag); // x, y, 강도 시각화
+    float mag = length(grad); // gradient 크기
+    vec3 color = vec3(grad.x * 0.5 + 0.5, grad.y * 0.5 + 0.5, mag); // x, y, 강도 시각화
 
     gl_FragColor = vec4(grad, 0, 1);
 }

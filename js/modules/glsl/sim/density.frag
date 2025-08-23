@@ -59,9 +59,6 @@ float sdfLineFalloff(vec2 p, vec2 a, vec2 b, float radius) {
 }
 
 void main() {
-    // 시작 시 초기값때문에 중심부분 색칠됨.
-    // 찌그러짐 수정 필요.
-    // 커서 사이즈 반영하여 영역 제한 및 커서 사이즈 적용
 
     // 0. 연기 소싱
     float source = 0.0;
@@ -73,10 +70,10 @@ void main() {
 
     vec2 center = positions[3];
     // 선 소스 (SDF 기반)
-    for (int i =0; i < 5 ; i++){ // center 제외 하고 계산
+    for (int i =0; i < MAX_POSITIONS ; i++){ // center 제외 하고 계산
         if (positions[i].x <= 0.0 || positions[i].y <= 0.0) continue;
         if (i == 3) continue; // i = 3일때 center
-        //source += strength * sdfLineFalloff(uv, positions[i], center, radius) *0.4;
+        source += strength * sdfLineFalloff(uv, positions[i], center, radius) *0.4;
     }
 
     // 1. buoyancy 
@@ -84,7 +81,7 @@ void main() {
     vec2 ratio = max(fboSize.x, fboSize.y) / fboSize;
     vec2 vel = texture2D(velocity, uv).xy;
 
-    // float buoyancyCoefficient = 0.05;
+    // float buoyancyCoefficient = 0.01;
     // vec2 gravity = vec2(0.0, -1.0); // 아래 방향
     // vec2 d = texture2D(density, uv).xy;
     // vec2 buoyancyForce = - buoyancyCoefficient * (d) * gravity;
@@ -98,8 +95,6 @@ void main() {
     // 확산 계수 lambda로 확산 정도 조절
     float lambda = 0.93;
     float dv = lambda*texture2D(density, uv2).x; // 과거 밀도
-
-    // float result = smoothstep( dv + source, 0.0, 1.0);
 
     // 4. 밀도 결과 = 이동된 밀도 + 소싱
     gl_FragColor = vec4(dv + source); // r=g=b=a로 밀도 저장

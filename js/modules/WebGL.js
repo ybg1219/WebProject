@@ -14,7 +14,7 @@ export default class Webgl{
 
         // --- 시뮬레이션 옵션 ---
         this.options = {
-            isMultiPerson: true, // 이 값을 false로 바꾸면 단일 모드로 실행됩니다.
+            isMultiPerson: false, // 이 값을 false로 바꾸면 단일 모드로 실행됩니다.
         };
 
         // 공통인 렌더러 요소들 초기화
