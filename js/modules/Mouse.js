@@ -3,7 +3,7 @@ import Common from "./Common";
 
 class Mouse{
     constructor(){
-        this.mouseMoved = false;
+        this.moved = false;
         this.coords = new THREE.Vector2();
         this.coords_old = new THREE.Vector2();
         this.diff = new THREE.Vector2();
@@ -20,9 +20,9 @@ class Mouse{
     setCoords( x, y ) {
         if(this.timer) clearTimeout(this.timer);
         this.coords.set( ( x / Common.width ) * 2 - 1, - ( y / Common.height ) * 2 + 1 );
-        this.mouseMoved = true;
+        this.moved = true;
         this.timer = setTimeout(() => {
-            this.mouseMoved = false;
+            this.moved = false;
         }, 100);
         
     }

@@ -8,7 +8,7 @@ void main(){
     
     vec3 pos = position;
     vec2 uv = vec2(0.5)+(pos.xy)*0.5;
-    pos.xy = pos.xy * px;
+    //pos.xy = pos.xy * px;
     vUv = uv;
     gl_Position = vec4(pos.xy, 0.0, 1.0);
 }
