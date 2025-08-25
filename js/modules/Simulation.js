@@ -10,6 +10,7 @@ import Poisson from "./Poisson";
 import Pressure from "./Pressure";
 import Density from "./Density";
 import Gradient from "./Gradient";
+import Swirl from "./Swirl";
 
 import Mouse from "./Mouse";
 import HandTracking from "./HandTracking";
@@ -119,7 +120,12 @@ export default class Simulation{
             cursor_size: this.options.cursor_size,
             dst: this.fbos.vel_1,
         });
-
+        this.swirl = new Swirl({
+            cellScale: this.cellScale,
+            cursor_size: this.options.cursor_size,
+            dst: this.fbos.vel_1,
+        });
+        
         this.viscous = new Viscous({
             cellScale: this.cellScale,
             boundarySpace: this.boundarySpace,
@@ -240,6 +246,20 @@ export default class Simulation{
                 this.applyExternalForce(person.head, this.externalForceBody);
                 this.applyExternalForce(person.leftHand, this.externalForceLeft);
                 this.applyExternalForce(person.rightHand, this.externalForceRight);
+                
+                // --- 양손을 이용한 Swirl 효과 적용 ---
+                const { leftHand, rightHand } = person;
+
+                // 양손이 모두 감지되고 움직였을 때만 와류를 생성합니다.
+                if (leftHand && leftHand.moved && rightHand && rightHand.moved) {
+                    this.swirl.update({
+                        leftHand: leftHand,
+                        rightHand: rightHand,
+                        cursor_size: this.options.cursor_size,
+                        cellScale: this.cellScale,
+                        mouse_force: this.options.mouse_force // 힘의 세기 조절
+                    });
+                }
             });
         }
 
