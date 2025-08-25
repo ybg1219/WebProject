@@ -42,8 +42,9 @@ void main() {
     // 3. 가중치 함수 계산
     // f: 선분의 중앙(t=0.5)에서 가장 큰 값을 가져 와류를 중앙에 집중시킵니다.
     float f = 4.0 * t * (1.0 - t);
-    // g: 선분(linePos)에서 멀어질수록(y축 기준) 힘이 약해지도록 가우시안 함수를 적용합니다.
-    float g = exp(-pow((uv.y - linePos.y) / radius, 2.0));
+    // g: 선분(linePos)에서 멀어질수록 힘이 약해지도록 가우시안 함수를 적용합니다.
+    float dist = distance(uv, linePos);
+    float g = exp(-pow(dist / radius, 2.0));
 
     // 4. 회전 성분(rot) 계산
     // linePos에서 현재 픽셀(uv)로 향하는 벡터를 90도 회전시켜 와류 방향을 만듭니다.

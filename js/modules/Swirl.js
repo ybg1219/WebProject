@@ -12,7 +12,7 @@ export default class Swirl extends ShaderPass {
             material: {
                 vertexShader: swirl_vert,
                 fragmentShader: swirl_frag,
-                // blending: THREE.AdditiveBlending,
+                blending: THREE.AdditiveBlending,
                 uniforms: {
                     //fboSize: { value: new THREE.Vector2(simProps.src.width, simProps.src.height) },
                     // GLSL 셰이더로 전달할 유니폼 변수들
@@ -83,10 +83,10 @@ export default class Swirl extends ShaderPass {
         this.uniforms.v1.value.copy(rightHand.diff).multiplyScalar(forceScale);
         
         // 힘의 세기는 force 벡터의 길이에 비례하도록 설정합니다.
-        this.uniforms.strength.value = mouse_force * 0.1; // 세기를 증폭시켜 효과를 명확하게 합니다.
+        this.uniforms.strength.value = mouse_force * 0.05; // 세기를 증폭시켜 효과를 명확하게 합니다.
         
         // 와류의 영향 반경은 cursor_size에 비례하도록 설정합니다.
-        this.uniforms.radius.value = cursor_size / 500.0; // 반경 스케일을 적절히 조절합니다.
+        this.uniforms.radius.value = cursor_size / 1000.0; // 반경 스케일을 적절히 조절합니다.
 
         // 5. 부모 클래스의 update를 호출하여 셰이더를 렌더링합니다.
         super.update();
