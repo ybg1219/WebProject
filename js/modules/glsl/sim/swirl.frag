@@ -1,3 +1,4 @@
+
 precision highp float;
 
 // Vertex Shader로부터 UV 좌표를 받습니다.
@@ -47,9 +48,22 @@ void main() {
     float g = exp(-pow(dist / radius, 2.0));
 
     // 4. 회전 성분(rot) 계산
-    // linePos에서 현재 픽셀(uv)로 향하는 벡터를 90도 회전시켜 와류 방향을 만듭니다.
-    vec2 perpendicular_dir = vec2(-(uv.y - linePos.y), (uv.x - linePos.x));
-    vec2 rot = strength * f * g * perpendicular_dir;
+    // linePos에서 현재 픽셀(uv)로 향하는 벡터를 90도 회전시켜 와류 방향 생성.
+    vec2 dir = uv - linePos;
+
+    // 2D 외적 계산
+    vec2 v_lin_dir = normalize(v_lin + vec2(0.00001)); 
+    float cross_product_z = v_lin_dir.x * dir.y - v_lin_dir.y * dir.x;
+
+    // v_lin의 크기(속도)를 계산하여 와류의 세기에 직접 반영.
+    float movement_intensity = length(v_lin);
+    movement_intensity = clamp(movement_intensity, 0.5, 1.0);
+
+    // 회전의 기본 방향 벡터 (90도 회전)
+    vec2 perpendicular_dir = vec2(-dir.y, dir.x);
+
+    // 외적 값과 움직임의 세기를 모두 사용하여 최종 회전력을 계산.
+    vec2 rot = strength * f * g * normalize(perpendicular_dir) * movement_intensity;
 
     // 5. 최종 힘 = 선형 보간된 흐름 + 회전 성분
     vec2 force = v_lin + rot;

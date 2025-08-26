@@ -60,10 +60,7 @@ export default class Swirl extends ShaderPass {
         // 입력 데이터가 유효한지 확인합니다.
         if (!leftHand || !rightHand) return;
 
-        // 1. 힘 벡터 계산: diff와 mouse_force를 기반으로 와류 선분의 길이와 방향을 결정합니다.
-        const diff = new THREE.Vector2()
-            .subVectors(rightHand.coords, leftHand.coords);
-
+        // 1. 와류가 발생할 두 점 위치, p0-p1 방향은 frag에서 계산
         const p0 = leftHand.coords;
         const p1 = rightHand.coords;
 
@@ -83,7 +80,7 @@ export default class Swirl extends ShaderPass {
         this.uniforms.v1.value.copy(rightHand.diff).multiplyScalar(forceScale);
         
         // 힘의 세기는 force 벡터의 길이에 비례하도록 설정합니다.
-        this.uniforms.strength.value = mouse_force * 0.05; // 세기를 증폭시켜 효과를 명확하게 합니다.
+        this.uniforms.strength.value = mouse_force * 0.01; // 세기를 증폭시켜 효과를 명확하게 합니다.
         
         // 와류의 영향 반경은 cursor_size에 비례하도록 설정합니다.
         this.uniforms.radius.value = cursor_size / 1000.0; // 반경 스케일을 적절히 조절합니다.
