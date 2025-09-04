@@ -253,15 +253,15 @@ export default class Simulation{
                 const { leftHand, rightHand } = person;
 
                 // 양손이 모두 감지되고 움직였을 때만 와류를 생성합니다.
-                // if (leftHand && leftHand.moved && rightHand && rightHand.moved) {
-                //     this.swirl.update({
-                //         leftHand: leftHand,
-                //         rightHand: rightHand,
-                //         cursor_size: this.options.cursor_size,
-                //         cellScale: this.cellScale,
-                //         mouse_force: this.options.mouse_force // 힘의 세기 조절
-                //     });
-                // }
+                if (leftHand && leftHand.moved && rightHand && rightHand.moved) {
+                    this.swirl.update({
+                        leftHand: leftHand,
+                        rightHand: rightHand,
+                        cursor_size: this.options.cursor_size,
+                        cellScale: this.cellScale,
+                        mouse_force: this.options.mouse_force // 힘의 세기 조절
+                    });
+                }
             });
         }
 
