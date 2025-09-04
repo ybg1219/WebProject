@@ -245,21 +245,23 @@ export default class Simulation{
             people.forEach(person => {
                 this.applyExternalForce(person.head, this.externalForceBody);
                 this.applyExternalForce(person.leftHand, this.externalForceLeft);
+                console.log("left", person.leftHand.coords, "diff", person.leftHand.diff);
                 this.applyExternalForce(person.rightHand, this.externalForceRight);
+                console.log("right", person.rightHand.coords, "diff", person.rightHand.diff);
                 
                 // --- 양손을 이용한 Swirl 효과 적용 ---
                 const { leftHand, rightHand } = person;
 
                 // 양손이 모두 감지되고 움직였을 때만 와류를 생성합니다.
-                if (leftHand && leftHand.moved && rightHand && rightHand.moved) {
-                    this.swirl.update({
-                        leftHand: leftHand,
-                        rightHand: rightHand,
-                        cursor_size: this.options.cursor_size,
-                        cellScale: this.cellScale,
-                        mouse_force: this.options.mouse_force // 힘의 세기 조절
-                    });
-                }
+                // if (leftHand && leftHand.moved && rightHand && rightHand.moved) {
+                //     this.swirl.update({
+                //         leftHand: leftHand,
+                //         rightHand: rightHand,
+                //         cursor_size: this.options.cursor_size,
+                //         cellScale: this.cellScale,
+                //         mouse_force: this.options.mouse_force // 힘의 세기 조절
+                //     });
+                // }
             });
         }
 
