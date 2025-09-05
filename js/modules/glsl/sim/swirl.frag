@@ -58,23 +58,18 @@ void main() {
     //dir = normalize(dir); // 하는 순간 시스템 불안정
     vec2 v_lin_dir = normalize(v_lin + vec2(0.00001)); 
     float cross_product_z = v_lin_dir.x * dir.y - v_lin_dir.y * dir.x;
-    cross_product_z *= 10.0;
-    
+    cross_product_z = smoothstep(cross_product_z, -1.0, 1.0);
+
     // v_lin의 크기(속도)를 계산하여 와류의 세기에 직접 반영.
     float movement_intensity = length(v_lin);
-    movement_intensity = clamp(movement_intensity, 0.2, 1.0);
+    movement_intensity = smoothstep(movement_intensity, 0.2, 1.0);
 
     // 외적 값과 움직임의 세기를 모두 사용하여 최종 회전력을 계산.
-    vec2 rot = strength * f * g * perpendicular_dir * movement_intensity;
+    vec2 rot = strength * f * g * perpendicular_dir * movement_intensity;// * cross_product_z;
 
     // 5. 최종 힘 = 선형 보간된 흐름 + 회전 성분
-    vec2 force = v_lin + rot;
+    vec2 force = v_lin * g + rot;
 
     // 최종 외력을 색상으로 출력합니다. (실제 시뮬레이션에서는 velocity FBO에 기록됩니다)
-    gl_FragColor = vec4(force, 0.0, 1.0);
-
-    /*
-    // 디버깅: 방향 벡터 시각화
-    gl_FragColor = vec4(normalize(dir) * 0.5 + 0.5, 0.0, 1.0);
-    */
+    gl_FragColor = vec4( force , 0.0, 1.0);
 }

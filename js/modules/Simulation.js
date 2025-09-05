@@ -233,7 +233,7 @@ export default class Simulation{
             this.boundarySpace.copy(this.cellScale);
         }
 
-        this.advection.update(this.options);
+        //this.advection.update(this.options);
 
         // --- 2. 외부 힘(External Forces) 적용 ---
         if (this.options.isMouse) {
@@ -243,11 +243,11 @@ export default class Simulation{
             const people = this.activeTracker.getPeople();
             
             people.forEach(person => {
-                this.applyExternalForce(person.head, this.externalForceBody);
-                this.applyExternalForce(person.leftHand, this.externalForceLeft);
-                console.log("left", person.leftHand.coords, "diff", person.leftHand.diff);
-                this.applyExternalForce(person.rightHand, this.externalForceRight);
-                console.log("right", person.rightHand.coords, "diff", person.rightHand.diff);
+                // this.applyExternalForce(person.head, this.externalForceBody);
+                // this.applyExternalForce(person.leftHand, this.externalForceLeft);
+                // console.log("left", person.leftHand.coords, "diff", person.leftHand.diff);
+                // this.applyExternalForce(person.rightHand, this.externalForceRight);
+                // console.log("right", person.rightHand.coords, "diff", person.rightHand.diff);
                 
                 // --- 양손을 이용한 Swirl 효과 적용 ---
                 const { leftHand, rightHand } = person;
@@ -269,41 +269,41 @@ export default class Simulation{
         let vel = this.fbos.vel_1;
 
         if(this.options.isViscous){
-            vel = this.viscous.update({
-                viscous: this.options.viscous,
-                iterations: this.options.iterations_viscous,
-                dt: this.options.dt
-            });
+            // vel = this.viscous.update({
+            //     viscous: this.options.viscous,
+            //     iterations: this.options.iterations_viscous,
+            //     dt: this.options.dt
+            // });
         }
 
-        this.divergence.update({vel});
+        // this.divergence.update({vel});
 
-        const pressure = this.poisson.update({
-            iterations: this.options.iterations_poisson,
-        });
+        // const pressure = this.poisson.update({
+        //     iterations: this.options.iterations_poisson,
+        // });
 
-        this.pressure.update({ vel , pressure});
+        // this.pressure.update({ vel , pressure});
 
         // --- 4. 밀도(Density) 업데이트 ---
-        vel = this.fbos.vel_1;
-        let allBodyCoords = [];
-        if (this.activeTracker) {
-            // 단일/다중 모드 모두에서 동일한 코드로 모든 좌표를 가져옵니다.
-            allBodyCoords = this.activeTracker.getPeople().flatMap(person =>
-                Object.values(person)
-                    .filter(Boolean) // null이나 undefined인 부위는 제외
-                    .map(part => part.coords.clone())
-            );
-        }
+        // vel = this.fbos.vel_1;
+        // let allBodyCoords = [];
+        // if (this.activeTracker) {
+        //     // 단일/다중 모드 모두에서 동일한 코드로 모든 좌표를 가져옵니다.
+        //     allBodyCoords = this.activeTracker.getPeople().flatMap(person =>
+        //         Object.values(person)
+        //             .filter(Boolean) // null이나 undefined인 부위는 제외
+        //             .map(part => part.coords.clone())
+        //     );
+        // }
         
-        this.density.update(
-        {   
-            cursor_size: this.options.cursor_size,
-            cellScale: this.cellScale,
-            vel: vel,
-            sourcePos: allBodyCoords
-        });
+        // this.density.update(
+        // {   
+        //     cursor_size: this.options.cursor_size,
+        //     cellScale: this.cellScale,
+        //     vel: vel,
+        //     sourcePos: allBodyCoords
+        // });
 
-        this.gradient.update()
+        // this.gradient.update()
     }
 }
