@@ -54,22 +54,24 @@ void main() {
     // 회전의 기본 방향 벡터 (90도 회전) normalize 절대 금지!!!! dir normalize도 주의
     vec2 perpendicular_dir = vec2(-dir.y, dir.x); // 거리가 멀어질 수록 회전 방향이 강해져야함.
 
-    // 2D 외적 계산
-    //dir = normalize(dir); // 하는 순간 시스템 불안정
-    vec2 v_lin_dir = normalize(v_lin + vec2(0.00001)); 
-    float cross_product_z = v_lin_dir.x * dir.y - v_lin_dir.y * dir.x;
-    cross_product_z = smoothstep(cross_product_z, -1.0, 1.0);
+    // 2D 외적 계산 순수한 각도 관계(-1.0 ~ 1.0)를 얻습니다.
+    vec2 v0_norm = normalize(v0 + vec2(0.00001));
+    vec2 v1_norm = normalize(v1 + vec2(0.00001));
+    float cross_product_z = v0.x * v1.y - v0.y * v1.x;
+
+    // 이 값의 부호(sign)가 최종 회전 방향(시계/반시계)을 결정합니다.
+    float rotation_direction = sign(cross_product_z); //smoothstep(-1.0, 1.0, cross_product_z);
 
     // v_lin의 크기(속도)를 계산하여 와류의 세기에 직접 반영.
     float movement_intensity = length(v_lin);
-    movement_intensity = smoothstep(movement_intensity, 0.2, 1.0);
+    movement_intensity = smoothstep(movement_intensity, 0.3, 1.0);
 
     // 외적 값과 움직임의 세기를 모두 사용하여 최종 회전력을 계산.
-    vec2 rot = strength * f * g * perpendicular_dir * movement_intensity;// * cross_product_z;
+    vec2 rot = strength * f * g * perpendicular_dir * rotation_direction; // * movement_intensity;
 
     // 5. 최종 힘 = 선형 보간된 흐름 + 회전 성분
-    vec2 force = v_lin * g + rot;
+    vec2 force = v_lin* g;// + rot;
 
     // 최종 외력을 색상으로 출력합니다. (실제 시뮬레이션에서는 velocity FBO에 기록됩니다)
-    gl_FragColor = vec4( force , 0.0, 1.0);
+    gl_FragColor = vec4( rot , 0.0, 1.0);
 }

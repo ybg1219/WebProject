@@ -104,16 +104,16 @@ export default class Swirl extends ShaderPass {
         const v0 = new THREE.Vector2(0, 0);
         if (this.isInsideBoundary(leftHand.coords, minX, maxX, minY, maxY)) {
             v0.copy(leftHand.diff);
-            console.log(v0);
+            // console.log("left", v0);
         } 
         const v1 = new THREE.Vector2(0, 0);
         if (this.isInsideBoundary(rightHand.coords, minX, maxX, minY, maxY)) {
             v1.copy(rightHand.diff);
-            console.log(v1)
+            // console.log("right", v1)
         }
 
-        this.uniforms.v0.value.copy(leftHand.diff).multiplyScalar(forceScale);
-        this.uniforms.v1.value.copy(rightHand.diff).multiplyScalar(forceScale);
+        this.uniforms.v0.value.copy( v0 ).multiplyScalar(forceScale);
+        this.uniforms.v1.value.copy( v1 ).multiplyScalar(forceScale);
         
         // 힘의 세기는 force 벡터의 길이에 비례하도록 설정합니다.
         this.uniforms.strength.value = mouse_force * 0.5; // 세기를 증폭시켜 효과를 명확하게 합니다.
