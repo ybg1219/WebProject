@@ -23,13 +23,14 @@ class BodyTracking {
         //     CENTER: 3,
         //     BOTTOM: 4
         // };
-        this.bodyKeys = ["head", "leftHand", "rightHand", "center", "foot"];
+        // this.bodyKeys = ["head", "leftHand", "rightHand", "center", "foot"];
 
         this.handsData = [ this.createData(), this.createData()];
         
         this.bodysData = [ this.createData(), this.createData()
-            ,this.createData(), this.createData(), this.createData()
-        ] // head, left, right, center, bottom
+            ,this.createData(), this.createData(), this.createData(),
+            this.createData(),this.createData(),this.createData(), this.createData()
+        ] // head, left, right, center, leftshoulder, rightshoulder, heap, leftFoot, rightFoot
     }
 
     createData() { // factory pattern
@@ -90,14 +91,18 @@ class BodyTracking {
                 const footY = (leftFoot.y + rightFoot.y) / 2;
 
                 // console.log(x,y);
-                this.setCoord(head.x, head.y);
+                // this.setCoord(head.x, head.y);
 
                 // body key 에 원하는 키 추가하고, 아래 코드 나중에 for 문으로 변경.
-                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[0]), head.x, head.y);
-                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[1]), leftHand.x, leftHand.y);
-                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[2]), rightHand.x, rightHand.y);
-                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[3]), neckX, neckY);
-                this.setBodyCoords(this.bodyKeys.indexOf(this.bodyKeys[4]), footX, footY);
+                this.setBodyCoords(0 , head.x, head.y);
+                this.setBodyCoords(1, leftHand.x, leftHand.y);
+                this.setBodyCoords(2, rightHand.x, rightHand.y);
+                this.setBodyCoords(3, neckX, neckY);
+                this.setBodyCoords(4, leftShoulder.x , leftShoulder.y);
+                this.setBodyCoords(5, rightShoulder.x , rightShoulder.y);
+                this.setBodyCoords(6, footX, footY);
+                this.setBodyCoords(7, leftFoot.x , leftFoot.y);
+                this.setBodyCoords(8, rightFoot.y , rightFoot.y);
                 // this.bodyKeys.forEach((key, i) => {
                 //     const point = landmarksMap[key];
                 //     this.setBodyCoords(i, point.x, point.y);
@@ -119,18 +124,18 @@ class BodyTracking {
         camera.start();
     }
 
-    setCoord(x, y) {
-        x = Math.floor((1 - x) * Common.width);
-        y = Math.floor(y * Common.height);
-        if (this.timer) clearTimeout(this.timer);
+    // setCoord(x, y) {
+    //     x = Math.floor((1 - x) * Common.width);
+    //     y = Math.floor(y * Common.height);
+    //     if (this.timer) clearTimeout(this.timer);
 
-        this.coords.set((x / Common.width) * 2 - 1, -(y / Common.height) * 2 + 1);
-        this.moved = true;
+    //     this.coords.set((x / Common.width) * 2 - 1, -(y / Common.height) * 2 + 1);
+    //     this.moved = true;
 
-        this.timer = setTimeout(() => {
-            this.moved = false;
-        }, 100);
-    }
+    //     this.timer = setTimeout(() => {
+    //         this.moved = false;
+    //     }, 100);
+    // }
 
     setBodyCoords(index, x, y){
         
@@ -183,23 +188,23 @@ class BodyTracking {
         });
     }
 
-    getBody(index) {
-        return {
-            //landmarks : this.handsData[index].landmarks,
-            coords: this.bodysData[index].coords,
-            diff: this.bodysData[index].diff,
-            moved: this.bodysData[index].moved
-        };
-    }
-    getWholeBody() {
-        // console.log(this.bodysData.map(c => c.coords.clone()));/
-        return {
-            //landmarks : this.handsData[index].landmarks,
-            coords: this.bodysData.map(c => c.coords.clone()), //this.bodyKeys.map((_, i) => this.bodysData[i].coords.clone()),
-            diff: this.bodysData.map(d => d.diff.clone()),
-            moved: this.bodysData.map(m => m.moved) // coords와 diff는 three.vector2 객체이므로 clone 필요.
-        };
-    }
+    // getBody(index) {
+    //     return {
+    //         //landmarks : this.handsData[index].landmarks,
+    //         coords: this.bodysData[index].coords,
+    //         diff: this.bodysData[index].diff,
+    //         moved: this.bodysData[index].moved
+    //     };
+    // }
+    // getWholeBody() {
+    //     // console.log(this.bodysData.map(c => c.coords.clone()));/
+    //     return {
+    //         //landmarks : this.handsData[index].landmarks,
+    //         coords: this.bodysData.map(c => c.coords.clone()), //this.bodyKeys.map((_, i) => this.bodysData[i].coords.clone()),
+    //         diff: this.bodysData.map(d => d.diff.clone()),
+    //         moved: this.bodysData.map(m => m.moved) // coords와 diff는 three.vector2 객체이므로 clone 필요.
+    //     };
+    // }
 
     /* @returns {Array<Object>} [{ head: {...}, leftHand: {...}, ... }] 형태의 배열
     */
@@ -215,10 +220,12 @@ class BodyTracking {
             head:       this.bodysData[0],
             leftHand:   this.bodysData[1],
             rightHand:  this.bodysData[2],
-            center:     this.bodysData[3],
-            heap:       this.bodysData[4],
-            leftFoot:   this.bodysData[5],
-            rightFoot:  this.bodysData[6]
+            center: this.bodysData[3],
+            leftShoulder:     this.bodysData[4],
+            rightShoulder: this.bodysData[5],
+            heap:       this.bodysData[6],
+            leftFoot:   this.bodysData[7],
+            rightFoot:  this.bodysData[8]
         };
 
         // 한 명의 데이터를 배열로 감싸서 반환하여, 
