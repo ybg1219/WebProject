@@ -70,8 +70,8 @@ void main() {
     vec2 rot = strength * f * g * perpendicular_dir * rotation_direction; // * movement_intensity;
 
     // 5. 최종 힘 = 선형 보간된 흐름 + 회전 성분
-    vec2 force = v_lin* g;// + rot;
+    vec2 force = v_lin* g + rot;
 
     // 최종 외력을 색상으로 출력합니다. (실제 시뮬레이션에서는 velocity FBO에 기록됩니다)
-    gl_FragColor = vec4( rot , 0.0, 1.0);
+    gl_FragColor = vec4( force , 0.0, 1.0);
 }
