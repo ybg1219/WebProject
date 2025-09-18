@@ -71,7 +71,7 @@ export default class Advection extends ShaderPass{
             fragmentShader: advection_frag,
             uniforms: this.uniforms
         });
-
+        // 테두리 선분 4개 생성.
         this.line = new THREE.LineSegments(boundaryG, boundaryM);
         this.scene.add(this.line);
     }
@@ -79,7 +79,7 @@ export default class Advection extends ShaderPass{
     update({ dt, isBounce, BFECC }){
 
         this.uniforms.dt.value = dt;
-        this.line.visible = isBounce;
+        this.line.visible = isBounce; // 플래그 값에 따라 시각화 결정.
         this.uniforms.isBFECC.value = BFECC;
 
         super.update();

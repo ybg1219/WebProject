@@ -230,25 +230,6 @@ class Tracking {
         }, 100);
     }
 
-    // update() {
-    //     // hands
-    //     // for (let i = 0; i < this.handsData.length; i++) {
-    //     //     const hand = this.handsData[i];
-    //     //     hand.diff.subVectors(hand.coords, hand.coords_old);
-    //     //     hand.coords_old.copy(hand.coords);
-    //     // }
-    //     // 전체 bodysData 각 원소별로 diff 계산
-    //     this.bodysData.forEach(body => {
-    //         body.diff.subVectors(body.coords, body.coords_old);
-    //         body.coords_old.copy(body.coords);
-
-    //         // 초기 프레임 등 0,0 일 경우 diff 초기화
-    //         if (body.coords_old.x === 0 && body.coords_old.y === 0) {
-    //             body.diff.set(0, 0);
-    //         }
-    //     });
-    // }
-
     getBody(index) {
         return {
             //landmarks : this.handsData[index].landmarks,

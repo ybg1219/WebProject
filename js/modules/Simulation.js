@@ -13,9 +13,6 @@ import Gradient from "./Gradient";
 import Swirl from "./Swirl";
 
 import Mouse from "./Mouse";
-import HandTracking from "./HandTracking";
-import BodyTracking from "./BodyTracking";
-import Tracking from "./Tracking";
 
 export default class Simulation{
     constructor(props){
@@ -172,7 +169,7 @@ export default class Simulation{
             dt: this.options.dt,
         });
 
-        this.gradient = new Gradient({ // Density constructor radius 추가됨. 조절 여부?
+        this.gradient = new Gradient({
             cellScale: this.cellScale,
             boundarySpace: this.boundarySpace,
             src: this.fbos.density_0,
@@ -199,13 +196,6 @@ export default class Simulation{
         for(let key in this.fbos){
             this.fbos[key].setSize(this.fboSize.x, this.fboSize.y);
         }
-    }
-
-    mergeForcesToVelocity() {
-        
-        Common.renderer.setRenderTarget(this.fbos.vel_1);
-        Common.renderer.render(this.scene, this.camera); // 반드시 full-screen quad로 구성된 scene
-        Common.renderer.setRenderTarget(null);
     }
 
     /**

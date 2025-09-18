@@ -70,8 +70,6 @@ export default class Webgl{
 
         VideoManager.setSize( Common.width, Common.height);
         CanvasManager.setSize( Common.width, Common.height);
-
-        // this.showCam();
     }
 
     render(){
@@ -98,5 +96,4 @@ export default class Webgl{
         if (this.stats) this.stats.end();
         requestAnimationFrame(this.loop.bind(this)); // 콜백함수를 인자로 받음.
     }
-
 }
