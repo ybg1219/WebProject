@@ -1,5 +1,4 @@
 import face_vert from "./glsl/sim/face.vert";
-import line_vert from "./glsl/sim/line.vert";
 
 import vortex_frag from "./glsl/sim/vortex.frag";
 import ShaderPass from "./ShaderPass";
@@ -7,7 +6,7 @@ import ShaderPass from "./ShaderPass";
 import * as THREE from "three";
 
 
-export default class vortex extends ShaderPass{
+export default class Vortex extends ShaderPass{
     constructor(simProps){
         super({
             material: {
@@ -22,6 +21,9 @@ export default class vortex extends ShaderPass{
                     },
                     dt: {
                         value: simProps.dt
+                    },
+                    px: {
+                        value: simProps.px
                     }
                 },
             },
@@ -35,9 +37,12 @@ export default class vortex extends ShaderPass{
         super.init();
     }
 
-    update({ dt }){
+    update({ dt, vel , fboSize, px}){
 
         this.uniforms.dt.value = dt;
+        this.uniforms.velocity.value = vel;
+        this.uniforms.fboSize.value = fboSize;
+        this.uniformss.px.value = px;
 
 
         super.update();

@@ -1,6 +1,7 @@
 precision highp float;
 uniform vec2 fboSize;
 uniform sampler2D velocity;
+uniform vec2 px;
 uniform float dt;
 varying vec2 uv;
 
@@ -106,10 +107,10 @@ void main() {
     // u_resolution.y / u_resolution.x 를 곱해 화면 비율을 보정합니다.
     // vec2 uv = (gl_FragCoord.xy * 2.0 - fboSize.xy) / fboSize.y;
     vec2 ratio = max(fboSize.x, fboSize.y) / fboSize;
-
+    vec2 vel = texture2D(velocity, uv).xy;
 
     // 시간에 따라 흐르도록 uv 좌표에 u_time을 더해줍니다.
-    vec2 p = uv - dt * raito;
+    vec2 p = uv - vel * dt * raito;
 
     // 현재 위치(p)에서 컬 노이즈 속도 벡터를 계산합니다.
     vec2 curl = computeCurl(p);
