@@ -10,9 +10,6 @@ export default class Gradient extends ShaderPass{
                 vertexShader: face_vert,
                 fragmentShader: gradient_frag,
                 uniforms: {
-                    boundarySpace: {
-                        value: simProps.boundarySpace
-                    },
                     density: {
                         value: simProps.src.texture
                     },

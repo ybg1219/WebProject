@@ -17,7 +17,7 @@ export default class Vortex extends ShaderPass{
                         value: simProps.fboSize
                     },
                     velocity: {
-                        value: simProps.src.texture
+                        value: simProps.velocity.texture
                     },
                     dt: {
                         value: simProps.dt
@@ -37,12 +37,10 @@ export default class Vortex extends ShaderPass{
         super.init();
     }
 
-    update({ vel , fboSize, px}){
+    update({ vel , fboSize}){
 
         this.uniforms.velocity.value = vel;
         this.uniforms.fboSize.value = fboSize;
-        this.uniformss.px.value = px;
-
 
         super.update();
 

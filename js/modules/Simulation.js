@@ -284,7 +284,7 @@ export default class Simulation{
         //--- 4. 밀도(Density) 업데이트 ---
         vel = this.fbos.vel_1;
 
-        this.vortex.update({vel, fboSize, px});
+        this.vortex.update({vel : vel, fboSize: this.fboSize});
 
         let allBodyCoords = [];
         if (this.activeTracker) {

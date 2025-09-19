@@ -88,6 +88,10 @@ export default class Density extends ShaderPass{
             this.posArray[i * 2 + 1] = uv.y;
         }); // cast 2d vector to glsl array
 
+        // Ping-Pong 스왑
+        const den0 = this.props.output0;
+        const den1 = this.props.output1;
+
         this.uniforms.positions.value = this.posArray;
         this.uniforms.density.value = den0.texture;
         this.props.output = den1;
@@ -95,8 +99,8 @@ export default class Density extends ShaderPass{
         super.update();
 
         // swap 역할 수행: output1 → 다음 프레임의 input
-        const temp = this.props.output0;
-        this.props.output0 = this.props.output1;
+        const temp = den0;
+        this.props.output0 = den1;
         this.props.output1 = temp;
 
         return this.props.output;
