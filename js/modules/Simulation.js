@@ -15,6 +15,25 @@ import Vortex from "./Vortex"
 
 import Mouse from "./Mouse";
 
+export const BODY_PART_ORDER = [
+    'head',         // 0
+    'center',       // 1 (neck 대신)
+    'rightShoulder',// 2
+    'rightHand',    // 3 
+    'leftShoulder', // 4
+    'leftHand',     // 5
+    'heap',         // 6 (pelvis 대신)
+    'rightFoot',    // 7
+    'leftFoot'      // 8
+];
+
+// GLSL의 MAX_POSITIONS와 일치시켜야 합니다.
+export const MAX_BODY_PARTS = BODY_PART_ORDER.length; // 9
+
+// 유효하지 않은 좌표를 나타내는 특수 값 (sentinel value)
+const INACTIVE_VEC2 = new THREE.Vector2(-10.0, -10.0);
+
+
 export default class Simulation{
     constructor(props){
         //this.props = props;
@@ -177,13 +196,13 @@ export default class Simulation{
             fboSize: this.fboSize,
             dt: this.options.dt,
         });
-        this.vortex = new Vortex({
-            cellScale: this.cellScale,
-            velocity: this.fbos.vel_0,
-            dst: this.fbos.vel_1,
-            fboSize: this.fboSize,
-            dt: this.options.dt,
-        });
+        // this.vortex = new Vortex({
+        //     cellScale: this.cellScale,
+        //     velocity: this.fbos.vel_0,
+        //     dst: this.fbos.vel_1,
+        //     fboSize: this.fboSize,
+        //     dt: this.options.dt,
+        // });
     }
 
     calcSize(){
@@ -222,7 +241,53 @@ export default class Simulation{
         }
     }
 
+    /**
+     * 한 사람의 신체 데이터에서 유효한 경계 내의 좌표만 필터링하여 반환합니다.
+     * @param {object} person - head, leftHand 등이 포함된 한 사람의 객체
+     * @returns {THREE.Vector2[]} 유효한 좌표(Vector2)들의 배열
+     */
+    _getFilteredBodyCoords(person) {
+        // 1. 유효 영역 경계 계산
+        const cursorSize = this.options.cursor_size;
+        const boundaryX = 1.0 - (cursorSize * this.cellScale.x) - (this.cellScale.x * 2.0);
+        const boundaryY = 1.0 - (cursorSize * this.cellScale.y) - (this.cellScale.y * 2.0);
+
+        const filteredCoords = [];
+
+        // 2. person 객체의 모든 신체 부위를 순회
+        for (const [partName, partData] of Object.entries(person)) {
+            console.log(partName, partData);
+            if (partData?.coords) {
+                const pos = partData.coords;
+                const isInside = pos.x > -boundaryX && pos.x < boundaryX &&
+                                 pos.y > -boundaryY && pos.y < boundaryY;
+                
+                if (isInside) {
+                    // 경계 내에 있을 때만 객체에 해당 부위를 추가합니다.
+                    filteredCoords[partName] = partData;
+                }
+            }
+        }
+
+        // BODY_PART_ORDER를 순회하며 순수한 좌표 배열을 생성합니다.
+        // const filteredCoords = BODY_PART_ORDER.map(partName => {
+        //     const part = person[partName];
+        //     if (part?.coords) {
+        //         const pos = part.coords;
+        //         const isInside = pos.x > -boundaryX && pos.x < boundaryX &&
+        //                          pos.y > -boundaryY && pos.y < boundaryY;
+                
+        //         return isInside ? pos : INACTIVE_VEC2;
+        //     }
+        //     return INACTIVE_VEC2;
+        // });
+        return filteredCoords;
+    }
+
     update(){
+        // --- 0. 데이터 준비: 트래커로부터 사용자 정보를 한 번만 가져옵니다. ---
+        const people = this.activeTracker ? this.activeTracker.getPeople() : [];
+
         // --- 1. 경계 및 이류(Advection) 계산 ---
         if(this.options.isBounce){ // 경계 여부
             this.boundarySpace.set(0, 0);
@@ -232,14 +297,16 @@ export default class Simulation{
 
         this.advection.update(this.options);
 
+        
+        let allBodyCoords = [];
         // --- 2. 외부 힘(External Forces) 적용 ---
         if (this.options.isMouse) {
             this.applyExternalForce(Mouse, this.externalForce);
         } else if (this.activeTracker) {
-            // activeTracker가 어떤 모듈이든 상관없이 getPeople()을 호출합니다.
-            const people = this.activeTracker.getPeople();
             
-            people.forEach(person => {
+            allBodyCoords = people.map(person => this._getFilteredBodyCoords(person))
+            console.log(allBodyCoords)
+            allBodyCoords.forEach(person => {
                 this.applyExternalForce(person.head, this.externalForceBody);
                 this.applyExternalForce(person.leftHand, this.externalForceLeft);
                 // console.log("left", person.leftHand.coords, "diff", person.leftHand.diff);
@@ -284,24 +351,17 @@ export default class Simulation{
         //--- 4. 밀도(Density) 업데이트 ---
         vel = this.fbos.vel_1;
 
-        this.vortex.update({vel : vel, fboSize: this.fboSize});
+        // this.vortex.update({vel : vel, fboSize: this.fboSize});
+        allBodyCoords.forEach(person => {
+            const personSourcePos = Object.values(person).map(part => part.coords);;
 
-        let allBodyCoords = [];
-        if (this.activeTracker) {
-            // 단일/다중 모드 모두에서 동일한 코드로 모든 좌표를 가져옵니다.
-            allBodyCoords = this.activeTracker.getPeople().flatMap(person =>
-                Object.values(person)
-                    .filter(Boolean) // null이나 undefined인 부위는 제외
-                    .map(part => part.coords.clone())
-            );
-        }
-        
-        this.density.update(
-        {   
-            cursor_size: this.options.cursor_size,
-            cellScale: this.cellScale,
-            vel: vel,
-            sourcePos: allBodyCoords
+            // 한 사람의 좌표 배열(sourcePos)을 전달하여 density를 업데이트합니다.
+            this.density.update({
+                cursor_size: this.options.cursor_size,
+                cellScale: this.cellScale,
+                vel: vel,
+                sourcePos: personSourcePos
+            });
         });
 
         this.gradient.update()

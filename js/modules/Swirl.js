@@ -12,7 +12,7 @@ export default class Swirl extends ShaderPass {
             material: {
                 vertexShader: swirl_vert,
                 fragmentShader: swirl_frag,
-                //blending: THREE.AdditiveBlending,
+                blending: THREE.AdditiveBlending,
                 uniforms: {
                     //fboSize: { value: new THREE.Vector2(simProps.src.width, simProps.src.height) },
                     // GLSL 셰이더로 전달할 유니폼 변수들

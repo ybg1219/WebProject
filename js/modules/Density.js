@@ -71,19 +71,12 @@ export default class Density extends ShaderPass{
         // 여러 개의 소스 위치를 0~1로 변환해서 각 유니폼에 전달
         const toUv = ({ x, y }) => new THREE.Vector2((x + 1.0) * 0.5, (y + 1.0) * 0.5);
 
-        // 커서 사이즈 반영하여 스크린에서 클리핑
-        const clipping = ({ x, y }) => new THREE.Vector2(
-            Math.min(Math.max(x, -1 + cursorSizeX + cellScale.x * 2), 1 - cursorSizeX - cellScale.x * 2),
-            Math.min(Math.max(y, -1 + cursorSizeY + cellScale.y * 2), 1 - cursorSizeY - cellScale.y * 2)
-        );
-
         if (sourcePos.length > this.landmarkMaxSize) {
             console.warn("sourcePos overflow: ", sourcePos.length, ">", this.landmarkMaxSize);
         }
 
         sourcePos.forEach((pos, i) => {
-            const clipped = clipping(pos);
-            const uv = toUv(clipped);
+            const uv = toUv(pos);
             this.posArray[i * 2] = uv.x;
             this.posArray[i * 2 + 1] = uv.y;
         }); // cast 2d vector to glsl array
