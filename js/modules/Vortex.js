@@ -23,7 +23,7 @@ export default class Vortex extends ShaderPass{
                         value: simProps.dt
                     },
                     px: {
-                        value: simProps.px
+                        value: simProps.cellScale
                     }
                 },
             },
@@ -37,14 +37,18 @@ export default class Vortex extends ShaderPass{
         super.init();
     }
 
-    update({ dt, vel , fboSize, px}){
+    update({ vel , fboSize, px}){
 
-        this.uniforms.dt.value = dt;
         this.uniforms.velocity.value = vel;
         this.uniforms.fboSize.value = fboSize;
         this.uniformss.px.value = px;
 
 
         super.update();
+
+        // swap 역할 수행: output1 → 다음 프레임의 input
+        const temp = this.props.output0;
+        this.props.output0 = this.props.output1;
+        this.props.output1 = temp;
     }
 }

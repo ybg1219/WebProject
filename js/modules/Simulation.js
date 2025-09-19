@@ -11,6 +11,7 @@ import Pressure from "./Pressure";
 import Density from "./Density";
 import Gradient from "./Gradient";
 import Swirl from "./Swirl";
+import Vortex from "./Vortex"
 
 import Mouse from "./Mouse";
 
@@ -171,9 +172,15 @@ export default class Simulation{
 
         this.gradient = new Gradient({
             cellScale: this.cellScale,
-            boundarySpace: this.boundarySpace,
             src: this.fbos.density_0,
             dst: this.fbos.gradient,
+            fboSize: this.fboSize,
+            dt: this.options.dt,
+        });
+        this.vortex = new Vortex({
+            cellScale: this.cellScale,
+            velocity: this.fbos.vel_0,
+            dst: this.fbos.vel_1,
             fboSize: this.fboSize,
             dt: this.options.dt,
         });
@@ -276,6 +283,9 @@ export default class Simulation{
 
         //--- 4. 밀도(Density) 업데이트 ---
         vel = this.fbos.vel_1;
+
+        this.vortex.update({vel, fboSize, px});
+
         let allBodyCoords = [];
         if (this.activeTracker) {
             // 단일/다중 모드 모두에서 동일한 코드로 모든 좌표를 가져옵니다.

@@ -89,11 +89,6 @@ export default class Density extends ShaderPass{
         }); // cast 2d vector to glsl array
 
         this.uniforms.positions.value = this.posArray;
-
-        // Ping-Pong 스왑
-        const den0 = this.props.output0;
-        const den1 = this.props.output1;
-
         this.uniforms.density.value = den0.texture;
         this.props.output = den1;
 
