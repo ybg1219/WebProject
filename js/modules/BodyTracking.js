@@ -7,23 +7,8 @@ class BodyTracking {
 
     constructor() {
         this.landmarks = [];
-        this.coords = new THREE.Vector2();
-        this.coords_old = new THREE.Vector2();
-        this.diff = new THREE.Vector2();
-        this.moved = false;
-        this.timer = null;
-
         this.videoElement = null;
         this.pose = null;
-
-        // this.bodyKeys = {
-        //     HEAD: 0,
-        //     LEFT: 1,
-        //     RIGHT: 2,
-        //     CENTER: 3,
-        //     BOTTOM: 4
-        // };
-        // this.bodyKeys = ["head", "leftHand", "rightHand", "center", "foot"];
 
         this.handsData = [ this.createData(), this.createData()];
         
@@ -47,10 +32,6 @@ class BodyTracking {
     async init() {
         this.videoElement = document.getElementById('input_video');
 
-        // this.pose = new Pose({
-        //     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
-        // });
-
         this.pose = new Pose({
             locateFile: (file) => {
                 return `/mediapipe/pose/${file}`; // 나중에 webpack이 복사해줄 경로
@@ -65,7 +46,6 @@ class BodyTracking {
             minTrackingConfidence: 0.7
         });
 
-        console.log("Pose Tracking initialized");
 
         this.pose.onResults(results => {
             this.landmarks = results.poseLandmarks;
@@ -90,9 +70,6 @@ class BodyTracking {
                 const footX = (leftFoot.x + rightFoot.x) / 2;
                 const footY = (leftFoot.y + rightFoot.y) / 2;
 
-                // console.log(x,y);
-                // this.setCoord(head.x, head.y);
-
                 // body key 에 원하는 키 추가하고, 아래 코드 나중에 for 문으로 변경.
                 this.setBodyCoords(0 , head.x, head.y);
                 this.setBodyCoords(1, leftHand.x, leftHand.y);
@@ -103,39 +80,33 @@ class BodyTracking {
                 this.setBodyCoords(6, footX, footY);
                 this.setBodyCoords(7, leftFoot.x , leftFoot.y);
                 this.setBodyCoords(8, rightFoot.y , rightFoot.y);
-                // this.bodyKeys.forEach((key, i) => {
-                //     const point = landmarksMap[key];
-                //     this.setBodyCoords(i, point.x, point.y);
-                // });
             }
         });
 
-        this.cameraStart();
+        await this.cameraStart();
+
+        console.log("Pose Tracking initialized");
     }
 
-    cameraStart() {
-        const camera = new Camera(this.videoElement, {
-            onFrame: async () => {
-                await this.pose.send({ image: this.videoElement });
-            },
-            width: Common.width,
-            height: Common.height
+    async cameraStart() {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        this.videoElement.srcObject = stream;
+
+        // 비디오 메타데이터가 로드되어야 videoWidth/Height를 알 수 있습니다.
+        await new Promise(resolve => {
+            this.videoElement.onloadedmetadata = () => resolve();
         });
-        camera.start();
+
+        this.videoElement.play();
+
+        // 비디오가 재생되면 매 프레임 추적을 시작합니다.
+        const process = async () => {
+            await this.pose.send({ image: this.videoElement });
+            requestAnimationFrame(process);
+        };
+        
+        process();
     }
-
-    // setCoord(x, y) {
-    //     x = Math.floor((1 - x) * Common.width);
-    //     y = Math.floor(y * Common.height);
-    //     if (this.timer) clearTimeout(this.timer);
-
-    //     this.coords.set((x / Common.width) * 2 - 1, -(y / Common.height) * 2 + 1);
-    //     this.moved = true;
-
-    //     this.timer = setTimeout(() => {
-    //         this.moved = false;
-    //     }, 100);
-    // }
 
     setBodyCoords(index, x, y){
         
@@ -169,13 +140,6 @@ class BodyTracking {
     }
 
     update() {
-        this.diff.subVectors(this.coords, this.coords_old);
-        this.coords_old.copy(this.coords);
-
-        if (this.coords_old.x === 0 && this.coords_old.y === 0) {
-            this.diff.set(0, 0);
-        }
-
         // 전체 bodysData 각 원소별로 diff 계산
         this.bodysData.forEach(body => {
             body.diff.subVectors(body.coords, body.coords_old);
@@ -188,25 +152,8 @@ class BodyTracking {
         });
     }
 
-    // getBody(index) {
-    //     return {
-    //         //landmarks : this.handsData[index].landmarks,
-    //         coords: this.bodysData[index].coords,
-    //         diff: this.bodysData[index].diff,
-    //         moved: this.bodysData[index].moved
-    //     };
-    // }
-    // getWholeBody() {
-    //     // console.log(this.bodysData.map(c => c.coords.clone()));/
-    //     return {
-    //         //landmarks : this.handsData[index].landmarks,
-    //         coords: this.bodysData.map(c => c.coords.clone()), //this.bodyKeys.map((_, i) => this.bodysData[i].coords.clone()),
-    //         diff: this.bodysData.map(d => d.diff.clone()),
-    //         moved: this.bodysData.map(m => m.moved) // coords와 diff는 three.vector2 객체이므로 clone 필요.
-    //     };
-    // }
-
-    /* @returns {Array<Object>} [{ head: {...}, leftHand: {...}, ... }] 형태의 배열
+    /**
+     *  @returns {Array<Object>} [{ head: {...}, leftHand: {...}, ... }] 형태의 배열
     */
     getPeople() {
         // bodysData가 비어있으면 아무도 감지되지 않은 것이므로 빈 배열을 반환합니다.
