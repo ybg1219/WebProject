@@ -256,7 +256,7 @@ export default class Simulation{
 
         // 2. person 객체의 모든 신체 부위를 순회
         for (const [partName, partData] of Object.entries(person)) {
-            console.log(partName, partData);
+            // console.log(partName, partData);
             if (partData?.coords) {
                 const pos = partData.coords;
                 const isInside = pos.x > -boundaryX && pos.x < boundaryX &&
@@ -266,21 +266,12 @@ export default class Simulation{
                     // 경계 내에 있을 때만 객체에 해당 부위를 추가합니다.
                     filteredCoords[partName] = partData;
                 }
+                else {
+                    partData.coords = INACTIVE_VEC2;
+                    filteredCoords[partName] = partData;
+                }
             }
         }
-
-        // BODY_PART_ORDER를 순회하며 순수한 좌표 배열을 생성합니다.
-        // const filteredCoords = BODY_PART_ORDER.map(partName => {
-        //     const part = person[partName];
-        //     if (part?.coords) {
-        //         const pos = part.coords;
-        //         const isInside = pos.x > -boundaryX && pos.x < boundaryX &&
-        //                          pos.y > -boundaryY && pos.y < boundaryY;
-                
-        //         return isInside ? pos : INACTIVE_VEC2;
-        //     }
-        //     return INACTIVE_VEC2;
-        // });
         return filteredCoords;
     }
 
