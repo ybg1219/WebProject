@@ -251,8 +251,8 @@ export default class Simulation{
         const cursorSize = this.options.cursor_size;
         const boundaryX = 1.0 - (cursorSize * this.cellScale.x) - (this.cellScale.x * 2.0);
         const boundaryY = 1.0 - (cursorSize * this.cellScale.y) - (this.cellScale.y * 2.0);
-
-        const filteredCoords = [];
+        // console.log(boundaryX, boundaryY)
+        const filteredCoords = {};
 
         // 2. person 객체의 모든 신체 부위를 순회
         for (const [partName, partData] of Object.entries(person)) {
@@ -267,8 +267,11 @@ export default class Simulation{
                     filteredCoords[partName] = partData;
                 }
                 else {
-                    partData.coords = INACTIVE_VEC2;
-                    filteredCoords[partName] = partData;
+                    // 전개 구문(...)을 사용해 partData를 얕게 복사하고, coords 속성만 덮어씁니다.
+                    filteredCoords[partName] = { 
+                        ...partData, 
+                        coords: INACTIVE_VEC2 
+                    };
                 }
             }
         }

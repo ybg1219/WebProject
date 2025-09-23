@@ -1,10 +1,11 @@
 precision highp float;
-#define MAX_POSITIONS 20
+
+uniform vec2 pointPositions[MAX_BODY_PARTS];
+uniform vec2 linePositions[MAX_BODY_PARTS];
+uniform int lineCount; // 유효한 선의 개수 (점 개수 / 2)
 
 uniform sampler2D velocity;
 uniform sampler2D density;
-
-uniform vec2 positions[MAX_POSITIONS]; // 최대 20개의 vec2 위치를 받는 배열
 
 uniform float radius;    // 소싱 반경
 uniform float strength;  // 밀도 증가량
@@ -62,21 +63,24 @@ void main() {
 
     // 0. 연기 소싱
     float source = 0.0;
-    // 점 소스
-    for (int i =0;i < MAX_POSITIONS; i++) { // 최대 길이 10
-        if (positions[i].x <= 0.0 || positions[i].y <= 0.0) continue;
-        source += strength * computeFalloff(uv, positions[i], radius)*0.5;
+
+    // 1. 점 소스 계산: 개별 신체 부위
+    for (int i = 0; i < MAX_BODY_PARTS; i++) {
+        source += strength * computeFalloff(uv, pointPositions[i], radius) * 0.5;
     }
 
-    vec2 center = positions[3];
-    // 선 소스 (SDF 기반)
-    for (int i =0; i < MAX_POSITIONS ; i++){ // center 제외 하고 계산
-        if (positions[i].x <= 0.0 || positions[i].y <= 0.0) continue;
-        if (i == 3) continue; // i = 3일때 center
-        source += strength * sdfLineFalloff(uv, positions[i], center, radius) *0.4;
+   // 2. 선 소스 계산
+    // JavaScript에서 보낸 유효한 선의 개수(lineCount)만큼만 반복합니다.
+    for (int i = 0; i < MAX_BODY_PARTS; i++) {
+        if (i >= lineCount) {
+            break;
+        }
+        vec2 p1 = linePositions[i * 2];
+        vec2 p2 = linePositions[i * 2 + 1];
+        source += strength * sdfLineFalloff(uv, p1, p2, radius * 0.7) * 0.4;
     }
 
-    // 1. buoyancy 
+    // 3. buoyancy 
 
     vec2 ratio = max(fboSize.x, fboSize.y) / fboSize;
     vec2 vel = texture2D(velocity, uv).xy;
@@ -87,8 +91,7 @@ void main() {
     // vec2 buoyancyForce = - buoyancyCoefficient * (d) * gravity;
     // vel += buoyancyForce;
 
-
-    // 2. 과거 밀도 위치 추적 (Advection for density)    
+    // 3. 과거 밀도 위치 추적 (Advection for density)    
     vec2 uv2 = uv - vel * dt * ratio;
     uv2 = clamp(uv2, vec2(0.0), vec2(1.0)); 
 
