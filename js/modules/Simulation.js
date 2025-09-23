@@ -299,7 +299,7 @@ export default class Simulation{
         } else if (this.activeTracker) {
             
             allBodyCoords = people.map(person => this._getFilteredBodyCoords(person))
-            console.log(allBodyCoords)
+            //console.log(allBodyCoords)
             allBodyCoords.forEach(person => {
                 this.applyExternalForce(person.head, this.externalForceBody);
                 this.applyExternalForce(person.leftHand, this.externalForceLeft);

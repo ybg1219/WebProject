@@ -1,8 +1,9 @@
 precision highp float;
 
 uniform vec2 pointPositions[MAX_BODY_PARTS];
-uniform vec2 linePositions[MAX_BODY_PARTS];
-uniform int lineCount; // 유효한 선의 개수 (점 개수 / 2)
+uniform vec2 linePositions[MAX_BODY_PARTS*2];
+uniform int lineCount; // 유효한 선의 개수
+uniform int pointCount; // 유효한 선의 개수
 
 uniform sampler2D velocity;
 uniform sampler2D density;
@@ -66,6 +67,9 @@ void main() {
 
     // 1. 점 소스 계산: 개별 신체 부위
     for (int i = 0; i < MAX_BODY_PARTS; i++) {
+        if (i >= pointCount) break;
+        vec2 p = pointPositions[i];
+        if (p.x < 0.0 || p.y < 0.0) continue;
         source += strength * computeFalloff(uv, pointPositions[i], radius) * 0.5;
     }
 

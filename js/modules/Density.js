@@ -23,6 +23,7 @@ export default class Density extends ShaderPass{
                     pointPositions: { value: null },
                     // 선 소스를 위한 좌표 배열
                     linePositions: { value: null },
+                    pointCount : { value : 0 },
                     // 유효한 선의 개수
                     lineCount: { value: 0 }, 
                     radius: {
@@ -79,15 +80,13 @@ export default class Density extends ShaderPass{
         this.uniforms.pointPositions.value = new Float32Array(MAX_BODY_PARTS * 2);
         
         // 선 좌표 배열 초기화
-        const maxLines = this.bodyConnectionIndices.length;
-        this.uniforms.linePositions.value = new Float32Array(maxLines * 2 * 2); // 선 개수 * 점 2개 * xy 2개
+        this.uniforms.linePositions.value = new Float32Array(MAX_BODY_PARTS * 4); // 선 개수 * 점 2개 * xy 2개
     }
 
     update({ cursor_size ,cellScale, vel, sourcePos }) {
         
         this.uniforms.radius.value = cursor_size;
         this.uniforms.px.value = cellScale;
-        // 유니폼 갱신
         this.uniforms.velocity.value = vel.texture;
         
         // 여러 개의 소스 위치를 0~1로 변환해서 각 유니폼에 전달
@@ -96,16 +95,16 @@ export default class Density extends ShaderPass{
         if (sourcePos.length > this.landmarkMaxSize) {
             console.warn("sourcePos overflow: ", sourcePos.length, ">", this.landmarkMaxSize);
         }
-        console.log(sourcePos)
         const uvCoords = sourcePos.map(toUv);
-        this.uniforms.pointPositions.value.set( new Float32Array(this.landmarkMaxSize));
-        this.uniforms.linePositions.value.set( new Float32Array(this.landmarkMaxSize/2)); 
 
+        const validPointCoords = [];
         for (let i = 0; i < uvCoords.length; i++) {
-            if (uvCoords[i].x <= -2.0 && uvCoords[i].y <= -2.0) return;
-            this.uniforms.pointPositions.value[i * 2] = uvCoords[i].x;
-            this.uniforms.pointPositions.value[i * 2 + 1] = uvCoords[i].y;
+            if (uvCoords[i].x <= -1.0 && uvCoords[i].y <= -1.0) continue;
+            validPointCoords.push(uvCoords[i].x, uvCoords[i].y);
         }
+        this.uniforms.pointPositions.value.set(validPointCoords);
+        this.uniforms.pointCount.value = validPointCoords.length/2;
+        console.log(validPointCoords);
 
         // 3. 선 소스(Line Source) 데이터 채우기
         const validLineCoords = [];
@@ -122,6 +121,7 @@ export default class Density extends ShaderPass{
                 validLineCoords.push(partA.x, partA.y, partB.x, partB.y);
             }
         });
+        // console.log(validLineCoords);
 
         // 유효한 선 데이터를 Float32Array에 복사하고, 유효한 선의 개수를 업데이트합니다.
         this.uniforms.linePositions.value.set(validLineCoords);
