@@ -65,7 +65,6 @@ export default class Density extends ShaderPass{
             [BODY_PART_ORDER.indexOf('center'), BODY_PART_ORDER.indexOf('heap')],
             [BODY_PART_ORDER.indexOf('heap'), BODY_PART_ORDER.indexOf('leftFoot')],
             [BODY_PART_ORDER.indexOf('heap'), BODY_PART_ORDER.indexOf('rightFoot')],
-            [BODY_PART_ORDER.indexOf('rightShoulder'), BODY_PART_ORDER.indexOf('leftShoulder')],
             [BODY_PART_ORDER.indexOf('rightShoulder'), BODY_PART_ORDER.indexOf('rightHand')],
             [BODY_PART_ORDER.indexOf('leftShoulder'), BODY_PART_ORDER.indexOf('leftHand')],
         ];

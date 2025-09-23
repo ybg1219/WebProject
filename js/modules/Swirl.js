@@ -32,38 +32,6 @@ export default class Swirl extends ShaderPass {
     }
 
     /**
-     * 좌표를 화면 경계 내로 제한(클리핑)하는 헬퍼 함수.
-     * @param {THREE.Vector2} point - 클리핑할 좌표.
-     * @param {number} cursorSizeX - 커서의 X 크기 (경계 계산용).
-     * @param {number} cursorSizeY - 커서의 Y 크기 (경계 계산용).
-     * @param {THREE.Vector2} cellScale - 픽셀(셀) 크기.
-     * @returns {THREE.Vector2} 클리핑된 좌표.
-     */
-    clipPoint(point, cursorSizeX, cursorSizeY, cellScale) {
-        const boundaryX = 1.0 - cursorSizeX - cellScale.x * 2.0;
-        const boundaryY = 1.0 - cursorSizeY - cellScale.y * 2.0;
-
-        const minX = -boundaryX;
-        const maxX = boundaryX;
-        const minY = -boundaryY;
-        const maxY = boundaryY;
-        
-        point.x = Math.max(minX, Math.min(maxX,point.x));
-        point.y = Math.max(minY, Math.min(maxY,point.y));
-        return point;
-    }
-
-    /**
-
-    점이 경계 내에 있는지 확인하는 헬퍼 함수.
-
-    @returns {boolean} 경계 내에 있으면 true를 반환.
-    */
-    isInsideBoundary(point, minX, maxX, minY, maxY) {
-        return point.x > minX && point.x < maxX && point.y > minY && point.y < maxY;
-    }
-
-    /**
      * 매 프레임 호출되어 와류 효과의 유니폼 값을 업데이트합니다.
      * @param {object} props - 외부에서 전달되는 속성들.
      * @param {object} props.leftHand - 왼손 추적 데이터.
@@ -78,45 +46,16 @@ export default class Swirl extends ShaderPass {
         // 입력 데이터가 유효한지 확인합니다.
         if (!leftHand || !rightHand) return;
 
-        const boundaryX = 1.0 - (props.cursor_size * props.cellScale.x) - (props.cellScale.x * 2.0);
-        const boundaryY = 1.0 - (props.cursor_size * props.cellScale.y) - (props.cellScale.y * 2.0);
-
-        const minX = -boundaryX;
-        const maxX = boundaryX;
-        const minY = -boundaryY;
-        const maxY = boundaryY;
-
-        // 1. 와류가 발생할 두 점 위치, p0-p1 방향은 frag에서 계산
-        const p0 = leftHand.coords.clone();
-        p0.x = Math.max(minX, Math.min(maxX, p0.x));
-        p0.y = Math.max(minY, Math.min(maxY, p0.y));
-
-        const p1 = rightHand.coords.clone();
-        p1.x = Math.max(minX, Math.min(maxX, p1.x));
-        p1.y = Math.max(minY, Math.min(maxY, p1.y));
-
-        this.uniforms.p0.value.copy(p0);
-        this.uniforms.p1.value.copy(p1);
+        this.uniforms.p0.value.copy(leftHand.coords);
+        this.uniforms.p1.value.copy(rightHand.coords);
 
         const forceScale = 1.0;
 
-        // 2. 각 손이 경계 내에 있을 때만 diff를 사용 if 밖 (0,0) 유지
-        const v0 = new THREE.Vector2(0, 0);
-        if (this.isInsideBoundary(leftHand.coords, minX, maxX, minY, maxY)) {
-            v0.copy(leftHand.diff);
-            // console.log("left", v0);
-        } 
-        const v1 = new THREE.Vector2(0, 0);
-        if (this.isInsideBoundary(rightHand.coords, minX, maxX, minY, maxY)) {
-            v1.copy(rightHand.diff);
-            // console.log("right", v1)
-        }
-
-        this.uniforms.v0.value.copy( v0 ).multiplyScalar(forceScale);
-        this.uniforms.v1.value.copy( v1 ).multiplyScalar(forceScale);
+        this.uniforms.v0.value.copy( leftHand.diff ).multiplyScalar(forceScale);
+        this.uniforms.v1.value.copy( rightHand.diff ).multiplyScalar(forceScale);
         
         // 힘의 세기는 force 벡터의 길이에 비례하도록 설정합니다.
-        this.uniforms.strength.value = mouse_force * 0.5; // 세기를 증폭시켜 효과를 명확하게 합니다.
+        this.uniforms.strength.value = mouse_force * 0.1; // 세기를 증폭시켜 효과를 명확하게 합니다.
         
         // 와류의 영향 반경은 cursor_size에 비례하도록 설정합니다.
         this.uniforms.radius.value = cursor_size / 1000.0; // 반경 스케일을 적절히 조절합니다.
