@@ -17,14 +17,14 @@ import Mouse from "./Mouse";
 
 export const BODY_PART_ORDER = [
     'head',         // 0
-    'center',       // 1 (neck 대신)
-    'rightShoulder',// 2
-    'rightHand',    // 3 
+    'leftHand',     // 1
+    'rightHand',    // 2
+    'center',       // 3
     'leftShoulder', // 4
-    'leftHand',     // 5
-    'heap',         // 6 (pelvis 대신)
-    'rightFoot',    // 7
-    'leftFoot'      // 8
+    'rightShoulder',// 5
+    'heap',         // 6
+    'leftFoot',     // 7
+    'rightFoot'     // 8
 ];
 
 // GLSL의 MAX_POSITIONS와 일치시켜야 합니다.
@@ -256,7 +256,7 @@ export default class Simulation{
 
         // 2. person 객체의 모든 신체 부위를 순회
         for (const [partName, partData] of Object.entries(person)) {
-            // console.log(partName, partData);
+            console.log(partName, partData);
             if (partData?.coords) {
                 const pos = partData.coords;
                 const isInside = pos.x > -boundaryX && pos.x < boundaryX &&
@@ -347,8 +347,7 @@ export default class Simulation{
 
         // this.vortex.update({vel : vel, fboSize: this.fboSize});
         allBodyCoords.forEach(person => {
-            const personSourcePos = Object.values(person).map(part => part.coords);;
-
+            const personSourcePos = Object.values(person).map(part => part.coords);
             // 한 사람의 좌표 배열(sourcePos)을 전달하여 density를 업데이트합니다.
             this.density.update({
                 cursor_size: this.options.cursor_size,
