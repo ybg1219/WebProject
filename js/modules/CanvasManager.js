@@ -29,10 +29,11 @@ class CanvasManager {
 
         this.canvas.style.position = 'absolute';
         this.canvas.style.top = '0';
-        this.canvas.style.left = '50%';
-        this.canvas.style.transform = 'translateX(-50%)';
+        this.canvas.style.left = '0%';
+        this.canvas.style.transform = 'translateX(10%) translateY(10%)';
         this.canvas.style.pointerEvents = 'none';
         this.canvas.style.zIndex = '10';
+        this.canvas.style.objectFit = 'cover'
 
         this.setSize(width, height);
         $wrapper.appendChild(this.canvas);
@@ -49,7 +50,7 @@ class CanvasManager {
     }
 
     setSize(width, height) {
-        const scaler = 0.3;
+        const scaler = 0.2;
 
         // 실제 캔버스 해상도 (픽셀 단위)
         this.canvas.width = width * scaler;
@@ -63,7 +64,27 @@ class CanvasManager {
     drawVideo(video){
         this.ctx.save(); // push() pop() 역할
         this.ctx.scale(-1, 1);  // 좌우 반전
-        this.ctx.drawImage(video, -this.canvas.width, 0, this.canvas.width, this.canvas.height);
+        const canvasRatio = this.canvas.width / this.canvas.height;
+        const videoRatio = video.videoWidth / video.videoHeight;
+
+        let drawWidth, drawHeight, offsetX, offsetY;
+
+        if (videoRatio > canvasRatio) {
+            // 비디오가 캔버스보다 가로로 더 길쭉한 경우 (가로가 잘림)
+            drawHeight = this.canvas.height;
+            drawWidth = drawHeight * videoRatio;
+            offsetX = (this.canvas.width - drawWidth) / 2;
+            offsetY = 0;
+        } else {
+            // 비디오가 캔버스보다 세로로 더 길쭉한 경우 (세로가 잘림)
+            drawWidth = this.canvas.width;
+            drawHeight = drawWidth / videoRatio;
+            offsetX = 0;
+            offsetY = (this.canvas.height - drawHeight) / 2;
+        }        
+        // 계산된 크기와 위치로 비디오를 그립니다.
+        this.ctx.drawImage(video, -(offsetX + drawWidth), offsetY, drawWidth, drawHeight);
+
         this.ctx.restore();
     }
 
@@ -118,8 +139,8 @@ class CanvasManager {
 
         const minX = Math.min(...xs);
         const maxX = Math.max(...xs);
-        const minY = Math.min(...ys);
-        const maxY = Math.max(...ys);
+        const minY = Math.min(...ys) - 100.0;
+        const maxY = Math.max(...ys) + 100.0;
 
         this.ctx.strokeStyle = color;
         this.ctx.lineWidth = 1;
