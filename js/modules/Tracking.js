@@ -8,15 +8,9 @@ class Tracking {
         this.poseLandmarker = null;
         this.landmarks = [];
         this.video = null;
-        this.ctx = null;
         
         this.bodyKeys = ["head", "leftHand", "rightHand", "center", "heap", "leftFoot", "rightFoot"];
-
-        //this.handsData = [this.createData(), this.createData()];
-        this.bodysData = [ ] // head, left, right, center, heap, left foot, rightfoot
-
-        this.peopleData = [];  // -> 각 사람(person)의 bodyKey 데이터를 담음
-
+        this.people = [];  // -> 각 사람(person)의 bodyKey 데이터를 담음
         this.running = false;
     }
 
@@ -46,8 +40,8 @@ class Tracking {
         return person;
     }
     
-    async init() {
-        this.video = document.getElementById("input_video");
+    async init( video) {
+        this.video = video
         
         const fileset = await FilesetResolver.forVisionTasks(
             "/mediapipe/wasm"
@@ -108,7 +102,7 @@ class Tracking {
      */
     handlePoseResult(poseResult) {
         if (!poseResult.landmarks || poseResult.landmarks.length === 0) {
-            this.peopleData = [];
+            this.people = [];
             this.landmarks = [];
             return;
         }
@@ -116,9 +110,9 @@ class Tracking {
         
 
         // 감지된 사람 수만큼 순회
-        this.peopleData = poseResult.landmarks.map((personLandmarks, personIndex) => {
+        this.people = poseResult.landmarks.map((personLandmarks, personIndex) => {
             // 이전에 추적되던 사람이 있다면 해당 데이터 재사용, 없다면 새로 생성
-            const personData = this.peopleData[personIndex] || this.createPersonData();
+            const personData = this.people[personIndex] || this.createPersonData();
 
             if (!personLandmarks || personLandmarks.length < 33) return personData;
 
@@ -164,9 +158,8 @@ class Tracking {
         // 타이머가 있다면 초기화
         if (partData.timer) clearTimeout(partData.timer);
 
-        // 스크린 좌표로 변환
-        const screenX = (1 - x) * Common.width;
-        const screenY = y * Common.height;
+        const screenX = Math.floor((1 - x) * Common.width);
+        const screenY = Math.floor(y * Common.height);
 
         // WebGL 좌표계(-1.0 ~ 1.0)로 변환하여 저장
         partData.coords.set((screenX / Common.width) * 2 - 1, -(screenY / Common.height) * 2 + 1);
@@ -182,7 +175,7 @@ class Tracking {
      * 매 프레임마다 호출되어 각 신체 부위의 좌표 변화량을 계산합니다.
      */
     update() {
-        this.peopleData.forEach(person => {
+        this.people.forEach(person => {
             this.bodyKeys.forEach(key => {
                 const part = person[key];
                 part.diff.subVectors(part.coords, part.coords_old);
@@ -208,7 +201,7 @@ class Tracking {
      * @returns {Array<Object>}
      */
     getPeople() {
-        return this.peopleData;
+        return this.people;
     }
 
     getLandmarks() {
@@ -217,35 +210,6 @@ class Tracking {
             return [];
         }
         return this.landmarks;
-    }
-
-    setCoords(data, x, y) {
-        if (data.timer) clearTimeout(data.timer);
-
-        data.coords.set((x / Common.width) * 2 - 1, -(y / Common.height) * 2 + 1);
-        data.moved = true;
-
-        data.timer = setTimeout(() => {
-            data.moved = false;
-        }, 100);
-    }
-
-    getBody(index) {
-        return {
-            //landmarks : this.handsData[index].landmarks,
-            coords: this.bodysData[index].coords,
-            diff: this.bodysData[index].diff,
-            moved: this.bodysData[index].moved
-        };
-    }
-    getWholeBody() {
-        // console.log(this.bodysData.map(c => c.coords.clone()));/
-        return {
-            //landmarks : this.handsData[index].landmarks,
-            coords: this.bodysData.map(c => c.coords.clone()), //this.bodyKeys.map((_, i) => this.bodysData[i].coords.clone()),
-            diff: this.bodysData.map(d => d.diff.clone()),
-            moved: this.bodysData.map(m => m.moved) // coords와 diff는 three.vector2 객체이므로 clone 필요.
-        };
     }
 }
 

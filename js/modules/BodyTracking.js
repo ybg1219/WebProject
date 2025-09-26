@@ -10,27 +10,37 @@ class BodyTracking {
         this.videoElement = null;
         this.pose = null;
 
-        this.handsData = [ this.createData(), this.createData()];
-        
-        this.bodysData = [ this.createData(), this.createData()
-            ,this.createData(), this.createData(), this.createData(),
-            this.createData(),this.createData(),this.createData(), this.createData()
-        ] // head, left, right, center, leftshoulder, rightshoulder, heap, leftFoot, rightFoot
+        this.people = [];
+        this.bodyKeys = ["head", "leftHand", "rightHand", "center", "leftShoulder", "rightShoulder", "heap", "leftFoot", "rightFoot"];
     }
 
-    createData() { // factory pattern
-            return {
-                coords: new THREE.Vector2(),
-                coords_old: new THREE.Vector2(),
-                diff: new THREE.Vector2(),
-                timer: null,
-                moved: false
-            };
-        }
     
+    /**
+     * 한 사람(person)의 전체 신체 데이터 구조를 생성합니다.
+     * @returns {Object.<string, {coords: THREE.Vector2, coords_old: THREE.Vector2, diff: THREE.Vector2, timer: number, moved: boolean}>}
+     */
+    createPersonData() {
+        const person = {};
+        this.bodyKeys.forEach(key => { person[key] = this.createPartData(); });
+        return person;
+    }
 
-    async init() {
-        this.videoElement = document.getElementById('input_video');
+    /**
+     * 신체 부위 하나의 데이터 구조를 생성합니다.
+     * @returns {{coords: THREE.Vector2, coords_old: THREE.Vector2, diff: THREE.Vector2, timer: number, moved: boolean}}
+     */
+    createPartData() {
+        return {
+            coords: new THREE.Vector2(),
+            coords_old: new THREE.Vector2(),
+            diff: new THREE.Vector2(),
+            moved: false,
+            timer: null
+        }
+    }
+
+    async init(video) {
+        this.videoElement = video;
 
         this.pose = new Pose({
             locateFile: (file) => {
@@ -47,50 +57,47 @@ class BodyTracking {
         });
 
 
-        this.pose.onResults(results => {
-            this.landmarks = results.poseLandmarks;
-            if (results.poseLandmarks) {
-                const head = results.poseLandmarks[0];
-
-                const leftHand = results.poseLandmarks[15];
-                const rightHand = results.poseLandmarks[16];
-
-                const leftShoulder = results.poseLandmarks[11];
-                const rightShoulder = results.poseLandmarks[12];
-                const leftHip = results.poseLandmarks[23];
-                const rightHip = results.poseLandmarks[24];
-
-                const leftFoot = results.poseLandmarks[29];
-                const rightFoot = results.poseLandmarks[30];
-
-                const avgX = (leftShoulder.x + rightShoulder.x + leftHip.x + rightHip.x) / 4;
-                const avgY = (leftShoulder.y + rightShoulder.y + leftHip.y + rightHip.y) / 4;
-                const neckX = (leftShoulder.x + rightShoulder.x) / 2;
-                const neckY = (leftShoulder.y + rightShoulder.y) / 2;
-                const footX = (leftFoot.x + rightFoot.x) / 2;
-                const footY = (leftFoot.y + rightFoot.y) / 2;
-
-                // body key 에 원하는 키 추가하고, 아래 코드 나중에 for 문으로 변경.
-                this.setBodyCoords(0 , head.x, head.y);
-                this.setBodyCoords(1, leftHand.x, leftHand.y);
-                this.setBodyCoords(2, rightHand.x, rightHand.y);
-                this.setBodyCoords(3, neckX, neckY);
-                this.setBodyCoords(4, leftShoulder.x , leftShoulder.y);
-                this.setBodyCoords(5, rightShoulder.x , rightShoulder.y);
-                this.setBodyCoords(6, footX, footY);
-                this.setBodyCoords(7, leftFoot.x , leftFoot.y);
-                this.setBodyCoords(8, rightFoot.y , rightFoot.y);
-            }
-        });
+        this.pose.onResults(results => this.handlePoseResult(results));
 
         await this.cameraStart();
 
         console.log("Pose Tracking initialized");
     }
 
+    /**
+     * MediaPipe 결과를 this.people 배열에 업데이트합니다.
+     */
+    handlePoseResult(results) {
+        this.landmarks = results.poseLandmarks;
+        if (results.poseLandmarks) {
+            if (this.people.length === 0) {
+                this.people.push(this.createPersonData());
+            }
+            
+            const personData = this.people[0];
+            const landmarks = results.poseLandmarks;
+
+            const neck = { x: (landmarks[11].x + landmarks[12].x) / 2, y: (landmarks[11].y + landmarks[12].y) / 2 };
+            const heap = { x: (landmarks[23].x + landmarks[24].x) / 2, y: (landmarks[23].y + landmarks[24].y) / 2 };
+
+            this.updatePartCoords(personData.head, landmarks[0].x, landmarks[0].y);
+            this.updatePartCoords(personData.leftHand, landmarks[15].x, landmarks[15].y);
+            this.updatePartCoords(personData.rightHand, landmarks[16].x, landmarks[16].y);
+            this.updatePartCoords(personData.leftShoulder, landmarks[11].x, landmarks[11].y);
+            this.updatePartCoords(personData.rightShoulder, landmarks[12].x, landmarks[12].y);
+            this.updatePartCoords(personData.center, neck.x, neck.y);
+            this.updatePartCoords(personData.heap, heap.x, heap.y);
+            this.updatePartCoords(personData.leftFoot, landmarks[29].x, landmarks[29].y);
+            this.updatePartCoords(personData.rightFoot, landmarks[30].x, landmarks[30].y);
+        } else {
+            this.people = [];
+        }
+    }
+
+
     async cameraStart() {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        this.videoElement.srcObject = stream;
+        // const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        // this.videoElement.srcObject = stream;
 
         // 비디오 메타데이터가 로드되어야 videoWidth/Height를 알 수 있습니다.
         await new Promise(resolve => {
@@ -108,86 +115,61 @@ class BodyTracking {
         process();
     }
 
-    setBodyCoords(index, x, y){
-        
-        x = Math.floor((1 - x) * Common.width);
-        y = Math.floor(y * Common.height);
+    /**
+     * 특정 신체 부위의 좌표와 움직임 상태를 업데이트합니다.
+     * @param {Object} partData - 업데이트할 신체 부위 데이터 객체 (예: personData.head)
+     * @param {number} x - 랜드마크의 x 좌표 (0.0 ~ 1.0)
+     * @param {number} y - 랜드마크의 y 좌표 (0.0 ~ 1.0)
+     */
+    updatePartCoords(partData, x, y) {
+        if (!partData) return;
 
-        const body = this.bodysData[index];
-        if (body.timer) clearTimeout(body.timer);// 이전에 돌아가던 타이머 제거.
+        // 타이머가 있다면 초기화
+        if (partData.timer) clearTimeout(partData.timer);
 
-        body.coords.set((x / Common.width) * 2 - 1, -(y / Common.height) * 2 + 1);
-        body.moved = true;
+        const screenX = Math.floor((1 - x) * Common.width);
+        const screenY = Math.floor(y * Common.height);
 
-        body.timer = setTimeout(() => {
-            body.moved = false;
-        }, 100);// 0.1초 동안 움직이지 않으면 다시 false로 바꿈.
-    }
-    setHandCoords(index, x, y) { // hand용
-        
-        x = Math.floor((1 - x) * Common.width);
-        y = Math.floor(y * Common.height);
+        // WebGL 좌표계(-1.0 ~ 1.0)로 변환하여 저장
+        partData.coords.set((screenX / Common.width) * 2 - 1, -(screenY / Common.height) * 2 + 1);
+        partData.moved = true;
 
-        const hand = this.handsData[index];
-        if (hand.timer) clearTimeout(hand.timer);// 이전에 돌아가던 타이머 제거.
-
-        hand.coords.set((x / Common.width) * 2 - 1, -(y / Common.height) * 2 + 1);
-        hand.moved = true;
-
-        hand.timer = setTimeout(() => {
-            hand.moved = false;
-        }, 100);// 0.1초 동안 움직이지 않으면 다시 false로 바꿈.
+        // 100ms 후 움직임 상태를 false로 변경
+        partData.timer = setTimeout(() => {
+            partData.moved = false;
+        }, 100);
     }
 
     update() {
-        // 전체 bodysData 각 원소별로 diff 계산
-        this.bodysData.forEach(body => {
-            body.diff.subVectors(body.coords, body.coords_old);
-            body.coords_old.copy(body.coords);
-
-            // 초기 프레임 등 0,0 일 경우 diff 초기화
-            if (body.coords_old.x === 0 && body.coords_old.y === 0) {
-                body.diff.set(0, 0);
+        if (this.people.length === 0) return;
+        const person = this.people[0];
+        for (const key of this.bodyKeys) {
+            const part = person[key];
+            if (part) {
+                if (part.coords_old.lengthSq() === 0) {
+                    part.coords_old.copy(part.coords);
+                }
+                part.diff.subVectors(part.coords, part.coords_old);
+                part.moved = part.diff.length() > 0.01;
+                part.coords_old.copy(part.coords);
             }
-        });
+        }
     }
 
     /**
-     *  @returns {Array<Object>} [{ head: {...}, leftHand: {...}, ... }] 형태의 배열
-    */
+     * 추적된 모든 사람의 데이터를 반환합니다.
+     * @returns {Array<Object>}
+     */
     getPeople() {
-        // bodysData가 비어있으면 아무도 감지되지 않은 것이므로 빈 배열을 반환합니다.
-        if (!this.bodysData || this.bodysData.length === 0) {
-            return [];
-        }
-
-        // bodysData 배열의 각 인덱스가 어떤 신체 부위를 의미하는지 명시합니다.
-        // 이 순서는 기존 getBody(index)를 호출하던 순서와 동일해야 합니다.
-        const person = {
-            head:       this.bodysData[0],
-            leftHand:   this.bodysData[1],
-            rightHand:  this.bodysData[2],
-            center: this.bodysData[3],
-            leftShoulder:     this.bodysData[4],
-            rightShoulder: this.bodysData[5],
-            heap:       this.bodysData[6],
-            leftFoot:   this.bodysData[7],
-            rightFoot:  this.bodysData[8]
-        };
-
-        // 한 명의 데이터를 배열로 감싸서 반환하여, 
-        // 다중 트래커의 [person1, person2, ...] 형태와 구조를 일치시킵니다.
-        return [person]; 
+        return this.people;
     }
 
-
-    getHand(index) {
-        return {
-            landmarks : this.handsData[index].landmarks,
-            coords: this.handsData[index].coords,
-            diff: this.handsData[index].diff,
-            moved: this.handMoved[index]
-        };
+    getLandmarks() {
+        // landmarks가 정의되지 않았으면 빈 배열 반환
+        if (!this.landmarks || !Array.isArray(this.landmarks)) {
+            return [];
+        }
+        return this.landmarks;
     }
 }
 

@@ -24,12 +24,13 @@ export default class Webgl{
         VideoManager.init(this.props.$wrapper, Common.width, Common.height);
         CanvasManager.init(this.props.$wrapper, Common.width, Common.height);
         
-        // register resize
-        window.addEventListener("resize", this.resize.bind(this)); // 이벤트 타입과 콜백함수
-
         this.init().then(() => {
             this.loop();
         });
+        
+        // register resize
+        window.addEventListener("resize", this.resize.bind(this)); // 이벤트 타입과 콜백함수
+
     }
 
     async init() {
@@ -41,7 +42,7 @@ export default class Webgl{
         document.body.appendChild(this.stats.dom);
 
         // 시뮬레이션 아웃풋 초기화 및 입력 모듈 초기화
-        //await VideoManager.startCamera();
+        await VideoManager.startCamera();
         //await VideoManager.loadVideoFile("/videos/sample.mp4"); // 여기에 mp4 파일 경로
 
 
@@ -54,7 +55,7 @@ export default class Webgl{
             console.log("Initializing Single-person Tracker");
             this.activeTracker = BodyTracking;
         }
-        await this.activeTracker.init(); // 활성화된 트래커만 초기화
+        await this.activeTracker.init(VideoManager.getElement()); // 활성화된 트래커만 초기화
 
         // Output(FluidSimulation)에 활성화된 트래커 인스턴스를 전달합니다.
         this.output = new Output({
