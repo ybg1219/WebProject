@@ -68,7 +68,7 @@ class BodyTracking {
      * MediaPipe 결과를 this.people 배열에 업데이트합니다.
      */
     handlePoseResult(results) {
-        this.landmarks = results.poseLandmarks;
+        this.landmarks = [results.poseLandmarks];
         if (results.poseLandmarks) {
             if (this.people.length === 0) {
                 this.people.push(this.createPersonData());
@@ -91,6 +91,7 @@ class BodyTracking {
             this.updatePartCoords(personData.rightFoot, landmarks[30].x, landmarks[30].y);
         } else {
             this.people = [];
+            this.landmarks = []; // 이 부분이 누락되어 있었습니다.
         }
     }
 

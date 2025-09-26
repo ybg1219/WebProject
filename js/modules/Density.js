@@ -103,7 +103,7 @@ export default class Density extends ShaderPass{
         }
         this.uniforms.pointPositions.value.set(validPointCoords);
         this.uniforms.pointCount.value = validPointCoords.length/2;
-        console.log(validPointCoords);
+        // console.log(validPointCoords);
 
         // 3. 선 소스(Line Source) 데이터 채우기
         const validLineCoords = [];
