@@ -9,6 +9,7 @@ class BodyTracking {
         this.landmarks = [];
         this.videoElement = null;
         this.pose = null;
+        this.running = false; // 루프 제어를 위한 플래그
 
         this.people = [];
         this.bodyKeys = ["head", "leftHand", "rightHand", "center", "leftShoulder", "rightShoulder", "heap", "leftFoot", "rightFoot"];
@@ -40,7 +41,15 @@ class BodyTracking {
     }
 
     async init(video) {
+        if (this.running) return; // 중복 실행 방지
+        this.running = true;
+        
         this.videoElement = video;
+
+        // 재초기화 시 이전 인스턴스가 있다면 안전하게 정리합니다.
+        if (this.pose) {
+            this.pose.close();
+        }
 
         this.pose = new Pose({
             locateFile: (file) => {
@@ -68,6 +77,7 @@ class BodyTracking {
      * MediaPipe 결과를 this.people 배열에 업데이트합니다.
      */
     handlePoseResult(results) {
+        if (!this.running) return; // 중복 실행 방지
         this.landmarks = [results.poseLandmarks];
         if (results.poseLandmarks) {
             if (this.people.length === 0) {
@@ -109,6 +119,9 @@ class BodyTracking {
 
         // 비디오가 재생되면 매 프레임 추적을 시작합니다.
         const process = async () => {
+            // this.running 플래그가 false가 되면 루프가 멈춥니다.
+            if (!this.running) return;
+
             await this.pose.send({ image: this.videoElement });
             requestAnimationFrame(process);
         };
@@ -171,6 +184,22 @@ class BodyTracking {
             return [];
         }
         return this.landmarks;
+    }
+
+    /**
+     * MediaPipe 인스턴스와 추적 루프를 안전하게 종료합니다.
+     */
+    destroy() {
+        console.log("Destroying BodyTracking...");
+        // 1. requestAnimationFrame 루프를 중단시킵니다.
+        this.running = false;
+
+        // 2. MediaPipe Pose 인스턴스의 리소스를 해제합니다.
+        if (this.pose) {
+            this.pose.close();
+            this.pose = null;
+        }
+        this.people = [];
     }
 }
 

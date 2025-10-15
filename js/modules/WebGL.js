@@ -97,4 +97,28 @@ export default class Webgl{
         if (this.stats) this.stats.end();
         requestAnimationFrame(this.loop.bind(this)); // 콜백함수를 인자로 받음.
     }
+
+    /**
+     * WebGL 인스턴스의 모든 리소스를 정리하는 함수
+     */
+    destroy() {
+        console.log("WebGL 인스턴스를 정리합니다...");
+
+        // 1. 애니메이션 루프 중단
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
+
+        // 2. 이벤트 리스너 제거
+        window.removeEventListener("resize", this.resizeHandler);
+
+        // 3. Stats.js DOM 요소 제거
+        if (this.stats && this.stats.dom.parentNode) {
+            this.stats.dom.parentNode.removeChild(this.stats.dom);
+        }
+        
+        if (this.activeTracker && this.activeTracker.destroy) {
+            this.activeTracker.destroy();
+        }
+    }
 }

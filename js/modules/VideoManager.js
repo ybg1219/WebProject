@@ -4,7 +4,10 @@ class VideoManager {
         this.stream = null;
     }
     init($wrapper, width, height){
-        this.video = document.getElementById('input_video');
+        
+        this.video = document.createElement('video');
+        this.video.id = 'input_video';
+        
         this.video.autoplay = true;
         this.video.playsInline = true;
         this.video.style.position = 'absolute';

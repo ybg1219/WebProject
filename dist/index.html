@@ -1,43 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <meta http-equiv="X-UA-COMPATIBLE" content="IE=edge">
-  <meta charset="utf-8">
-  <title>fluid-three</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
-  <meta name="description" content="">
-  <meta name="keywords" content="">
-  <meta http-equiv="Content-Language" content="ja">
-  <meta http-equiv="x-dns-prefetch-control" content="on">
-  <style>
-    body{
-      overscroll-behavior: none;
-      /* cursor: none; */
-      touch-action: none;
-    }
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-COMPATIBLE" content="IE=edge">
+    <title>Fluid Simulation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, shrink-to-fit=no">
+    <meta name="description" content="Real-time fluid simulation with body tracking.">
 
-    canvas{
-      top:0;
-    }
-  </style>
-  
+    <style>
+        /* 기본 스타일 초기화 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #111;
+            font-family: sans-serif;
+        }
+        body {
+            overscroll-behavior: none;
+            touch-action: none;
+        }
+        /* 네비게이션 스타일 */
+        nav {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+        }
+        nav a {
+            color: white;
+            margin-right: 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        /* 모든 콘텐츠를 담을 컨테이너 */
+        #app {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        /* 비디오 요소 스타일 */
+        #input_video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* 최종 결과물에서는 보이지 않도록 투명하게 처리 */
+            opacity: 0;
+            /* 비율을 유지하면서 꽉 채우기 (찌그러짐 방지) */
+            object-fit: cover;
+            /* 시뮬레이션 뒤에 위치하도록 z-index 설정 */
+            z-index: -1;
+        }
+    </style>
 </head>
-<body>  
+<body>
+    <nav>
+        <a href="/" data-link>Main (WebGL)</a>
+        <a href="/about" data-link>About</a>
+    </nav>
 
-  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r17/Stats.min.js"></script> -->
-  <script src="https://mrdoob.github.io/stats.js/build/stats.min.js"></script>
+    <div id="app"></div>
 
-  <!-- mediapipe pose&hand global 등록 -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script> -->
-
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-  <!-- <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script> -->
-  <!-- <script>
-    window.DrawingUtils = DrawingUtils;
-  </script> -->
-  <video id="input_video" autoplay muted playsinline loop style="display: none;"></video>
-  <script src="./main.min.js" type="text/javascript"></script>
-  
+    <script src="https://mrdoob.github.io/stats.js/build/stats.min.js"></script>
+    
+    <script src="./main.min.js"></script>
 </body>
 </html>

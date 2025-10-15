@@ -41,20 +41,17 @@ class Tracking {
     }
     
     async init( video) {
-        this.video = video
+        this.running = false;
+        this.video = video;
         
         const fileset = await FilesetResolver.forVisionTasks(
             "/mediapipe/wasm"
         );
 
-        // this.handLandmarker = await HandLandmarker.createFromOptions(fileset, {
-        //     baseOptions: {
-        //         modelAssetPath: "/models/hand_landmarker.task",
-        //         wasmBinaryPath: "/wasm/vision_wasm_internal.wasm",
-        //     },
-        //     runningMode: "VIDEO",
-        //     numHands: 2
-        // });
+        // 이전에 생성된 인스턴스가 있다면 안전하게 close 합니다.
+        if (this.poseLandmarker) {
+            this.poseLandmarker.close();
+        }
 
         this.poseLandmarker = await PoseLandmarker.createFromOptions(fileset, {
             baseOptions: {
@@ -81,8 +78,7 @@ class Tracking {
         const offctx = offscreen.getContext("2d");
 
         const process = async () => {
-            if (!this.running) return;
-
+            if (!this.running) return; // destroy()가 호출되면 루프가 멈춥니다.
             const now = performance.now();
             offctx.drawImage(this.video, 0, 0, offscreen.width, offscreen.height);
             
@@ -210,6 +206,26 @@ class Tracking {
             return [];
         }
         return this.landmarks;
+    }
+
+    /**
+     * ★★★ 추가된 함수 ★★★
+     * MediaPipe 인스턴스와 추적 루프를 안전하게 종료합니다.
+     */
+    destroy() {
+        console.log("Destroying Tracking (Multi-person)...");
+        // 1. requestAnimationFrame 루프를 중단시킵니다.
+        this.running = false;
+
+        // 2. MediaPipe PoseLandmarker 인스턴스의 리소스를 해제합니다.
+        if (this.poseLandmarker) {
+            this.poseLandmarker.close();
+            this.poseLandmarker = null;
+        }
+        
+        // 3. 데이터 배열을 초기화합니다.
+        this.people = [];
+        this.landmarks = [];
     }
 }
 
