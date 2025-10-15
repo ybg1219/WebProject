@@ -110,7 +110,7 @@ void main() {
     vec2 vel = texture2D(velocity, uv).xy;
 
     // 시간에 따라 흐르도록 uv 좌표에 u_time을 더해줍니다.
-    vec2 p = uv - vel * dt * ratio;
+    vec2 p = uv;// - vel * dt * ratio;
 
     // 현재 위치(p)에서 컬 노이즈 속도 벡터를 계산합니다.
     vec2 curl = computeCurl(p);

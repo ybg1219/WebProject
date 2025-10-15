@@ -196,13 +196,13 @@ export default class Simulation{
             fboSize: this.fboSize,
             dt: this.options.dt,
         });
-        // this.vortex = new Vortex({
-        //     cellScale: this.cellScale,
-        //     velocity: this.fbos.vel_0,
-        //     dst: this.fbos.vel_1,
-        //     fboSize: this.fboSize,
-        //     dt: this.options.dt,
-        // });
+        this.vortex = new Vortex({
+            cellScale: this.cellScale,
+            velocity: this.fbos.vel_0,
+            dst: this.fbos.vel_1,
+            fboSize: this.fboSize,
+            dt: this.options.dt,
+        });
     }
 
     calcSize(){
@@ -256,7 +256,7 @@ export default class Simulation{
 
         // 2. person 객체의 모든 신체 부위를 순회
         for (const [partName, partData] of Object.entries(person)) {
-            console.log(partName, partData);
+            //console.log(partName, partData);
             if (partData?.coords) {
                 const pos = partData.coords;
                 const isInside = pos.x > -boundaryX && pos.x < boundaryX &&
@@ -308,13 +308,21 @@ export default class Simulation{
                 // console.log("right", person.rightHand.coords, "diff", person.rightHand.diff);
                 
                 // --- 양손을 이용한 Swirl 효과 적용 ---
-                const { leftHand, rightHand } = person;
+                const { leftHand, rightHand, leftShoulder, rightShoulder } = person;
 
                 // 양손이 모두 감지되고 움직였을 때만 와류를 생성합니다.
                 if (leftHand && leftHand.moved && rightHand && rightHand.moved) {
                     this.swirl.update({
                         leftHand: leftHand,
-                        rightHand: rightHand,
+                        rightHand: leftShoulder,
+                        cursor_size: this.options.cursor_size,
+                        cellScale: this.cellScale,
+                        mouse_force: this.options.mouse_force // 힘의 세기 조절
+                    });
+
+                    this.swirl.update({
+                        leftHand: rightHand,
+                        rightHand: rightShoulder,
                         cursor_size: this.options.cursor_size,
                         cellScale: this.cellScale,
                         mouse_force: this.options.mouse_force // 힘의 세기 조절
@@ -345,7 +353,8 @@ export default class Simulation{
         //--- 4. 밀도(Density) 업데이트 ---
         vel = this.fbos.vel_1;
 
-        // this.vortex.update({vel : vel, fboSize: this.fboSize});
+        this.vortex.update({vel : vel, fboSize: this.fboSize});
+
         allBodyCoords.forEach(person => {
             const personSourcePos = Object.values(person).map(part => part.coords);
             // 한 사람의 좌표 배열(sourcePos)을 전달하여 density를 업데이트합니다.

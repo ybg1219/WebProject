@@ -12,6 +12,7 @@ export default class Vortex extends ShaderPass{
             material: {
                 vertexShader: face_vert,
                 fragmentShader: vortex_frag,
+                blending: THREE.AdditiveBlending,
                 uniforms: {
                     fboSize: {
                         value: simProps.fboSize
