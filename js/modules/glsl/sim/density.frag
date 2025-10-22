@@ -70,7 +70,7 @@ void main() {
         if (i >= pointCount) break;
         vec2 p = pointPositions[i];
         if (p.x < 0.0 || p.y < 0.0) continue;
-        source += strength * computeFalloff(uv, pointPositions[i], radius) * 0.5;
+        source += strength * computeFalloff(uv, pointPositions[i], radius) * 0.3;
     }
 
    // 2. 선 소스 계산
@@ -81,7 +81,7 @@ void main() {
         }
         vec2 p1 = linePositions[i * 2];
         vec2 p2 = linePositions[i * 2 + 1];
-        source += strength * sdfLineFalloff(uv, p1, p2, radius * 0.7) * 0.4;
+        source += strength * sdfLineFalloff(uv, p1, p2, radius * 0.7) * 0.2;
     }
 
     // 3. buoyancy 
@@ -91,16 +91,16 @@ void main() {
 
     // float buoyancyCoefficient = 0.01;
     // vec2 gravity = vec2(0.0, -1.0); // 아래 방향
-    // vec2 d = texture2D(density, uv).xy;
+    // vec2 d = texture2D(density, uv).rr;
     // vec2 buoyancyForce = - buoyancyCoefficient * (d) * gravity;
     // vel += buoyancyForce;
 
     // 3. 과거 밀도 위치 추적 (Advection for density)    
     vec2 uv2 = uv - vel * dt * ratio;
-    uv2 = clamp(uv2, vec2(0.0), vec2(1.0)); 
+    // uv2 = clamp(uv2, vec2(0.0), vec2(1.0)); 
 
-    // 확산 계수 lambda로 확산 정도 조절
-    float lambda = 0.93;
+    // dissipation 소멸 계수 lambda로 연기 사라지는 속도 조절
+    float lambda = 0.98;
     float dv = lambda*texture2D(density, uv2).x; // 과거 밀도
 
     // 4. 밀도 결과 = 이동된 밀도 + 소싱

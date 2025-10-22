@@ -127,18 +127,18 @@ export default class Density extends ShaderPass{
         this.uniforms.lineCount.value = validLineCoords.length / 4; // 선 하나당 4개의 float
 
         // Ping-Pong 스왑
-        const den0 = this.props.output0;
-        const den1 = this.props.output1;
+        // const den0 = this.props.output0;
+        // const den1 = this.props.output1;
 
-        this.uniforms.density.value = den0.texture;
-        this.props.output = den1;
+        // this.uniforms.density.value = den0.texture;
+        // this.props.output = den1;
 
         super.update();
 
         // swap 역할 수행: output1 → 다음 프레임의 input
-        const temp = den0;
-        this.props.output0 = den1;
-        this.props.output1 = temp;
+        // const temp = den0;
+        // this.props.output0 = den1;
+        // this.props.output1 = temp;
 
         return this.props.output;
     }

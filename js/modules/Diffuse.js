@@ -1,27 +1,27 @@
 import face_vert from "./glsl/sim/face.vert";
-import viscous_frag from "./glsl/sim/viscous.frag";
+import diffuse_frag from "./glsl/sim/diffuse.frag";
 
 import ShaderPass from "./ShaderPass";
 import * as THREE from "three";
 
-export default class Viscous extends ShaderPass{
+export default class Diffuse extends ShaderPass{
     constructor(simProps){
         super({
             material: {
                 vertexShader: face_vert,
-                fragmentShader: viscous_frag,
+                fragmentShader: diffuse_frag,
                 uniforms: {
                     boundarySpace: {
                         value: simProps.boundarySpace
                     },
-                    velocity: {
+                    density: {
                         value: simProps.src.texture
                     },
-                    velocity_new: {
+                    density_new: {
                         value: simProps.dst_.texture
                     },
-                    viscosity: {
-                        value: simProps.viscosity,
+                    v: {
+                        value: simProps.viscous,
                     },
                     px: {
                         value: simProps.cellScale
@@ -53,7 +53,7 @@ export default class Viscous extends ShaderPass{
                 fbo_out = this.props.output0;
             }
 
-            this.uniforms.velocity_new.value = fbo_in.texture;
+            this.uniforms.density_new.value = fbo_in.texture;
             this.props.output = fbo_out;
             this.uniforms.dt.value = dt;
 

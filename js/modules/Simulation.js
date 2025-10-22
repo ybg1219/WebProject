@@ -9,6 +9,7 @@ import Divergence from "./Divergence";
 import Poisson from "./Poisson";
 import Pressure from "./Pressure";
 import Density from "./Density";
+import Diffuse from "./Diffuse";
 import Gradient from "./Gradient";
 import Swirl from "./Swirl";
 import Vortex from "./Vortex"
@@ -42,6 +43,10 @@ export default class Simulation{
         this.fbos = {
             density_0: null,
             density_1: null,
+
+            diffuse_0: null,
+            diffuse_1: null,
+
             vel_0: null,
             vel_1: null,
 
@@ -146,7 +151,7 @@ export default class Simulation{
         this.viscous = new Viscous({
             cellScale: this.cellScale,
             boundarySpace: this.boundarySpace,
-            viscous: this.options.viscous,
+            viscosity: this.options.viscous,
             src: this.fbos.vel_1,
             dst: this.fbos.vel_viscous1,
             dst_: this.fbos.vel_viscous0,
@@ -183,15 +188,25 @@ export default class Simulation{
             boundarySpace: this.boundarySpace,
             cursor_size: this.options.cursor_size,
             vel: this.fbos.vel_0,
-            den: this.fbos.density_0,
+            den: this.fbos.diffuse_0,
             dst: this.fbos.density_1,
             fboSize: this.fboSize,
             dt: this.options.dt,
         });
 
+        this.densityDiffuse = new Diffuse({
+            cellScale: this.cellScale,
+            boundarySpace: this.boundarySpace,
+            src: this.fbos.density_1,
+            dst: this.fbos.diffuse_1,
+            dst_: this.fbos.diffuse_0,
+            viscosity: this.options.viscous,
+            dt: this.options.dt,
+        });
+
         this.gradient = new Gradient({
             cellScale: this.cellScale,
-            src: this.fbos.density_0,
+            src: this.fbos.diffuse_0,
             dst: this.fbos.gradient,
             fboSize: this.fboSize,
             dt: this.options.dt,
@@ -311,23 +326,23 @@ export default class Simulation{
                 const { leftHand, rightHand, leftShoulder, rightShoulder } = person;
 
                 // 양손이 모두 감지되고 움직였을 때만 와류를 생성합니다.
-                if (leftHand && leftHand.moved && rightHand && rightHand.moved) {
-                    this.swirl.update({
-                        leftHand: leftHand,
-                        rightHand: leftShoulder,
-                        cursor_size: this.options.cursor_size,
-                        cellScale: this.cellScale,
-                        mouse_force: this.options.mouse_force // 힘의 세기 조절
-                    });
+                // if (leftHand && leftHand.moved && rightHand && rightHand.moved) {
+                //     this.swirl.update({
+                //         leftHand: leftHand,
+                //         rightHand: leftShoulder,
+                //         cursor_size: this.options.cursor_size,
+                //         cellScale: this.cellScale,
+                //         mouse_force: this.options.mouse_force // 힘의 세기 조절
+                //     });
 
-                    this.swirl.update({
-                        leftHand: rightHand,
-                        rightHand: rightShoulder,
-                        cursor_size: this.options.cursor_size,
-                        cellScale: this.cellScale,
-                        mouse_force: this.options.mouse_force // 힘의 세기 조절
-                    });
-                }
+                //     this.swirl.update({
+                //         leftHand: rightHand,
+                //         rightHand: rightShoulder,
+                //         cursor_size: this.options.cursor_size,
+                //         cellScale: this.cellScale,
+                //         mouse_force: this.options.mouse_force // 힘의 세기 조절
+                //     });
+                // }
             });
         }
 
@@ -353,7 +368,7 @@ export default class Simulation{
         //--- 4. 밀도(Density) 업데이트 ---
         vel = this.fbos.vel_1;
 
-        this.vortex.update({vel : vel, fboSize: this.fboSize});
+    //  this.vortex.update({vel : vel, fboSize: this.fboSize});
 
         allBodyCoords.forEach(person => {
             const personSourcePos = Object.values(person).map(part => part.coords);
@@ -365,6 +380,14 @@ export default class Simulation{
                 sourcePos: personSourcePos
             });
         });
+        // --- 5. 밀도 확산(Diffusion) 업데이트 ---
+        this.densityDiffuse.update({
+            viscosity: this.options.viscous,
+            iterations: this.options.iterations_viscous,
+            dt: this.options.dt
+        });
+
+        this.fbos.density_0 = this.fbos.diffuse_0;
 
         this.gradient.update()
     }
