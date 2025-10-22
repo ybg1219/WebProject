@@ -351,7 +351,7 @@ export default class Simulation{
 
         if(this.options.isViscous){
             vel = this.viscous.update({
-                viscous: this.options.viscous,
+                viscosity: this.options.viscous,
                 iterations: this.options.iterations_viscous,
                 dt: this.options.dt
             });

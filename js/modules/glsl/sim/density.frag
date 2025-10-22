@@ -100,7 +100,7 @@ void main() {
     // uv2 = clamp(uv2, vec2(0.0), vec2(1.0)); 
 
     // dissipation 소멸 계수 lambda로 연기 사라지는 속도 조절
-    float lambda = 0.98;
+    float lambda = 0.99;
     float dv = lambda*texture2D(density, uv2).x; // 과거 밀도
 
     // 4. 밀도 결과 = 이동된 밀도 + 소싱
