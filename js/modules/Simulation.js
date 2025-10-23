@@ -70,7 +70,7 @@ export default class Simulation{
             mouse_force: 20,
             resolution: 0.5,
             cursor_size: 100,
-            viscous: 30,
+            viscous: 500,
             isBounce: false,
             dt: 0.014,
             isViscous: false,
@@ -213,8 +213,8 @@ export default class Simulation{
         });
         this.vortex = new Vortex({
             cellScale: this.cellScale,
-            velocity: this.fbos.vel_0,
-            dst: this.fbos.vel_1,
+            velocity: this.fbos.vel_1,
+            dst: this.fbos.vel_0,
             fboSize: this.fboSize,
             dt: this.options.dt,
         });
@@ -368,7 +368,7 @@ export default class Simulation{
         //--- 4. 밀도(Density) 업데이트 ---
         vel = this.fbos.vel_1;
 
-    //  this.vortex.update({vel : vel, fboSize: this.fboSize});
+        this.vortex.update({vel : vel, fboSize: this.fboSize});
 
         allBodyCoords.forEach(person => {
             const personSourcePos = Object.values(person).map(part => part.coords);

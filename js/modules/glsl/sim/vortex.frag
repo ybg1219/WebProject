@@ -1,6 +1,6 @@
 precision highp float;
 uniform vec2 fboSize;
-uniform sampler2D velocity;
+uniform float u_time;
 uniform vec2 px;
 uniform float dt;
 varying vec2 uv;
@@ -79,8 +79,10 @@ float snoise(vec2 v) {
 // 1. 포텐셜(Potential, ψ) 계산
 // 2D에서는 포텐셜은 그냥 노이즈 값 그 자체입니다.
 float getPotential(vec2 p) {
+    float scale = 30.0;
+    vec2 offset_p = p * scale + vec2(u_time, 0.0);
     // 0.01을 곱해 노이즈를 확대(Scale)하여 더 큰 소용돌이를 만듭니다.
-    return snoise(p * 0.01);
+    return snoise(offset_p);
 }
 
 // 2. 2D Curl 계산
@@ -107,7 +109,7 @@ void main() {
     // u_resolution.y / u_resolution.x 를 곱해 화면 비율을 보정합니다.
     // vec2 uv = (gl_FragCoord.xy * 2.0 - fboSize.xy) / fboSize.y;
     vec2 ratio = max(fboSize.x, fboSize.y) / fboSize;
-    vec2 vel = texture2D(velocity, uv).xy;
+    // vec2 vel = texture2D(velocity, uv).xy;
 
     // 시간에 따라 흐르도록 uv 좌표에 u_time을 더해줍니다.
     vec2 p = uv;// - vel * dt * ratio;
@@ -117,5 +119,5 @@ void main() {
 
     // 속도 벡터를 시각화합니다.
     // x축 속도는 R(빨강) 채널, y축 속도는 G(초록) 채널에 매핑합니다.
-    gl_FragColor = vec4(curl.x, curl.y, 0.0, 1.0);
+    gl_FragColor = vec4( curl * 0.0001 , 0.0, 1.0);
 }
