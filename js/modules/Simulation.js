@@ -146,6 +146,7 @@ export default class Simulation{
             cellScale: this.cellScale,
             cursor_size: this.options.cursor_size,
             dst: this.fbos.vel_1,
+            dt: this.options.dt,
         });
         
         this.viscous = new Viscous({

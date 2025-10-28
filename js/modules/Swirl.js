@@ -26,7 +26,10 @@ export default class Swirl extends ShaderPass {
                     noise_frequency: { value: 5.0 },
                     noise_strength: { value: 0.3 },
                     u_osc_frequency: { value: 6.28318 },
-                    u_osc_strength: { value: 0.5  },
+                    u_osc_strength: { value: 0.8  },
+                    dt : { value: simProps.dt },
+                    u_time: { value: 0.0 },
+                    u_osc_speed: { value: 0.5  }
                 }
             },
             output: simProps.dst
@@ -63,6 +66,8 @@ export default class Swirl extends ShaderPass {
         
         // 와류의 영향 반경은 cursor_size에 비례하도록 설정합니다.
         this.uniforms.radius.value = cursor_size / 1000.0; // 반경 스케일을 적절히 조절합니다.
+
+        this.uniforms.u_time.value += this.uniforms.dt.value;
 
         // 셰이더를 렌더링합니다.
         super.update();

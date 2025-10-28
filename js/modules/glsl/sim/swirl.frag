@@ -22,6 +22,8 @@ uniform float noise_strength;  // 예: 0.3 (원본 t에서 30% 정도만 벗어�
 uniform float u_osc_frequency; // 예: 6.28318 (t=1.0일 때 cos(x)가 1번 진동)
 // [유니폼] 진동 세기
 uniform float u_osc_strength;  // 예: 0.5
+uniform float u_time;          // (시간) JS에서 전달 (예: 1.0, 1.1, ...)
+uniform float u_osc_speed;     // (시간) 이동 속도 (예: 2.0)
 
 // 힘의 크기 제어
 uniform float strength; // 전체 힘의 세기
@@ -77,7 +79,8 @@ void main() {
 
     // --- 2. 선형 보간된 점(linePos)과 벡터(v_lin) 계산 ---
     vec2 linePos = mix(p0_uv, p1_uv, t);
-    vec2 v_lin = mix(v0, v1, t); // 기본 흐름
+    //vec2 v_lin = mix(v0, v1, t); // 기본 흐름
+    vec2 v_lin = mix(v0, v1, noisy_t);
 
     // --- 3. 가중치 함수 계산 (f, g) ---
     float f = 4.0 * t * (1.0 - t); // 선분 중앙에서 최대
@@ -93,14 +96,20 @@ void main() {
 
     // --- 5. 조화 진동(Harmonic Oscillation) 성분 계산 ---
     
-    // t와 frequency를 기반으로 harmonic 함수 입력값 계산
-    float harmonic_input = t * u_osc_frequency;
+    // 5-1. 공간적 빈도 적용
+    float spatial_input = t * u_osc_frequency;
     
-    // harmonic 함수 호출 (-1.0 ~ 1.0 사이의 값)
+    // 5-2. 시간적 이동(오프셋) 계산
+    // u_osc_speed가 양수면 한 방향, 음수면 반대 방향으로 흐릅니다.
+    float time_offset = u_time * u_osc_speed;
+    
+    // 5-3. 최종 입력 = 공간 위치 + 시간 오프셋
+    float harmonic_input = spatial_input + time_offset;
+    
+    // 5-4. harmonic 함수 호출
     float osc_val = harmonic(harmonic_input);
     
-    // 진동 성분 벡터 계산
-    // dir 벡터 방향으로 osc_val 만큼의 힘을 가합니다. (가중치 f, g 적용)
+    // 5-5. 진동 성분 벡터 계산
     vec2 osc = u_osc_strength * f * g * dir * osc_val;
 
     // --- 6. 최종 힘 = 선형 흐름 + 회전 + 진동 ---
