@@ -23,6 +23,9 @@ export default class Swirl extends ShaderPass {
                     strength: { value: 6.0 },  
                     radius: { value: 10.0 },
                     // px: { value: simProps.cellScale },
+                    noise_frequency: { value: 5.0 },
+                    noise_strength: { value: 0.3 },
+
                 }
             },
             output: simProps.dst

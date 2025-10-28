@@ -326,23 +326,23 @@ export default class Simulation{
                 const { leftHand, rightHand, leftShoulder, rightShoulder } = person;
 
                 // 양손이 모두 감지되고 움직였을 때만 와류를 생성합니다.
-                // if (leftHand && leftHand.moved && rightHand && rightHand.moved) {
-                //     this.swirl.update({
-                //         leftHand: leftHand,
-                //         rightHand: leftShoulder,
-                //         cursor_size: this.options.cursor_size,
-                //         cellScale: this.cellScale,
-                //         mouse_force: this.options.mouse_force // 힘의 세기 조절
-                //     });
+                if (leftHand && leftHand.moved && rightHand && rightHand.moved) {
+                    this.swirl.update({
+                        leftHand: leftHand,
+                        rightHand: leftShoulder,
+                        cursor_size: this.options.cursor_size,
+                        cellScale: this.cellScale,
+                        mouse_force: this.options.mouse_force // 힘의 세기 조절
+                    });
 
-                //     this.swirl.update({
-                //         leftHand: rightHand,
-                //         rightHand: rightShoulder,
-                //         cursor_size: this.options.cursor_size,
-                //         cellScale: this.cellScale,
-                //         mouse_force: this.options.mouse_force // 힘의 세기 조절
-                //     });
-                // }
+                    this.swirl.update({
+                        leftHand: rightHand,
+                        rightHand: rightShoulder,
+                        cursor_size: this.options.cursor_size,
+                        cellScale: this.cellScale,
+                        mouse_force: this.options.mouse_force // 힘의 세기 조절
+                    });
+                }
             });
         }
 
@@ -368,7 +368,7 @@ export default class Simulation{
         //--- 4. 밀도(Density) 업데이트 ---
         vel = this.fbos.vel_1;
 
-        this.vortex.update({vel : vel, fboSize: this.fboSize});
+        // this.vortex.update({vel : vel, fboSize: this.fboSize});
 
         allBodyCoords.forEach(person => {
             const personSourcePos = Object.values(person).map(part => part.coords);
