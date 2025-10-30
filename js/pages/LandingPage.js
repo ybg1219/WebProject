@@ -156,8 +156,8 @@ function runParticleAnimation(container, titleElement) {
         const fontPath = 'three/examples/fonts/helvetiker_regular.typeface.json';
 
         // 애니메이션 지속 시간 (반복 없음)
-        const scaleDuration = 3.0;
-        const disperseDuration = 4.0;
+        const scaleDuration = 1.2;
+        const disperseDuration = 0.8;
         const totalDuration = scaleDuration + disperseDuration;
 
         // 지오메트리 생성 및 애니메이션 시작 헬퍼 함수
@@ -215,10 +215,12 @@ function runParticleAnimation(container, titleElement) {
                     originalPositions[i * 3 + 1] = tempPosition.y;
                     originalPositions[i * 3 + 2] = tempPosition.z;
 
-                    // 각 파티클의 분산 속도 저장 (이전과 동일)
-                    particleVelocities[i * 3]     = (Math.random() - 0.5) * 0.1;
-                    particleVelocities[i * 3 + 1] = (Math.random() * 0.2) + 0.05;
-                    particleVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.1;
+                    // 각 파티클의 분산 속도 (사방으로 퍼지도록)
+                    const speedFactor = 0.05 + (Math.random() * 0.3); // 속도 랜덤화
+                    particleVelocities[i * 3]     = (Math.random() - 0.5) * speedFactor;
+                    // Y축도 위아래 랜덤 + 약간의 상승력
+                    particleVelocities[i * 3 + 1] = (Math.random() - 0.5) * speedFactor + 0.05; 
+                    particleVelocities[i * 3 + 2] = (Math.random() - 0.5) * speedFactor;
                 }
 
                 particleGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(originalPositions), 3));
@@ -315,7 +317,7 @@ function runParticleAnimation(container, titleElement) {
 
                 if (elapsedTime <= scaleDuration) {
                     // --- 1단계: Solid 텍스트 확대 ---
-                    const scale = 1.0 + (elapsedTime / scaleDuration) * 1.0;
+                    const scale = 0.5 + (elapsedTime / scaleDuration) * 1.0;
                     
                     textMesh.scale.set(scale, scale, scale);
                     textMesh.visible = true;
@@ -334,16 +336,35 @@ function runParticleAnimation(container, titleElement) {
                     // --- 2단계: 파티클 분산 및 페이드 아웃 ---
                     const disperseTime = elapsedTime - scaleDuration;
 
-                    textMesh.visible = false; // [수정] Solid 텍스트 숨기기
+                    textMesh.visible = false; // Solid 텍스트 숨기기
                     
-                    particleSystem.visible = true; // [수정] 파티클 시스템 보이기
+                    particleSystem.visible = true; // 파티클 시스템 보이기
                     particleSystem.scale.set(2.0, 2.0, 2.0); 
+
+                    // 항력(Drag) 및 난류(Noise) 설정
+                    const drag = 0.94; // 2%씩 속도 감소
+                    const noiseStrength = 0.01; // 맴도는 효과의 강도
+                    const noiseTime = elapsedTime * 0.5; // 노이즈가 변하는 속도
 
                     // 파티클 위치 업데이트 (흩어짐)
                     for (let i = 0; i < particleCount; i++) {
+                        // 1. 항력 적용 (속도 감속)
+                        particleVelocities[i * 3] *= drag;
+                        particleVelocities[i * 3 + 1] *= drag;
+                        particleVelocities[i * 3 + 2] *= drag;
+                        
+                        // 2. 속도에 따라 위치 업데이트
                         particlePositions.array[i * 3] += particleVelocities[i * 3];
                         particlePositions.array[i * 3 + 1] += particleVelocities[i * 3 + 1];
                         particlePositions.array[i * 3 + 2] += particleVelocities[i * 3 + 2];
+
+                        // 3. [추가] 난류(Noise) 적용 (맴도는 효과)
+                        // 파티클의 원래 X위치와 시간을 기반으로 sin/cos 노이즈 생성
+                        const noiseX = 1.2*Math.sin(originalPositions[i * 3] * 0.7 + noiseTime) * noiseStrength;
+                        const noiseY = 0.9*Math.cos(originalPositions[i * 3] * 0.4 + noiseTime) * noiseStrength;
+                        
+                        particlePositions.array[i * 3] += noiseX;
+                        particlePositions.array[i * 3 + 1] += noiseY;
                     }
                     particlePositions.needsUpdate = true;
                     
@@ -408,7 +429,7 @@ function createSmokeMaterial() {
         size: 0.5,
         transparent: true,
         opacity: 1.0,
-        blending: THREE.AdditiveBlending,
+        blending: THREE.NormalBlending,
         depthWrite: false, // 텍스처끼리 겹칠 때 어색함을 방지
         color: 0xffffff
     });
@@ -429,7 +450,7 @@ function createSmokeTexture() {
         canvas.width / 2, canvas.height / 2, 0, 
         canvas.width / 2, canvas.height / 2, canvas.width / 2
     );
-    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
     gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
     context.fillStyle = gradient;
