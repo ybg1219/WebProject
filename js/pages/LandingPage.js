@@ -155,112 +155,91 @@ function runParticleAnimation(container, titleElement) {
         const disperseDuration = 4.0;
         const totalDuration = scaleDuration + disperseDuration;
 
-        fontLoader.load(fontPath, (font) => {
-            // 4. 텍스트 지오메트리...
-            const textGeometry = new TextGeometry('flowground', {
-                font: font,
-                size: 3,
-                height: 0.2,
-                curveSegments: 12,
-                bevelEnabled: true,
-                bevelThickness: 0.03,
-                bevelSize: 0.02,
-                bevelOffset: 0,
-                bevelSegments: 5
-            });
-            textGeometry.center();
+        // 지오메트리 생성 및 애니메이션 시작 헬퍼 함수
+        function createGeometryAndAnimate(font) {
+            try {
+                // 4. 텍스트 지오메트리...
+                const textGeometry = new TextGeometry('flowground', {
+                    font: font,
+                    size: 3,
+                    height: 0.2,
+                    curveSegments: 12,
+                    bevelEnabled: true,
+                    bevelThickness: 0.03,
+                    bevelSize: 0.02,
+                    bevelOffset: 0,
+                    bevelSegments: 5
+                });
+                textGeometry.center();
 
-            // 5. 파티클 시스템 생성...
-            const particleCount = textGeometry.attributes.position.count;
-            originalPositions = new Float32Array(particleCount * 3);
-            particleVelocities = new Float32Array(particleCount * 3);
-            const particleGeometry = new THREE.BufferGeometry();
+                // 5. 파티클 시스템 생성...
+                const particleCount = textGeometry.attributes.position.count;
+                originalPositions = new Float32Array(particleCount * 3);
+                particleVelocities = new Float32Array(particleCount * 3);
+                const particleGeometry = new THREE.BufferGeometry();
 
-            for (let i = 0; i < particleCount; i++) {
-                const x = textGeometry.attributes.position.getX(i);
-                const y = textGeometry.attributes.position.getY(i);
-                const z = textGeometry.attributes.position.getZ(i);
+                for (let i = 0; i < particleCount; i++) {
+                    const x = textGeometry.attributes.position.getX(i);
+                    const y = textGeometry.attributes.position.getY(i);
+                    const z = textGeometry.attributes.position.getZ(i);
 
-                originalPositions[i * 3] = x;
-                originalPositions[i * 3 + 1] = y;
-                originalPositions[i * 3 + 2] = z;
+                    originalPositions[i * 3] = x;
+                    originalPositions[i * 3 + 1] = y;
+                    originalPositions[i * 3 + 2] = z;
 
-                particleVelocities[i * 3] = (Math.random() - 0.5) * 0.1;
-                particleVelocities[i * 3 + 1] = (Math.random() * 0.2) + 0.05;
-                particleVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.1;
+                    particleVelocities[i * 3] = (Math.random() - 0.5) * 0.1;
+                    particleVelocities[i * 3 + 1] = (Math.random() * 0.2) + 0.05;
+                    particleVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.1;
+                }
+
+                particleGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(originalPositions), 3));
+
+                const particleMaterial = new THREE.PointsMaterial({
+                    color: 0xffffff,
+                    size: 0.05,
+                    transparent: true,
+                    opacity: 1.0,
+                    blending: THREE.AdditiveBlending
+                });
+
+                particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+                scene.add(particleSystem);
+
+                // 6. 애니메이션 루프 시작 (반복 없음)
+                animate();
+
+            } catch (error) {
+                // (최악의 경우) 폰트 파싱/지오메트리 생성 실패
+                console.error("지오메트리 생성 실패 (Fallback 폰트 데이터 이상):", error);
+                // 애니메이션 건너뛰고 종료
+                animate(); 
             }
+        }
 
-            particleGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(originalPositions), 3));
+        fontLoader.load(fontPath, 
+            // 3-2. (성공 시)
+            (font) => {
+                console.log("fontPath 로드 성공.");
+                createGeometryAndAnimate(font);
+            }, 
+            // (진행 콜백 - 비워둠)
+            undefined, 
+            // 3-3. (실패 시 - Fallback)
+            (error) => {
+                console.warn(`fontPath 로드 실패 ('${fontPath}'): ${error.message}`);
+                console.log("Fallback: import된 기본 폰트로 파싱을 시도합니다.");
 
-            const particleMaterial = new THREE.PointsMaterial({
-                color: 0xffffff,
-                size: 0.05,
-                transparent: true,
-                opacity: 1.0,
-                blending: THREE.AdditiveBlending
-            });
-
-            particleSystem = new THREE.Points(particleGeometry, particleMaterial);
-            scene.add(particleSystem);
-
-            // 6. 애니메이션 루프 시작 (반복 없음)
-            animate();
-
-        }, undefined, (error) => {
-             // 폰트 로드 실패 시 (수정됨)
-            console.error('폰트 로딩 실패:', error);
-            const font = fontLoader.parse(helvetikerFontData);
-
-            // 4. 텍스트 지오메트리...
-            const textGeometry = new TextGeometry('flowground', {
-                font: font,
-                size: 3,
-                height: 0.2,
-                curveSegments: 12,
-                bevelEnabled: true,
-                bevelThickness: 0.03,
-                bevelSize: 0.02,
-                bevelOffset: 0,
-                bevelSegments: 5
-            });
-            textGeometry.center();
-
-            // 5. 파티클 시스템 생성...
-            const particleCount = textGeometry.attributes.position.count;
-            originalPositions = new Float32Array(particleCount * 3);
-            particleVelocities = new Float32Array(particleCount * 3);
-            const particleGeometry = new THREE.BufferGeometry();
-
-            for (let i = 0; i < particleCount; i++) {
-                const x = textGeometry.attributes.position.getX(i);
-                const y = textGeometry.attributes.position.getY(i);
-                const z = textGeometry.attributes.position.getZ(i);
-
-                originalPositions[i * 3] = x;
-                originalPositions[i * 3 + 1] = y;
-                originalPositions[i * 3 + 2] = z;
-
-                particleVelocities[i * 3] = (Math.random() - 0.5) * 0.1;
-                particleVelocities[i * 3 + 1] = (Math.random() * 0.2) + 0.05;
-                particleVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.1;
+                try {
+                    // import한 폰트 데이터(JSON)를 동기적으로 파싱합니다.
+                    const font = fontLoader.parse(helvetikerFontData);
+                    createGeometryAndAnimate(font);
+                } catch (parseError) {
+                    console.error("Fallback 폰트 파싱조차 실패했습니다:", parseError);
+                    // (최악의 경우) 폰트가 아예 없으므로 애니메이션을 건너뜁니다.
+                    animate(); 
+                }
             }
-
-            particleGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(originalPositions), 3));
-
-            const particleMaterial = new THREE.PointsMaterial({
-                color: 0xffffff,
-                size: 0.05,
-                transparent: true,
-                opacity: 1.0,
-                blending: THREE.AdditiveBlending
-            });
-
-            particleSystem = new THREE.Points(particleGeometry, particleMaterial);
-            scene.add(particleSystem);
-
-            // 6. 애니메이션 루프 시작 (반복 없음)
-            animate();
-        });
+        );
 
         // 7. 애니메이션 루프 (수정됨)
         function animate() {
