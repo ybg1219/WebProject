@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js';
 
 import helvetikerFontData from 'three/examples/fonts/helvetiker_regular.typeface.json';
 /**
@@ -158,7 +159,7 @@ function runParticleAnimation(container, titleElement) {
         // 지오메트리 생성 및 애니메이션 시작 헬퍼 함수
         function createGeometryAndAnimate(font) {
             try {
-                // 4. 텍스트 지오메트리...
+                // 4. 텍스트 지오메트리 생성 (이전과 동일)
                 const textGeometry = new TextGeometry('flowground', {
                     font: font,
                     size: 3,
@@ -172,22 +173,40 @@ function runParticleAnimation(container, titleElement) {
                 });
                 textGeometry.center();
 
-                // 5. 파티클 시스템 생성...
-                const particleCount = textGeometry.attributes.position.count;
+                // --- [신규] MeshSurfaceSampler 사용 ---
+                // 1. 샘플링을 위해 텍스트 지오메트리로 임시 메쉬를 만듭니다.
+                const tempMesh = new THREE.Mesh(textGeometry);
+
+                // 2. 샘플러를 초기화합니다.
+                const sampler = new MeshSurfaceSampler(tempMesh).build();
+
+                // 3. 텍스트 지오메트리는 이제 샘플러에 복사되었으므로 원본은 제거합니다.
+                textGeometry.dispose();
+
+                // 4. 파티클 개수를 정합니다. (꼭짓점 개수와 상관없이 원하는 만큼)
+                //    숫자를 늘릴수록 텍스트가 빽빽해집니다.
+                const particleCount = 20000; 
+
+                // 5. 새 파티클 개수에 맞게 배열을 초기화합니다.
                 originalPositions = new Float32Array(particleCount * 3);
                 particleVelocities = new Float32Array(particleCount * 3);
                 const particleGeometry = new THREE.BufferGeometry();
+                
+                // 6. 샘플링에 사용할 임시 Vector3 객체
+                const tempPosition = new THREE.Vector3();
 
+                // 7. 파티클 개수만큼 루프를 돌며 메쉬 표면에서 점을 샘플링합니다.
                 for (let i = 0; i < particleCount; i++) {
-                    const x = textGeometry.attributes.position.getX(i);
-                    const y = textGeometry.attributes.position.getY(i);
-                    const z = textGeometry.attributes.position.getZ(i);
+                    // 메쉬 표면에서 무작위 점 하나를 샘플링하여 tempPosition에 저장
+                    sampler.sample(tempPosition);
+                    
+                    // 샘플링된 위치를 originalPositions에 저장
+                    originalPositions[i * 3]     = tempPosition.x;
+                    originalPositions[i * 3 + 1] = tempPosition.y;
+                    originalPositions[i * 3 + 2] = tempPosition.z;
 
-                    originalPositions[i * 3] = x;
-                    originalPositions[i * 3 + 1] = y;
-                    originalPositions[i * 3 + 2] = z;
-
-                    particleVelocities[i * 3] = (Math.random() - 0.5) * 0.1;
+                    // 각 파티클의 분산 속도 저장 (이전과 동일)
+                    particleVelocities[i * 3]     = (Math.random() - 0.5) * 0.1;
                     particleVelocities[i * 3 + 1] = (Math.random() * 0.2) + 0.05;
                     particleVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.1;
                 }
