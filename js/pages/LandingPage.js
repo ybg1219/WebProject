@@ -8,6 +8,7 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+import helvetikerFontData from 'three/examples/fonts/helvetiker_regular.typeface.json';
 /**
  * Phase 1: 랜딩 페이지 컴포넌트
  */
@@ -107,6 +108,7 @@ export function LandingPage(container) {
 }
 
 
+
 /**
  * 3D 타이틀 파티클 애니메이션을 실행하는 함수
  * @param {HTMLElement} container - 캔버스를 추가할 부모 컨테이너
@@ -115,12 +117,12 @@ export function LandingPage(container) {
  */
 function runParticleAnimation(container, titleElement) {
     return new Promise((resolve, reject) => {
-
+        
         // H1 타이틀 숨기기
         titleElement.style.display = 'none';
 
         let animationFrameId; // requestAnimationFrame ID
-
+        
         // 2. 기본 씬(Scene), 카메라(Camera), 렌더러(Renderer) 설정
         const scene = new THREE.Scene();
 
@@ -140,11 +142,13 @@ function runParticleAnimation(container, titleElement) {
 
         // 3. 폰트 로드 및 텍스트 지오메트리 생성
         const fontLoader = new FontLoader();
-        let particleSystem;
+        let particleSystem; 
         let originalPositions;
-        let particleVelocities;
+        let particleVelocities; 
         const clock = new THREE.Clock();
-        const fontPath = 'https://cdn.jsdelivr.net/npm/three@0.140.0/examples/fonts/helvetiker_regular.typeface.json';
+        // 폰트 경로 수정: Webpack으로 빌드할 경우, 폰트 파일은 정적 에셋으로 제공되어야 합니다.
+        // 우선 'three/examples/fonts/' 경로를 사용, 에러 시 import 된 폰트 데이터 사용
+        const fontPath = 'three/examples/fonts/helvetiker_regular.typeface.json';
 
         // 애니메이션 지속 시간 (반복 없음)
         const scaleDuration = 3.0;
@@ -203,9 +207,59 @@ function runParticleAnimation(container, titleElement) {
             animate();
 
         }, undefined, (error) => {
-            // 폰트 로드 실패 시
+             // 폰트 로드 실패 시 (수정됨)
             console.error('폰트 로딩 실패:', error);
-            reject(error); // Promise 실패 처리
+            const font = fontLoader.parse(helvetikerFontData);
+
+            // 4. 텍스트 지오메트리...
+            const textGeometry = new TextGeometry('flowground', {
+                font: font,
+                size: 3,
+                height: 0.2,
+                curveSegments: 12,
+                bevelEnabled: true,
+                bevelThickness: 0.03,
+                bevelSize: 0.02,
+                bevelOffset: 0,
+                bevelSegments: 5
+            });
+            textGeometry.center();
+
+            // 5. 파티클 시스템 생성...
+            const particleCount = textGeometry.attributes.position.count;
+            originalPositions = new Float32Array(particleCount * 3);
+            particleVelocities = new Float32Array(particleCount * 3);
+            const particleGeometry = new THREE.BufferGeometry();
+
+            for (let i = 0; i < particleCount; i++) {
+                const x = textGeometry.attributes.position.getX(i);
+                const y = textGeometry.attributes.position.getY(i);
+                const z = textGeometry.attributes.position.getZ(i);
+
+                originalPositions[i * 3] = x;
+                originalPositions[i * 3 + 1] = y;
+                originalPositions[i * 3 + 2] = z;
+
+                particleVelocities[i * 3] = (Math.random() - 0.5) * 0.1;
+                particleVelocities[i * 3 + 1] = (Math.random() * 0.2) + 0.05;
+                particleVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.1;
+            }
+
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(originalPositions), 3));
+
+            const particleMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.05,
+                transparent: true,
+                opacity: 1.0,
+                blending: THREE.AdditiveBlending
+            });
+
+            particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+            scene.add(particleSystem);
+
+            // 6. 애니메이션 루프 시작 (반복 없음)
+            animate();
         });
 
         // 7. 애니메이션 루프 (수정됨)
@@ -217,9 +271,11 @@ function runParticleAnimation(container, titleElement) {
                 cancelAnimationFrame(animationFrameId); // 루프 중지
 
                 // 리소스 정리 (메모리 누수 방지)
-                scene.remove(particleSystem);
-                particleSystem.geometry.dispose();
-                particleSystem.material.dispose();
+                if (particleSystem) { // particleSystem이 성공적으로 로드된 경우에만 정리
+                    scene.remove(particleSystem);
+                    particleSystem.geometry.dispose();
+                    particleSystem.material.dispose();
+                }
                 renderer.dispose();
                 controls.dispose();
 
@@ -236,7 +292,7 @@ function runParticleAnimation(container, titleElement) {
             }
 
             // 애니메이션 진행
-            if (particleSystem) {
+            if (particleSystem) { // particleSystem이 있을 때만 애니메이션 실행
                 const geometry = particleSystem.geometry;
                 const material = particleSystem.material;
                 const positions = geometry.attributes.position;
