@@ -117,6 +117,10 @@ export function LandingPage(container) {
  * @returns {Promise<void>} 애니메이션이 완료되면 resolve되는 Promise
  */
 function runParticleAnimation(container, titleElement) {
+
+    // true: 연기 텍스처 / false: 기본 파티클(점)
+    const USE_SMOKE = true;
+
     return new Promise((resolve, reject) => {
         
         // H1 타이틀 숨기기
@@ -174,11 +178,17 @@ function runParticleAnimation(container, titleElement) {
                 textGeometry.center();
 
                 // --- [신규] MeshSurfaceSampler 사용 ---
-                // 1. 샘플링을 위해 텍스트 지오메트리로 임시 메쉬를 만듭니다.
-                const tempMesh = new THREE.Mesh(textGeometry);
+                // 1. 샘플링을 위해 텍스트 지오메트리로 텍스트 메쉬를 만듭니다.
+                const textMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xffffff,
+                    transparent: true, 
+                    opacity: 1.0 
+                });
+                textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                scene.add(textMesh); // Solid 메쉬를 씬에 추가
 
                 // 2. 샘플러를 초기화합니다.
-                const sampler = new MeshSurfaceSampler(tempMesh).build();
+                const sampler = new MeshSurfaceSampler(textMesh).build();
 
                 // 3. 텍스트 지오메트리는 이제 샘플러에 복사되었으므로 원본은 제거합니다.
                 textGeometry.dispose();
@@ -213,15 +223,16 @@ function runParticleAnimation(container, titleElement) {
 
                 particleGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(originalPositions), 3));
 
-                const particleMaterial = new THREE.PointsMaterial({
-                    color: 0xffffff,
-                    size: 0.05,
-                    transparent: true,
-                    opacity: 1.0,
-                    blending: THREE.AdditiveBlending
-                });
+                let particleMaterial;
+                if (USE_SMOKE) {
+                    particleMaterial = createSmokeMaterial();
+                } else {
+                    particleMaterial = createParticleMaterial();
+                }
+                // ---------------------------------------------
 
                 particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+                particleSystem.visible = false; 
                 scene.add(particleSystem);
 
                 // 6. 애니메이션 루프 시작 (반복 없음)
@@ -274,6 +285,11 @@ function runParticleAnimation(container, titleElement) {
                     particleSystem.geometry.dispose();
                     particleSystem.material.dispose();
                 }
+                if (textMesh) {
+                    scene.remove(textMesh);
+                    textMesh.geometry.dispose(); 
+                    textMesh.material.dispose();
+                }
                 renderer.dispose();
                 controls.dispose();
 
@@ -290,37 +306,66 @@ function runParticleAnimation(container, titleElement) {
             }
 
             // 애니메이션 진행
-            if (particleSystem) { // particleSystem이 있을 때만 애니메이션 실행
-                const geometry = particleSystem.geometry;
-                const material = particleSystem.material;
-                const positions = geometry.attributes.position;
-                const count = positions.count;
+            // [수정] 애니메이션 진행 로직
+            if (particleSystem && textMesh) { 
+                const particlePositions = particleSystem.geometry.attributes.position;
+                const particleMaterial = particleSystem.material;
+                const textMaterial = textMesh.material;
+                const particleCount = particlePositions.count;
 
                 if (elapsedTime <= scaleDuration) {
-                    // --- 1단계: 확대 ---
+                    // --- 1단계: Solid 텍스트 확대 ---
                     const scale = 1.0 + (elapsedTime / scaleDuration) * 1.0;
+                    
+                    textMesh.scale.set(scale, scale, scale);
+                    textMesh.visible = true;
+                    
                     particleSystem.scale.set(scale, scale, scale);
-                    material.opacity = 1.0;
+                    particleSystem.visible = false;
+                    
+                    // (파티클 리셋)
+                    if (particleMaterial.opacity < 1.0) {
+                        particleMaterial.opacity = 1.0;
+                        particlePositions.array.set(originalPositions);
+                        particlePositions.needsUpdate = true;
+                    }
 
                 } else {
-                    // --- 2단계: 분산 및 페이드 아웃 ---
-                    particleSystem.scale.set(2.0, 2.0, 2.0); // 스케일 고정
+                    // --- 2단계: 파티클 분산 및 페이드 아웃 ---
                     const disperseTime = elapsedTime - scaleDuration;
 
-                    for (let i = 0; i < count; i++) {
-                        positions.array[i * 3] += particleVelocities[i * 3];
-                        positions.array[i * 3 + 1] += particleVelocities[i * 3 + 1];
-                        positions.array[i * 3 + 2] += particleVelocities[i * 3 + 2];
+                    textMesh.visible = false; // [수정] Solid 텍스트 숨기기
+                    
+                    particleSystem.visible = true; // [수정] 파티클 시스템 보이기
+                    particleSystem.scale.set(2.0, 2.0, 2.0); 
+
+                    // 파티클 위치 업데이트 (흩어짐)
+                    for (let i = 0; i < particleCount; i++) {
+                        particlePositions.array[i * 3] += particleVelocities[i * 3];
+                        particlePositions.array[i * 3 + 1] += particleVelocities[i * 3 + 1];
+                        particlePositions.array[i * 3 + 2] += particleVelocities[i * 3 + 2];
                     }
-                    positions.needsUpdate = true;
-                    material.opacity = 1.0 - (disperseTime / disperseDuration);
+                    particlePositions.needsUpdate = true;
+                    
+                    // 파티클 투명도 조절 (사라짐)
+                    particleMaterial.opacity = 1.0 - (disperseTime / disperseDuration);
+
+                    // 렌더링 모드에 따라 크기 조절
+                    if (USE_SMOKE) {
+                        const startSize = 0.5;
+                        const growthFactor = 2.0;
+                        particleMaterial.size = startSize + (disperseTime / disperseDuration) * growthFactor;
+                    } else {
+                        const startSize = 0.05;
+                        const growthFactor = 0.1;
+                        particleMaterial.size = startSize + (disperseTime / disperseDuration) * growthFactor;
+                    }
                 }
             }
 
             controls.update();
             renderer.render(scene, camera);
 
-            // 다음 프레임 요청
             animationFrameId = requestAnimationFrame(animate);
         }
 
@@ -336,4 +381,59 @@ function runParticleAnimation(container, titleElement) {
         }
         window.addEventListener('resize', onWindowResize);
     });
+}
+
+// --- 헬퍼 함수 (재질 생성) ---
+
+/**
+ * 기본 파티클(점) 재질을 생성합니다.
+ */
+function createParticleMaterial() {
+    return new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 0.05,
+        transparent: true,
+        opacity: 1.0,
+        blending: THREE.AdditiveBlending
+    });
+}
+
+/**
+ * 연기(텍스처) 재질을 생성합니다.
+ */
+function createSmokeMaterial() {
+    const texture = createSmokeTexture();
+    return new THREE.PointsMaterial({
+        map: texture,
+        size: 0.5,
+        transparent: true,
+        opacity: 1.0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false, // 텍스처끼리 겹칠 때 어색함을 방지
+        color: 0xffffff
+    });
+}
+
+/**
+ * 2D Canvas를 사용해 실시간으로 연기 텍스처를 생성합니다.
+ * (외부 이미지 파일 의존성 없음)
+ */
+function createSmokeTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const context = canvas.getContext('2d');
+    
+    // 중앙은 50% 불투명한 흰색, 가장자리는 100% 투명한 그라데이션
+    const gradient = context.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, 0, 
+        canvas.width / 2, canvas.height / 2, canvas.width / 2
+    );
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    return new THREE.CanvasTexture(canvas);
 }
