@@ -2,7 +2,9 @@
 // window.EventBus = EventBus; // event bus 글로벌로 등록, event 발행 구독하면서 모듈 간 통신 역할
 import WebGL from './modules/WebGL.js';
 import { router } from "./router.js";
-import { AboutPage } from "./about.js";
+import { AboutPage } from "./pages/AboutPage.js";
+import {LandingPage} from "./pages/LandingPage.js";
+import {TutorialPage} from "./pages/TutorialPage.js";
 
 // 개발 환경 플래그 설정
 if(!window.isDev) window.isDev = false; // is dev 정의되어있지 않으면 개발환경을 끔. (디버그 용 코드드 한번에 꺼버리기)
@@ -12,7 +14,7 @@ if(!window.isDev) window.isDev = false; // is dev 정의되어있지 않으면 �
  * @param {HTMLElement} container - 페이지가 렌더링될 DOM 요소
  * @returns {Function} 페이지가 사라질 때 호출될 정리(cleanup) 함수
  */
-function mainPage(container) {
+function MainPage(container) {
     // WebGL 인스턴스를 저장할 변수
     let webglInstance = new WebGL({
         $wrapper: container
@@ -30,7 +32,10 @@ function mainPage(container) {
 }
 
 // 1. 라우트(경로)와 페이지 컴포넌트를 등록합니다.
-router.addRoute("/", mainPage); // MainPage 대신 위에서 정의한 mainPage 함수를 사용합니다.
+router.addRoute("/", LandingPage); // MainPage 대신 위에서 정의한 mainPage 함수를 사용합니다.
+router.addRoute("/about", AboutPage);
+router.addRoute("/simulation", MainPage);
+router.addRoute("/tutorial", TutorialPage);
 router.addRoute("/about", AboutPage);
 
 // 2. 네비게이션 링크(<a data-link>) 클릭 이벤트를 처리합니다.
