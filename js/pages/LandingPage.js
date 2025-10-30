@@ -35,6 +35,64 @@ export function LandingPage(container) {
                 <p>카메라 권한이 거부되었습니다.<br>브라우저 설정을 변경 후 새로고침 해주세요.</p>
             </div>
         </div>
+    `;container.innerHTML = `
+        <!-- 
+          전체 화면을 채우는 다크 모드 컨테이너 (bg-gray-900)
+          모든 자식 요소를 중앙 정렬합니다 (flex, items-center, justify-center)
+        -->
+        <div class="landing-container flex items-center justify-center h-screen w-screen bg-gray-900 text-white font-sans overflow-hidden">
+            
+            <!-- 
+              1. 3D 애니메이션으로 대체될 H1 타이틀
+                 (애니메이션 재생 전까지 임시로 펄스 효과를 줍니다)
+            -->
+            <h1 class="title-animation text-6xl md:text-8xl font-bold text-white animate-pulse">flowground</h1>
+            
+            <!-- 
+              2. 튜토리얼 프롬프트 (카드 디자인)
+                 - bg-gray-800: 배경색
+                 - rounded-lg, shadow-xl: 둥근 모서리와 그림자
+                 - p-8: 패딩
+                 - max-w-md, w-full: 최대 너비 고정, 모바일에선 꽉 차게
+            -->
+            <div class="prompt bg-gray-800 p-8 rounded-lg shadow-xl max-w-md w-11/12 text-center" style="display: none;">
+                <h2 class="text-3xl font-bold mb-4">튜토리얼을 보시겠습니까?</h2>
+                <p class="text-gray-300 mb-8">손동작으로 연기를 다루는 방법을 배웁니다.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button id="btn-tutorial-yes" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+                        예 (학습하기)
+                    </button>
+                    <button id="btn-tutorial-no" class="w-full sm:w-auto bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+                        아니오 (바로 시작)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 
+              3. 카메라 권한 요청 메시지 (카드 디자인)
+                 (권한을 기다리는 동안 스피너를 표시합니다)
+            -->
+            <div class="permission-message bg-gray-800 p-8 rounded-lg shadow-xl max-w-md w-11/12 text-center" style="display: none;">
+                <h2 class="text-3xl font-bold mb-4">카메라 권한</h2>
+                <p class="text-gray-300 mb-6">손동작 인식을 위해 카메라 권한이 필요합니다.<br>브라우저의 권한 허용 팝업을 확인해주세요.</p>
+                <!-- Tailwind CSS 스피너 -->
+                <div class="mt-6">
+                    <svg class="animate-spin h-8 w-8 text-indigo-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- 
+              4. 카메라 권한 거부 메시지 (카드 디자인)
+                 (에러 상태를 text-red-500으로 표시합니다)
+            -->
+            <div class="permission-denied bg-gray-800 p-8 rounded-lg shadow-xl max-w-md w-11/12 text-center" style="display: none;">
+                <h2 class="text-3xl font-bold mb-4 text-red-500">권한 거부됨</h2>
+                <p class="text-gray-300">카메라 권한이 거부되었습니다.<br>손동작 인식을 사용하려면 브라우저 설정에서 권한을 허용한 후, 페이지를 새로고침 해주세요.</p>
+            </div>
+        </div>
     `;
 
     // 2. DOM 요소 참조
@@ -67,11 +125,11 @@ export function LandingPage(container) {
         } catch (error) {
             console.error("타이틀 애니메이션 실패:", error);
             // 애니메이션 실패 시 H1 타이틀을 그냥 숨김 (다음 단계 진행을 위해)
-            title.style.display = 'none';
+            if (title) title.style.display = 'none';
         }
 
         // 2. (임시) 권한 요청 UI 표시
-        permMessage.style.display = 'block';
+        if (permMessage) permMessage.style.display = 'block';
 
         // 3. TODO: 실제 카메라 권한 요청 로직
         try {
@@ -81,18 +139,17 @@ export function LandingPage(container) {
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             console.log("카메라 권한 획득 (가상)");
-            permMessage.style.display = 'none';
-            prompt.style.display = 'block'; // 튜토리얼 프롬프트 표시
+            if (permMessage) permMessage.style.display = 'none';
+            if (prompt) prompt.style.display = 'block'; 
 
-            // 버튼에 이벤트 리스너 연결
-            btnYes.addEventListener('click', handleYes);
-            btnNo.addEventListener('click', handleNo);
+            if (btnYes) btnYes.addEventListener('click', handleYes);
+            if (btnNo) btnNo.addEventListener('click', handleNo);
 
         } catch (error) {
             // 권한 요청 실패 시
             console.error("카메라 권한 거부됨", error);
-            permMessage.style.display = 'none';
-            permDenied.style.display = 'block';
+            if (permMessage) permMessage.style.display = 'none';
+            if (permDenied) permDenied.style.display = 'block';
         }
     };
 
