@@ -2,6 +2,7 @@
 const routes = {};
 // 현재 페이지의 리소스를 정리(cleanup)하는 함수를 저장할 변수
 let currentPageCleanup = null;
+import EventBus from './utils/EventBus.js';
 
 /**
  * 라우터 객체
@@ -38,6 +39,7 @@ export const router = {
 
         // 3. 새 페이지를 렌더링하고, 반환된 정리 함수를 저장합니다.
         currentPageCleanup = page(appContainer);
+        EventBus.emit('routeChanged', { pathname: path });
     },
 
     /**
