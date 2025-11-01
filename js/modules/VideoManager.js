@@ -60,6 +60,29 @@ class VideoManager {
     getElement() {
         return this.video;
     }
+
+    destroy() {
+        console.log("Destroying VideoManager...");
+        
+        // 1. 카메라 스트림(MediaStream) 중지
+        if (this.stream) {
+            this.stream.getTracks().forEach(track => track.stop());
+            this.stream = null;
+        }
+
+        // 2. 비디오 요소 정리
+        if (this.video) {
+            this.video.pause();
+            this.video.srcObject = null;
+            this.video.src = "";
+            
+            // 3. DOM에서 요소 제거
+            if (this.video.parentNode) {
+                this.video.parentNode.removeChild(this.video);
+            }
+            this.video = null;
+        }
+    }
 }
 
 export default new VideoManager(); // instance return single ton

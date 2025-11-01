@@ -11,6 +11,7 @@ import CanvasManager from "./CanvasManager";
 export default class Webgl{
     constructor(props){
         this.props = props; // document.body를 받아옴.
+        this._destroyed = false;
 
         // --- 시뮬레이션 옵션 ---
         this.options = {
@@ -24,8 +25,16 @@ export default class Webgl{
         VideoManager.init(this.props.$wrapper, Common.width, Common.height);
         CanvasManager.init(this.props.$wrapper, Common.width, Common.height);
         
+        // requestAnimationFrame ID 저장을 위해 추가
+        this.animationFrameId = null;
+        // 이벤트 리스너 제거를 위해 bind된 함수를 변수에 저장
+        this.resizeHandler = this.resize.bind(this);
+
+
         this.init().then(() => {
-            this.loop();
+            if (!this._destroyed) {
+                this.loop();
+            }
         });
         
         // register resize
@@ -66,14 +75,18 @@ export default class Webgl{
     
 
     resize(){
+        if (this._destroyed) return;
+
         Common.resize();
-        this.output.resize();
+        if (this.output) this.output.resize();
 
         VideoManager.setSize( Common.width, Common.height);
         CanvasManager.setSize( Common.width, Common.height);
     }
 
     render(){
+        if (this._destroyed) return;
+
         Mouse.update();
 
         // 활성화된 트래커의 update만 호출.
@@ -92,6 +105,8 @@ export default class Webgl{
     }
 
     loop(){
+        if (this._destroyed) return;
+
         if (this.stats) this.stats.begin();
         this.render();
         if (this.stats) this.stats.end();
@@ -102,23 +117,55 @@ export default class Webgl{
      * WebGL 인스턴스의 모든 리소스를 정리하는 함수
      */
     destroy() {
+        // 중복 호출 방지
+        if (this._destroyed) {
+            console.warn("WebGL이 이미 destroy되었습니다.");
+            return;
+        }
         console.log("WebGL 인스턴스를 정리합니다...");
 
-        // 1. 애니메이션 루프 중단
-        if (this.animationFrameId) {
-            cancelAnimationFrame(this.animationFrameId);
-        }
+        try {
+            // 1. 애니메이션 루프 중단
+            if (this.animationFrameId) {
+                cancelAnimationFrame(this.animationFrameId);
+                this.animationFrameId = null;
+            }
 
-        // 2. 이벤트 리스너 제거
-        window.removeEventListener("resize", this.resizeHandler);
+            // 2. 이벤트 리스너 제거
+            window.removeEventListener("resize", this.resizeHandler);
 
-        // 3. Stats.js DOM 요소 제거
-        if (this.stats && this.stats.dom.parentNode) {
-            this.stats.dom.parentNode.removeChild(this.stats.dom);
-        }
-        
-        if (this.activeTracker && this.activeTracker.destroy) {
-            this.activeTracker.destroy();
+            // 3. Stats.js DOM 요소 제거
+            if (this.stats && this.stats.dom.parentNode) {
+                this.stats.dom.parentNode.removeChild(this.stats.dom);
+            }
+            
+            // 4. Output (Simulation) 연쇄 정리
+            if (this.output && this.output.destroy) {
+                this.output.destroy();
+            }
+            
+            // 5. VideoManager 정리
+            VideoManager.destroy();
+            
+            // 6. Tracker 정리
+            if (this.activeTracker && this.activeTracker.destroy) {
+                this.activeTracker.destroy();
+            }
+
+            // 7. 렌더러 DOM 요소 제거
+            if (Common.renderer.domElement.parentNode) {
+                Common.renderer.domElement.parentNode.removeChild(Common.renderer.domElement);
+            }
+
+        } catch (e) {
+            console.error("WebGL 리소스 해제 중 오류 발생:", e);
+        } finally {
+            // 8. 참조 해제
+            this.output = null;
+            this.activeTracker = null;
+            this.stats = null;
+            this.props = null; // $wrapper 참조 해제
+            this._destroyed = true;
         }
     }
 }

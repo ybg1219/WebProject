@@ -107,6 +107,9 @@ export default class Simulation{
     }
 
     createShaderPass(){
+        // 배열 초기화
+        this.shaderPasses = [];
+        
         this.advection = new Advection({
             cellScale: this.cellScale,
             fboSize: this.fboSize,
@@ -219,6 +222,24 @@ export default class Simulation{
             fboSize: this.fboSize,
             dt: this.options.dt,
         });
+
+        this.shaderPasses.push(
+            this.advection,
+            this.externalForce,
+            this.externalForceTracking,
+            this.externalForceLeft,
+            this.externalForceRight,
+            this.externalForceBody,
+            this.swirl,
+            this.viscous,
+            this.divergence,
+            this.poisson,
+            this.pressure,
+            this.density,
+            this.densityDiffuse,
+            this.gradient,
+            this.vortex
+        );
     }
 
     calcSize(){
@@ -391,5 +412,32 @@ export default class Simulation{
         this.fbos.density_0 = this.fbos.diffuse_0;
 
         this.gradient.update()
+    }
+
+    destroy() {
+        console.log("Destroying Simulation (FBOs and Shaders)...");
+        try {
+            // 1. 모든 FBO 텍스처를 GPU 메모리에서 해제
+            for (const key in this.fbos) {
+                if (this.fbos[key]) {
+                    this.fbos[key].dispose();
+                }
+            }
+
+            // 2. 모든 ShaderPass 모듈의 리소스(geometry, material) 해제
+            for (const pass of this.shaderPasses) {
+                if (pass.dispose) {
+                    pass.dispose();
+                }
+            }
+        } catch (e) {
+            console.error("Simulation 리소스 해제 중 오류:", e);
+        } finally {
+            // 3. 모든 참조를 null로 설정
+            this.fbos = {};
+            this.shaderPasses = [];
+            this.activeTracker = null;
+            this.options = null;
+        }
     }
 }

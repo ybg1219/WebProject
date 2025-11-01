@@ -25,4 +25,19 @@ export default class ShaderPass{
         Common.renderer.render(this.scene, this.camera);
         Common.renderer.setRenderTarget(null);
     }
+    dispose() {
+        if (this.plane) {
+            this.scene.remove(this.plane);
+        }
+        if (this.geometry) {
+            this.geometry.dispose();
+        }
+        if (this.material) {
+            this.material.dispose();
+        }
+        this.scene = null;
+        this.camera = null;
+        this.props = null;
+        this.uniforms = null;
+    }
 }
