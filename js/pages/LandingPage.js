@@ -19,6 +19,8 @@ import helvetikerFontData from 'three/examples/fonts/helvetiker_regular.typeface
  * - 튜토리얼 프롬프트
  */
 export function LandingPage(container) {
+
+    let shouldCleanupTracking = true; // 트래킹 모듈 정리 여부 플래그
     // 1. HTML 뼈대 렌더링
     container.innerHTML = `
         <!-- 
@@ -91,8 +93,8 @@ export function LandingPage(container) {
 
     // 3. 이벤트 핸들러 정의
     const handleYes = () => {
-        // TODO: (Day 3) '/tutorial' 경로로 변경
-        // router.navigate('/tutorial'); 
+        shouldCleanupTracking = false;
+        router.navigate('/tutorial');
         console.log("튜토리얼 페이지로 이동 (미구현)");
     };
 
@@ -120,10 +122,10 @@ export function LandingPage(container) {
         try {
             // 1. VideoManager 초기화 (DOM에 <video> 생성)
             // container(현재 페이지)에 비디오를 꽉 채움
-            VideoManager.init(container, window.innerWidth, window.innerHeight);
+            VideoManager.init(document.body, window.innerWidth, window.innerHeight);
 
             // 2. 카메라 시작 (*** 실제 권한 요청 발생 ***)
-            await VideoManager.startCamera(); 
+            await VideoManager.startCamera();
             const videoElement = VideoManager.getElement();
             if (!videoElement) {
                 throw new Error("VideoManager에서 video 요소를 가져오지 못했습니다.");
@@ -135,11 +137,11 @@ export function LandingPage(container) {
             // (임시) 2초 후 성공했다고 가정
             // await new Promise(resolve => setTimeout(resolve, 1000));
             // console.log("카메라 권한 획득 (가상)");
-            
+
             if (permMessage) permMessage.style.display = 'none';
 
             console.log("video and tracking 초기화 완료");
-            if (prompt) prompt.style.display = 'block'; 
+            if (prompt) prompt.style.display = 'block';
 
             if (btnYes) btnYes.addEventListener('click', handleYes);
             if (btnNo) btnNo.addEventListener('click', handleNo);
@@ -161,10 +163,14 @@ export function LandingPage(container) {
         btnYes.removeEventListener('click', handleYes);
         btnNo.removeEventListener('click', handleNo);
 
-        // 페이지 나갈 때 tracking과 VideoManager 모두 정지 및 파괴
-        GestureTracking.stop();
-        VirtualMouse.destroy();
-        VideoManager.destroy();
+        if (shouldCleanupTracking) {
+            console.log("Cleaning up tracking modules from LandingPage...");
+            GestureTracking.stop();
+            VirtualMouse.destroy();
+            VideoManager.destroy();
+        } else {
+            console.log("Persisting tracking modules for TutorialPage...");
+        }
 
         // (참고) 3D 애니메이션 관련 리소스(렌더러, 씬 등)는
         // runParticleAnimation 함수 내부에서 스스로 정리됩니다.
@@ -186,12 +192,12 @@ function runParticleAnimation(container, titleElement) {
     const USE_SMOKE = true;
 
     return new Promise((resolve, reject) => {
-        
+
         // H1 타이틀 숨기기
         titleElement.style.display = 'none';
 
         let animationFrameId; // requestAnimationFrame ID
-        
+
         // 2. 기본 씬(Scene), 카메라(Camera), 렌더러(Renderer) 설정
         const scene = new THREE.Scene();
 
@@ -211,9 +217,9 @@ function runParticleAnimation(container, titleElement) {
 
         // 3. 폰트 로드 및 텍스트 지오메트리 생성
         const fontLoader = new FontLoader();
-        let particleSystem; 
+        let particleSystem;
         let originalPositions;
-        let particleVelocities; 
+        let particleVelocities;
         const clock = new THREE.Clock();
         // 폰트 경로 수정: Webpack으로 빌드할 경우, 폰트 파일은 정적 에셋으로 제공되어야 합니다.
         // 우선 'three/examples/fonts/' 경로를 사용, 에러 시 import 된 폰트 데이터 사용
@@ -243,10 +249,10 @@ function runParticleAnimation(container, titleElement) {
 
                 // --- [신규] MeshSurfaceSampler 사용 ---
                 // 1. 샘플링을 위해 텍스트 지오메트리로 텍스트 메쉬를 만듭니다.
-                const textMaterial = new THREE.MeshBasicMaterial({ 
+                const textMaterial = new THREE.MeshBasicMaterial({
                     color: 0xffffff,
-                    transparent: true, 
-                    opacity: 1.0 
+                    transparent: true,
+                    opacity: 1.0
                 });
                 textMesh = new THREE.Mesh(textGeometry, textMaterial);
                 scene.add(textMesh); // Solid 메쉬를 씬에 추가
@@ -259,13 +265,13 @@ function runParticleAnimation(container, titleElement) {
 
                 // 4. 파티클 개수를 정합니다. (꼭짓점 개수와 상관없이 원하는 만큼)
                 //    숫자를 늘릴수록 텍스트가 빽빽해집니다.
-                const particleCount = 20000; 
+                const particleCount = 20000;
 
                 // 5. 새 파티클 개수에 맞게 배열을 초기화합니다.
                 originalPositions = new Float32Array(particleCount * 3);
                 particleVelocities = new Float32Array(particleCount * 3);
                 const particleGeometry = new THREE.BufferGeometry();
-                
+
                 // 6. 샘플링에 사용할 임시 Vector3 객체
                 const tempPosition = new THREE.Vector3();
 
@@ -273,17 +279,17 @@ function runParticleAnimation(container, titleElement) {
                 for (let i = 0; i < particleCount; i++) {
                     // 메쉬 표면에서 무작위 점 하나를 샘플링하여 tempPosition에 저장
                     sampler.sample(tempPosition);
-                    
+
                     // 샘플링된 위치를 originalPositions에 저장
-                    originalPositions[i * 3]     = tempPosition.x;
+                    originalPositions[i * 3] = tempPosition.x;
                     originalPositions[i * 3 + 1] = tempPosition.y;
                     originalPositions[i * 3 + 2] = tempPosition.z;
 
                     // 각 파티클의 분산 속도 (사방으로 퍼지도록)
                     const speedFactor = 0.05 + (Math.random() * 0.3); // 속도 랜덤화
-                    particleVelocities[i * 3]     = (Math.random() - 0.5) * speedFactor;
+                    particleVelocities[i * 3] = (Math.random() - 0.5) * speedFactor;
                     // Y축도 위아래 랜덤 + 약간의 상승력
-                    particleVelocities[i * 3 + 1] = (Math.random() - 0.5) * speedFactor + 0.05; 
+                    particleVelocities[i * 3 + 1] = (Math.random() - 0.5) * speedFactor + 0.05;
                     particleVelocities[i * 3 + 2] = (Math.random() - 0.5) * speedFactor;
                 }
 
@@ -298,7 +304,7 @@ function runParticleAnimation(container, titleElement) {
                 // ---------------------------------------------
 
                 particleSystem = new THREE.Points(particleGeometry, particleMaterial);
-                particleSystem.visible = false; 
+                particleSystem.visible = false;
                 scene.add(particleSystem);
 
                 // 6. 애니메이션 루프 시작 (반복 없음)
@@ -308,18 +314,18 @@ function runParticleAnimation(container, titleElement) {
                 // (최악의 경우) 폰트 파싱/지오메트리 생성 실패
                 console.error("지오메트리 생성 실패 (Fallback 폰트 데이터 이상):", error);
                 // 애니메이션 건너뛰고 종료
-                animate(); 
+                animate();
             }
         }
 
-        fontLoader.load(fontPath, 
+        fontLoader.load(fontPath,
             // 3-2. (성공 시)
             (font) => {
                 console.log("fontPath 로드 성공.");
                 createGeometryAndAnimate(font);
-            }, 
+            },
             // (진행 콜백 - 비워둠)
-            undefined, 
+            undefined,
             // 3-3. (실패 시 - Fallback)
             (error) => {
                 console.warn(`fontPath 로드 실패 ('${fontPath}'): ${error.message}`);
@@ -332,7 +338,7 @@ function runParticleAnimation(container, titleElement) {
                 } catch (parseError) {
                     console.error("Fallback 폰트 파싱조차 실패했습니다:", parseError);
                     // (최악의 경우) 폰트가 아예 없으므로 애니메이션을 건너뜁니다.
-                    animate(); 
+                    animate();
                 }
             }
         );
@@ -353,7 +359,7 @@ function runParticleAnimation(container, titleElement) {
                 }
                 if (textMesh) {
                     scene.remove(textMesh);
-                    textMesh.geometry.dispose(); 
+                    textMesh.geometry.dispose();
                     textMesh.material.dispose();
                 }
                 renderer.dispose();
@@ -373,7 +379,7 @@ function runParticleAnimation(container, titleElement) {
 
             // 애니메이션 진행
             // [수정] 애니메이션 진행 로직
-            if (particleSystem && textMesh) { 
+            if (particleSystem && textMesh) {
                 const particlePositions = particleSystem.geometry.attributes.position;
                 const particleMaterial = particleSystem.material;
                 const textMaterial = textMesh.material;
@@ -382,13 +388,13 @@ function runParticleAnimation(container, titleElement) {
                 if (elapsedTime <= scaleDuration) {
                     // --- 1단계: Solid 텍스트 확대 ---
                     const scale = 0.5 + (elapsedTime / scaleDuration) * 1.0;
-                    
+
                     textMesh.scale.set(scale, scale, scale);
                     textMesh.visible = true;
-                    
+
                     particleSystem.scale.set(scale, scale, scale);
                     particleSystem.visible = false;
-                    
+
                     // (파티클 리셋)
                     if (particleMaterial.opacity < 1.0) {
                         particleMaterial.opacity = 1.0;
@@ -401,9 +407,9 @@ function runParticleAnimation(container, titleElement) {
                     const disperseTime = elapsedTime - scaleDuration;
 
                     textMesh.visible = false; // Solid 텍스트 숨기기
-                    
+
                     particleSystem.visible = true; // 파티클 시스템 보이기
-                    particleSystem.scale.set(2.0, 2.0, 2.0); 
+                    particleSystem.scale.set(2.0, 2.0, 2.0);
 
                     // 항력(Drag) 및 난류(Noise) 설정
                     const drag = 0.94; // 2%씩 속도 감소
@@ -416,7 +422,7 @@ function runParticleAnimation(container, titleElement) {
                         particleVelocities[i * 3] *= drag;
                         particleVelocities[i * 3 + 1] *= drag;
                         particleVelocities[i * 3 + 2] *= drag;
-                        
+
                         // 2. 속도에 따라 위치 업데이트
                         particlePositions.array[i * 3] += particleVelocities[i * 3];
                         particlePositions.array[i * 3 + 1] += particleVelocities[i * 3 + 1];
@@ -424,14 +430,14 @@ function runParticleAnimation(container, titleElement) {
 
                         // 3. [추가] 난류(Noise) 적용 (맴도는 효과)
                         // 파티클의 원래 X위치와 시간을 기반으로 sin/cos 노이즈 생성
-                        const noiseX = 1.2*Math.sin(originalPositions[i * 3] * 0.7 + noiseTime) * noiseStrength;
-                        const noiseY = 0.9*Math.cos(originalPositions[i * 3] * 0.4 + noiseTime) * noiseStrength;
-                        
+                        const noiseX = 1.2 * Math.sin(originalPositions[i * 3] * 0.7 + noiseTime) * noiseStrength;
+                        const noiseY = 0.9 * Math.cos(originalPositions[i * 3] * 0.4 + noiseTime) * noiseStrength;
+
                         particlePositions.array[i * 3] += noiseX;
                         particlePositions.array[i * 3 + 1] += noiseY;
                     }
                     particlePositions.needsUpdate = true;
-                    
+
                     // 파티클 투명도 조절 (사라짐)
                     particleMaterial.opacity = 1.0 - (disperseTime / disperseDuration);
 
@@ -508,10 +514,10 @@ function createSmokeTexture() {
     canvas.width = 64;
     canvas.height = 64;
     const context = canvas.getContext('2d');
-    
+
     // 중앙은 50% 불투명한 흰색, 가장자리는 100% 투명한 그라데이션
     const gradient = context.createRadialGradient(
-        canvas.width / 2, canvas.height / 2, 0, 
+        canvas.width / 2, canvas.height / 2, 0,
         canvas.width / 2, canvas.height / 2, canvas.width / 2
     );
     gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');

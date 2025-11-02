@@ -203,9 +203,9 @@ class VirtualMouse {
         const event = new MouseEvent(eventName, {
             clientX: x,
             clientY: y,
-            bubbles: true,     // 이벤트 버블링 허용
-            cancelable: true,  // 기본 동작 취소 가능
-            view: window        // window 객체 참조
+            bubbles: true,       // 이벤트 버블링 허용
+            cancelable: true,    // 기본 동작 취소 가능
+            view: window         // window 객체 참조
         });
 
         // 대상 요소에 이벤트 발생

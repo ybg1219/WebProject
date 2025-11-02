@@ -106,14 +106,10 @@ class GestureTracking {
             return;
         }
 
-        // 비디오 시간이 변경되었을 때만 예측 수행
-        if (this.video.currentTime !== this.lastVideoTime) {
-            this.lastVideoTime = this.video.currentTime;
-
-            const results = await this.gestureRecognizer.recognizeForVideo(this.video, performance.now());
-            
-            this.processResults(results); // 랜드마크와 제스처 결과를 처리
-        }
+        //예측 수행
+        const results = await this.gestureRecognizer.recognizeForVideo(this.video, performance.now());  
+        this.processResults(results); // 랜드마크와 제스처 결과를 처리
+        
         
         // 다음 프레임 호출
         this.animationFrameId = requestAnimationFrame(() => this.predictWebcam());
