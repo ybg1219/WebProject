@@ -1,26 +1,41 @@
 import { router } from '../router.js';
+// [추가] 모듈 import (cleanup을 위해)
+import VideoManager from '../modules/VideoManager.js';
+import GestureTracking from '../modules/GestureTracking.js';
+import VirtualMouse from '../modules/VirtualMouse.js';
+
+// [추가] 3D 연습 씬을 위한 Three.js 임포트
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+// (OrbitControls, BoxGeometry 등 필요한 다른 모듈도 여기에 추가)
 
 /**
- * Phase 2: 튜토리얼 학습 페이지
+ * Phase 2: 튜토리얼 학습 및 3D 연습 페이지 (통합)
  */
 export function TutorialPage(container) {
-    // [추가] 페이지 이탈 시 트래킹 모듈을 정리할지 여부
+    // 페이지 이탈 시 트래킹 모듈을 정리할지 여부 (기본값: true)
     let shouldCleanupTracking = true;
 
+    // [추가] 3D 연습 씬을 위한 변수
+    let renderer, scene, camera, controls, raycaster, mouse, plane;
+    let grabbedObject = null;
+    let animationId = null;
+
+    // --- HTML 뼈대 (두 단계를 모두 포함) ---
     container.innerHTML = `
-        <div class="tutorial-container flex items-center justify-center h-screen w-screen text-white font-sans overflow-hidden">
-            
-            <!-- 1. 튜토리얼 영상 (임시 플레이스홀더) -->
+    <div class="tutorial-container flex items-center justify-center h-screen w-screen text-white font-sans overflow-hidden">
+
+        <div id="tutorial-video-step" class="flex flex-col items-center justify-center w-full h-full">
+
             <div id="tutorial-video-placeholder" class="text-center">
                 <h2 class="text-4xl font-bold text-indigo-400">튜토리얼 영상 재생 중...</h2>
                 <p class="text-gray-400 mt-4">(임시 플레이스홀더 - 2초 후 사라짐)</p>
             </div>
 
-            <!-- 2. 연습 페이지 이동 프롬프트 (LandingPage와 동일한 스타일) -->
-            <div id="practice-prompt" class="prompt relative z-10 bg-gray-800 p-8 rounded-lg shadow-xl max-w-md w-11/12 text-center" style="display: none;">
+            <div id="practice-prompt" class="prompt z-10 bg-gray-800 p-8 rounded-lg shadow-xl max-w-md w-11/12 text-center mt-8" style="display: none;">
                 <h2 class="text-3xl font-bold mb-4">연습 페이지로 가시겠습니까?</h2>
-                    <p class="text-gray-300 mb-8">방금 배운 손동작(클릭, 드래그)을 연습합니다.</p>
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <p class="text-gray-300 mb-8">방금 배운 손동작(클릭, 드래그)을 연습합니다.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
                     <button id="btn-practice-yes" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
                     예 (연습하기)
                     </button>
@@ -30,52 +45,216 @@ export function TutorialPage(container) {
                 </div>
             </div>
         </div>
+
+        <!-- --- 역할 2: 3D 연습 단계 --- -->
+        <div id="tutorial-practice-step" class="relative w-full h-full" style="display: none;">
+            <h1 class="absolute top-10 left-1/2 -translate-x-1/2 z-10 text-4xl font-bold text-green-400">3D 연습 환경</h1>
+            <p class="absolute top-20 left-1/2 -translate-x-1/2 z-10 text-gray-400">(손동작으로 큐브를 클릭/드래그 해보세요)</p>
+            <button id="btn-practice-done" class="absolute top-40 left-1/2 -translate-x-1/2 z-10 z-10 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+            연습 완료 (메인으로 이동)
+            </button>
+        </div>
+    </div>
     `;
 
-    // DOM 요소 참조
+    // --- DOM 요소 참조 ---
+    const videoStep = container.querySelector('#tutorial-video-step');
     const videoPlaceholder = container.querySelector('#tutorial-video-placeholder');
     const practicePrompt = container.querySelector('#practice-prompt');
     const btnPracticeYes = container.querySelector('#btn-practice-yes');
     const btnPracticeNo = container.querySelector('#btn-practice-no');
 
-    // 이벤트 핸들러
+    const practiceStep = container.querySelector('#tutorial-practice-step');
+    const btnPracticeDone = container.querySelector('#btn-practice-done');
+
+    // --- 3D 연습 씬 관련 함수 (역할 2) ---
+    function initPracticeScene() {
+        console.log("3D 연습 씬 초기화 시작...");
+
+        // 1. 기본 씬 설정
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 10); // 카메라 위치 조정
+
+        renderer = new THREE.WebGLRenderer({ alpha: true }); // 배경 투명
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // [수정] 캔버스 z-index를 -1로 하여 UI(버튼 등) 뒤에 렌더링
+        renderer.domElement.style.position = 'absolute';
+        renderer.domElement.style.top = '0';
+        renderer.domElement.style.left = '0';
+        renderer.domElement.style.zIndex = '0';
+
+        // 3D 캔버스를 practiceStep의 *부모* (tutorial-container)에 추가
+        practiceStep.appendChild(renderer.domElement);
+
+        // 2. 컨트롤 (디버깅용 - 실제 마우스로 조작)
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // 3. 조명
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 10, 7.5);
+        scene.add(directionalLight);
+
+        // 4. 바닥 (Grid)
+        const gridHelper = new THREE.GridHelper(20, 20);
+        scene.add(gridHelper);
+
+        // 5. 레이캐스팅 설정
+        raycaster = new THREE.Raycaster();
+        mouse = new THREE.Vector2(); // 3D 좌표(-1 to +1)로 변환될 2D 마우스 좌표
+
+        // 6. 드래그를 위한 가상의 평면 (y=0 바닥)
+        plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+
+        // 7. [★핵심★] VirtualMouse가 쏘는 이벤트를 캔버스가 받도록 리스너 연결
+        renderer.domElement.addEventListener('mousemove', onMouseMove, false);
+        renderer.domElement.addEventListener('mousedown', onMouseDown, false);
+        renderer.domElement.addEventListener('mouseup', onMouseUp, false);
+
+        // (Phase 2) TODO: 여기에 에셋 바(Asset Bar) 3D 객체들 생성
+        // (Phase 3-5) TODO: onMouseDown/Move/Up 함수 내용 구현
+
+        // 8. 애니메이션 루프 시작
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            controls.update(); // 디버깅용 카메라 컨트롤
+            renderer.render(scene, camera);
+        }
+        animate();
+    }
+
+    /**
+     * [신규] 3D 씬 리소스 및 이벤트 리스너를 정리합니다.
+     */
+    function cleanupPracticeScene() {
+        console.log("3D 연습 씬 정리...");
+        cancelAnimationFrame(animationId);
+
+        // [★핵심★] 이벤트 리스너 제거
+        if (renderer) {
+            renderer.domElement.removeEventListener('mousemove', onMouseMove);
+            renderer.domElement.removeEventListener('mousedown', onMouseDown);
+            renderer.domElement.removeEventListener('mouseup', onMouseUp);
+        }
+
+        if (controls) controls.dispose();
+
+        // 3D 리소스 정리
+        if (renderer) renderer.dispose();
+        if (scene) {
+            scene.traverse(object => {
+                if (object.geometry) object.geometry.dispose();
+                if (object.material) object.material.dispose();
+            });
+        }
+        if (renderer) renderer.domElement.remove();
+    }
+
+    /**
+     * [신규] (가상) 마우스 이동 시 호출됩니다. (호버링 및 드래그)
+     */
+    function onMouseMove(event) {
+        // (x, y)를 -1 ~ +1 범위의 3D 뷰포트 좌표로 변환
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        // (Phase 4) TODO: 드래그 로직 구현
+        if (grabbedObject) {
+            // 레이캐스터가 가상 평면과 만나는 지점을 찾아 객체 이동
+        }
+    }
+
+    /**
+     * [신규] (가상) 마우스 다운 시 호출됩니다. (잡기)
+     */
+    function onMouseDown(event) {
+        // (Phase 3) TODO: 잡기 로직 구현
+        // 1. 레이캐스터 업데이트
+        // raycaster.setFromCamera(mouse, camera);
+        // 2. 에셋 바(assetSlots)와 교차하는지 확인
+        // const intersects = raycaster.intersectObjects(assetSlots);
+        // 3. 교차하면, grabbedObject = intersects[0].object.clone(); scene.add(grabbedObject);
+        console.log("3D Scene Mousedown (Hand Grab)");
+    }
+
+    /**
+     * [신규] (가상) 마우스 업 시 호출됩니다. (놓기)
+     */
+    function onMouseUp(event) {
+        // (Phase 5) TODO: 놓기 로직 구현
+        if (grabbedObject) {
+            console.log("3D Scene Mouseup (Hand Release)");
+            grabbedObject = null; // 잡고 있던 객체 놓기
+        }
+    }
+
+    // --- 단계 전환 함수 (역할 분리) ---
+    function showVideoStep() {
+        if (videoStep) videoStep.style.display = 'flex';
+        if (practiceStep) practiceStep.style.display = 'none';
+
+        // 2초 후 영상 숨기고 프롬프트 표시
+        setTimeout(() => {
+            if (videoPlaceholder) videoPlaceholder.style.display = 'none';
+            if (practicePrompt) practicePrompt.style.display = 'block';
+        }, 2000);
+    }
+
+    function showPracticeStep() {
+        if (videoStep) videoStep.style.display = 'none';
+        if (practiceStep) practiceStep.style.display = 'block';
+        initPracticeScene(); // 3D 씬 시작
+    }
+
+    // --- 이벤트 핸들러 ---
     const handlePracticeYes = () => {
-        // [수정] 연습 페이지로 트래킹 모듈을 가져가기 위해 파괴하지 않음
-        shouldCleanupTracking = false;
-        router.navigate('/practice'); // Day 4-5의 '/practice' 경로로 이동
+        // [수정] 네비게이션 대신 내부 씬 전환
+        console.log("연습 단계로 전환");
+        showPracticeStep();
     };
 
     const handlePracticeNo = () => {
-        // [수정] 시뮬레이션 페이지는 자체 트래킹을 시작하므로, 현재 모듈 파괴
-        shouldCleanupTracking = true;
-        router.navigate('/simulation'); // 메인 시뮬레이션으로 이동
+        shouldCleanupTracking = true; // 트래킹 모듈 파괴
+        router.navigate('/simulation');
     };
 
-    // 2초 후 영상 숨기고 프롬프트 표시
-    setTimeout(() => {
-        if (videoPlaceholder) videoPlaceholder.style.display = 'none';
-        if (practicePrompt) practicePrompt.style.display = 'block';
-    }, 2000);
+    const handlePracticeDone = () => {
+        shouldCleanupTracking = true; // 트래킹 모듈 파괴
+        router.navigate('/simulation');
+    };
 
-    // 리스너 연결 (가상 마우스가 이미 활성화되어 있으므로 'click' 사용)
+    // --- 리스너 연결 ---
     btnPracticeYes.addEventListener('click', handlePracticeYes);
     btnPracticeNo.addEventListener('click', handlePracticeNo);
+    btnPracticeDone.addEventListener('click', handlePracticeDone);
 
-    // 정리(cleanup) 함수
+    // --- 초기 실행 ---
+    showVideoStep(); // 첫 단계(비디오)로 시작
+
+    // --- 정리(cleanup) 함수 ---
     return () => {
         btnPracticeYes.removeEventListener('click', handlePracticeYes);
         btnPracticeNo.removeEventListener('click', handlePracticeNo);
+        btnPracticeDone.removeEventListener('click', handlePracticeDone);
 
-        // [수정] 플래그에 따라 트래킹 모듈을 선택적으로 파괴
+        cleanupPracticeScene(); // 3D 씬 정리
+
+        // 플래그에 따라 트래킹 모듈을 선택적으로 파괴
         if (shouldCleanupTracking) {
             console.log("Cleaning up tracking modules from TutorialPage...");
             GestureTracking.stop();
             VirtualMouse.destroy();
             VideoManager.destroy();
         } else {
-            console.log("Persisting tracking modules for PracticePage...");
+            // (이 케이스는 이제 발생하지 않음)
+            console.log("Persisting tracking modules (should not happen from here)...");
         }
 
         container.innerHTML = '';
     };
 }
+
