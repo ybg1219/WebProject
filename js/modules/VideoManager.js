@@ -23,8 +23,7 @@ class VideoManager {
         this.video.style.zIndex = '0';
         // 개발 중에는 보이도록 opacity: 1, 최종적으로 0으로 변경
         this.video.style.opacity = '0';
-        // this.video.style.transform = 'scaleX(-1)'; // tracking.js에서 좌우반전 처리 시 불필요
-
+        this.video.style.pointerEvents = 'none';
         this.setSize(width, height);
         $wrapper.appendChild(this.video);
     }

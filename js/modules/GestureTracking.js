@@ -129,7 +129,8 @@ class GestureTracking {
 
         if (gestures && gestures.length > 0) {
             const topGesture = gestures[0];
-            console.log(`Gesture: ${topGesture.categoryName}, Score: ${topGesture.score.toFixed(2)}`);
+            // console.log(`Gesture: ${topGesture.categoryName}, Score: ${topGesture.score.toFixed(2)}`);
+            // console.log(`Gesture detected: ${topGesture.categoryName} (score: ${topGesture.score.toFixed(2)})`);
         }
 
         if (!landmarks) {
@@ -139,10 +140,10 @@ class GestureTracking {
         }
 
         // 1. 손 위치 계산
-        const IndexBase = landmarks[5]; // 8번 랜드마크 (검지 끝)
+        const IndexBase = landmarks[5]; // 5번 랜드마크 (검지 시작0)
         // 랜드마크는 있으나 indexTip이 없는 예외 상황 방어
         if (!IndexBase) {
-            console.warn('GestureTracking: Hand landmarks detected, but indexTip (8) is missing.');
+            console.warn('GestureTracking: Hand landmarks detected, but indexBase (5) is missing.');
             EventBus.emit('handLost');
             return;
         }
@@ -151,7 +152,7 @@ class GestureTracking {
         const screenY = IndexBase.y * window.innerHeight;
 
         // 2. 'Click' 제스처(잡기) 감지
-        const clickGesture = gestures?.find(g => g.categoryName === 'Click');
+        const clickGesture = gestures?.find(g => g.categoryName === 'Closed_Fist');
         const isGrabbing = (clickGesture && clickGesture.score > CLICK_SCORE_THRESHOLD);
 
         // 3. (중요) DOM을 직접 제어하는 대신 EventBus로 데이터 발행
