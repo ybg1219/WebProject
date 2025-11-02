@@ -1,6 +1,7 @@
 import { router } from '../router.js';
-// MediaPipe 카메라 권한 헬퍼가 있다면 가져옵니다.
-// import { requestCameraPermission } from '../utils/mediaPipeHelper.js';
+import VideoManager from '../modules/VideoManager.js'; // 1. VideoManager 임포트
+import GestureTracking from '../modules/GestureTracking.js';       // 2. GestureTracking 모듈 임포트
+import VirtualMouse from '../modules/VirtualMouse.js';          // 3. VirtualMouse 모듈 임포트
 
 // Three.js 모듈 임포트 (Webpack/npm 경로로 수정)
 import * as THREE from 'three';
@@ -12,30 +13,14 @@ import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.j
 import helvetikerFontData from 'three/examples/fonts/helvetiker_regular.typeface.json';
 /**
  * Phase 1: 랜딩 페이지 컴포넌트
+ * - 타이틀 애니메이션
+ * - 카메라 권한 요청 (VideoManager)
+ * - 손 추적 및 가상 커서 활성화 (GestureTracking, VirtualMouse)
+ * - 튜토리얼 프롬프트
  */
 export function LandingPage(container) {
     // 1. HTML 뼈대 렌더링
     container.innerHTML = `
-        <div class="landing-container">
-            <!-- 3D 애니메이션이 이 h1 요소를 대체할 것입니다. -->
-            <h1 class="title-animation">flowground</h1>
-            
-            <div class="prompt" style="display: none;">
-                <h2>튜토리얼을 보시겠습니까?</h2>
-                <p>손동작으로 연기를 다루는 방법을 배웁니다.</p>
-                <button id="btn-tutorial-yes">예 (학습하기)</button>
-                <button id="btn-tutorial-no">아니오 (바로 시작)</button>
-            </div>
-
-            <div class="permission-message" style="display: none;">
-                <p>손동작 인식을 위해 카메라 권한이 필요합니다.<br>권한을 허용해주세요.</p>
-            </div>
-
-            <div class="permission-denied" style="display: none;">
-                <p>카메라 권한이 거부되었습니다.<br>브라우저 설정을 변경 후 새로고침 해주세요.</p>
-            </div>
-        </div>
-    `;container.innerHTML = `
         <!-- 
           전체 화면을 채우는 다크 모드 컨테이너 (bg-gray-900)
           모든 자식 요소를 중앙 정렬합니다 (flex, items-center, justify-center)
@@ -133,21 +118,37 @@ export function LandingPage(container) {
 
         // 3. TODO: 실제 카메라 권한 요청 로직
         try {
-            // await requestCameraPermission(); // 실제 MediaPipe 권한 요청
+            // 1. VideoManager 초기화 (DOM에 <video> 생성)
+            // container(현재 페이지)에 비디오를 꽉 채움
+            VideoManager.init(container, window.innerWidth, window.innerHeight);
+
+            // 2. 카메라 시작 (*** 실제 권한 요청 발생 ***)
+            await VideoManager.startCamera(); 
+            const videoElement = VideoManager.getElement();
+            if (!videoElement) {
+                throw new Error("VideoManager에서 video 요소를 가져오지 못했습니다.");
+            }
+            await GestureTracking.init(videoElement); // tracking.js 시작
+            VirtualMouse.init();
+
 
             // (임시) 2초 후 성공했다고 가정
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            console.log("카메라 권한 획득 (가상)");
+            // await new Promise(resolve => setTimeout(resolve, 1000));
+            // console.log("카메라 권한 획득 (가상)");
+            
             if (permMessage) permMessage.style.display = 'none';
+
+            console.log("video and tracking 초기화 완료");
             if (prompt) prompt.style.display = 'block'; 
 
             if (btnYes) btnYes.addEventListener('click', handleYes);
             if (btnNo) btnNo.addEventListener('click', handleNo);
 
+            GestureTracking.start(); // 손동작 추적 시작
+
         } catch (error) {
             // 권한 요청 실패 시
-            console.error("카메라 권한 거부됨", error);
+            console.error("카메라 시작 또는 트래킹 초기화 실패:", err);
             if (permMessage) permMessage.style.display = 'none';
             if (permDenied) permDenied.style.display = 'block';
         }
@@ -159,6 +160,12 @@ export function LandingPage(container) {
     return () => {
         btnYes.removeEventListener('click', handleYes);
         btnNo.removeEventListener('click', handleNo);
+
+        // 페이지 나갈 때 tracking과 VideoManager 모두 정지 및 파괴
+        GestureTracking.stop();
+        VirtualMouse.destroy();
+        VideoManager.destroy();
+
         // (참고) 3D 애니메이션 관련 리소스(렌더러, 씬 등)는
         // runParticleAnimation 함수 내부에서 스스로 정리됩니다.
         container.innerHTML = ''; // 페이지 나갈 때 DOM 정리
