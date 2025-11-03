@@ -23,7 +23,7 @@ uniform float u_osc_frequency; // 예: 6.28318 (t=1.0일 때 cos(x)가 1번 진�
 // [유니폼] 진동 세기
 uniform float u_osc_strength;  // 예: 0.5
 uniform float u_time;          // (시간) JS에서 전달 (예: 1.0, 1.1, ...)
-uniform float u_osc_speed;     // (시간) 이동 속도 (예: 2.0)
+uniform float u_osc_speed;     // (시간) 이동 속도 (예: 0.1)
 
 // 힘의 크기 제어
 uniform float strength; // 전체 힘의 세기
@@ -56,6 +56,25 @@ float noise(float t) {
     f = f * f * (3.0 - 2.0 * f); // smoothstep(0.0, 1.0, f)
     
     return mix(a, b, f); // 부드럽게 보간된 노이즈 값
+}
+/**
+ * FBM (Fractal Brownian Motion)
+ * noise() 함수를 여러 옥타브(빈도)로 겹쳐서
+ * 더 복잡하고 자연스러운 노이즈를 만듭니다.
+ */
+float fbm(float x) {
+    float total = 0.0;
+    float amplitude = 0.5; // 첫 진폭
+    float frequency = 1.0; // 첫 빈도
+    
+    // 4~5 겹 정도 겹칩니다.
+    for (int i = 0; i < 3; i++) {
+        total += noise(x * frequency) * amplitude;
+        
+        frequency *= 2.0; // 다음 옥타브는 2배 더 촘촘하게
+        amplitude *= 0.5; // 다음 옥타브는 0.5배 더 약하게
+    }
+    return total;
 }
 
 void main() {
@@ -99,9 +118,15 @@ void main() {
     // 5-1. 공간적 빈도 적용
     float spatial_input = t * u_osc_frequency;
     
-    // 5-2. 시간적 이동(오프셋) 계산
-    // u_osc_speed가 양수면 한 방향, 음수면 반대 방향으로 흐릅니다.
-    float time_offset = harmonic(u_time * u_osc_speed * 0.05 )*4.0;
+    // 5-2. 시간적 이동(오프셋) 계산 [수정됨]
+    // noise()를 사용하여 시간 오프셋이 불규칙하게 앞뒤로 움직이도록 합니다.
+    float time_input = u_time * u_osc_speed;
+
+    // noise()는 0~1 반환 -> -1~1 범위로 변경
+    float noisy_offset_normalized = noise(time_input) * 2.0 - 1.0;
+
+    // 최종 시간 오프셋 = 정규화된 노이즈값 * 진폭
+    float time_offset = noisy_offset_normalized * 5.0; //u_osc_amplitude;
     
     // 5-3. 최종 입력 = 공간 위치 + 시간 오프셋
     float harmonic_input = spatial_input + time_offset;
