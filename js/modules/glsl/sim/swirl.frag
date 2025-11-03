@@ -101,7 +101,7 @@ void main() {
     
     // 5-2. 시간적 이동(오프셋) 계산
     // u_osc_speed가 양수면 한 방향, 음수면 반대 방향으로 흐릅니다.
-    float time_offset = u_time * u_osc_speed;
+    float time_offset = harmonic(u_time * u_osc_speed * 0.05 )*4.0;
     
     // 5-3. 최종 입력 = 공간 위치 + 시간 오프셋
     float harmonic_input = spatial_input + time_offset;
