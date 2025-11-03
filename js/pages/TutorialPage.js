@@ -19,6 +19,7 @@ export function TutorialPage(container) {
     // [추가] 3D 연습 씬을 위한 변수
     let renderer, scene, camera, controls, raycaster, mouse, plane;
     let grabbedObject = null;
+    let spawnedObjects = [];
     let animationId = null;
     let assetBar = null;
 
@@ -118,9 +119,9 @@ export function TutorialPage(container) {
         plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
         // 7. [★핵심★] VirtualMouse가 쏘는 이벤트를 캔버스가 받도록 리스너 연결
-        renderer.domElement.addEventListener('mousemove', onMouseMove, false);
-        renderer.domElement.addEventListener('mousedown', onMouseDown, false);
-        renderer.domElement.addEventListener('mouseup', onMouseUp, false);
+        renderer.domElement.addEventListener('mousemove', onSceneMouseMove, false);
+        renderer.domElement.addEventListener('mousedown', onSceneMouseDown, false);
+        renderer.domElement.addEventListener('mouseup', onSceneMouseUp, false);
 
         assetBar = new AssetBar('#asset-bar-container', onAssetGrab);
         assetBar.init();
@@ -144,9 +145,9 @@ export function TutorialPage(container) {
 
         // [★핵심★] 이벤트 리스너 제거
         if (renderer) {
-            renderer.domElement.removeEventListener('mousemove', onMouseMove);
-            renderer.domElement.removeEventListener('mousedown', onMouseDown);
-            renderer.domElement.removeEventListener('mouseup', onMouseUp);
+            renderer.domElement.removeEventListener('mousemove', onSceneMouseMove);
+            renderer.domElement.removeEventListener('mousedown', onSceneMouseDown);
+            renderer.domElement.removeEventListener('mouseup', onSceneMouseUp);
         }
 
         if (controls) controls.dispose();
@@ -174,52 +175,105 @@ export function TutorialPage(container) {
      * @param {string} assetType - 'box', 'sphere', 'cone'
      */
     function onAssetGrab(assetType) {
-        console.log(`(다음 단계) Asset bar에서 ${assetType} 잡기 시작`);
-        
-        // (다음 단계 구현)
-        // 1. assetType에 따라 새 3D 객체(Box, Sphere...) 생성
-        // 2. grabbedObject = newObject;
-        // 3. scene.add(grabbedObject);
-        // 4. (선택) onMouseMove()를 수동으로 한번 호출하여 커서 위치로 즉시 이동
+        console.log(`Asset bar에서 ${assetType} 잡기 시작`);
+
+        let geometry, material, mesh;
+        material = new THREE.MeshNormalMaterial({ wireframe: true });
+
+        // 1. assetType에 따라 새 3D 객체 생성
+        switch (assetType) {
+            case 'box':
+                geometry = new THREE.BoxGeometry(1, 1, 1);
+                break;
+            case 'sphere':
+                geometry = new THREE.SphereGeometry(0.5, 32, 16);
+                break;
+            case 'cone':
+                geometry = new THREE.ConeGeometry(0.5, 1, 32);
+                break;
+            default:
+                return;
+        }
+        mesh = new THREE.Mesh(geometry, material);
+
+        // 2. grabbedObject로 설정하고 씬에 추가
+        grabbedObject = mesh;
+        scene.add(grabbedObject);
+        spawnedObjects.push(grabbedObject); // 잡을 수 있는 객체 목록에 추가
+
+        // 3. (중요) 객체를 즉시 마우스 위치로 이동
+        // Raycaster를 현재 마우스 위치(mouse)로 업데이트
+        raycaster.setFromCamera(mouse, camera);
+        // 바닥(plane)과 교차하는 지점을 찾음
+        const intersectPoint = new THREE.Vector3();
+        raycaster.ray.intersectPlane(plane, intersectPoint);
+
+        if (intersectPoint) {
+            grabbedObject.position.copy(intersectPoint);
+        }
     }
 
     /**
-     * [신규] (가상) 마우스 이동 시 호출됩니다. (호버링 및 드래그)
-     */
-    function onMouseMove(event) {
-        // (x, y)를 -1 ~ +1 범위의 3D 뷰포트 좌표로 변환
+      * (가상) 마우스 이동 시 호출됩니다. (호버링 및 드래그)
+      */
+    function onSceneMouseMove(event) {
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        // (Phase 4) TODO: 드래그 로직 구현
+        // [★수정★] (Phase 4) 드래그 로직 구현
         if (grabbedObject) {
-            // 레이캐스터가 가상 평면과 만나는 지점을 찾아 객체 이동
+            // 1. 레이캐스터 업데이트
+            raycaster.setFromCamera(mouse, camera);
+
+            // 2. 보이지 않는 바닥(plane)과 교차하는 3D 좌표 찾기
+            const intersectPoint = new THREE.Vector3();
+            raycaster.ray.intersectPlane(plane, intersectPoint);
+
+            // 3. 교차점이 있다면, 잡고 있는 물체의 위치를 업데이트
+            if (intersectPoint) {
+                grabbedObject.position.copy(intersectPoint);
+            }
         }
     }
 
     /**
-     * [신규] (가상) 마우스 다운 시 호출됩니다. (잡기)
+     * (가상) 마우스 다운 시 호출됩니다. (잡기)
      */
-    function onMouseDown(event) {
-        // (Phase 3) TODO: 잡기 로직 구현
-        // 1. 레이캐스터 업데이트
-        // raycaster.setFromCamera(mouse, camera);
-        // 2. 에셋 바(assetSlots)와 교차하는지 확인
-        // const intersects = raycaster.intersectObjects(assetSlots);
-        // 3. 교차하면, grabbedObject = intersects[0].object.clone(); scene.add(grabbedObject);
+    function onSceneMouseDown(event) {
+        // [★수정★] (Phase 3) 씬에 있는 물체 다시 잡기
+
+        // 1. 이미 다른 물체를 잡고 있거나, 에셋 바를 클릭했다면 무시
+        if (grabbedObject || assetBar.container.contains(event.target)) {
+            return;
+        }
+
         console.log("3D Scene Mousedown (Hand Grab)");
+
+        // 2. 레이캐스터 업데이트
+        raycaster.setFromCamera(mouse, camera);
+
+        // 3. 씬에 있는 잡을 수 있는 물체들(grabbableObjects)과 교차하는지 확인
+        const intersects = raycaster.intersectObjects(spawnedObjects);
+
+        if (intersects.length > 0) {
+            // 4. 가장 가까운 물체를 잡음
+            grabbedObject = intersects[0].object;
+            console.log("씬에 있던 물체 잡기:", grabbedObject);
+        }
     }
 
     /**
-     * [신규] (가상) 마우스 업 시 호출됩니다. (놓기)
+     * (가상) 마우스 업 시 호출됩니다. (놓기)
      */
-    function onMouseUp(event) {
-        // (Phase 5) TODO: 놓기 로직 구현
+    function onSceneMouseUp(event) {
+        // (Phase 5) 놓기 로직
         if (grabbedObject) {
             console.log("3D Scene Mouseup (Hand Release)");
-            grabbedObject = null; // 잡고 있던 객체 놓기
+            // 씬에 놓기 (grabbableObjects 목록에는 이미 있음)
+            grabbedObject = null; // 잡고 있던 객체 참조 해제
         }
     }
+
 
     // --- 단계 전환 함수 (역할 분리) ---
     function showVideoStep() {
@@ -309,6 +363,7 @@ class AssetSlot {
                        flex-shrink-0 text-white text-sm hover:bg-indigo-600 transition-colors"
                 title="Drag ${this.assetType}"
             >
+            <span style="pointer-events: none;">
                 ${this.iconHTML}
             </button>
         `;
@@ -329,10 +384,10 @@ class AssetBar {
             console.error(`AssetBar: 컨테이너(${containerSelector})를 찾을 수 없습니다.`);
             return;
         }
-        
+
         this.onSlotGrab = onSlotGrab; // 'mousedown' 시 실행할 콜백
         this.assetSlots = [];         // AssetSlot 인스턴스 배열
-        
+
         // mousedown 이벤트를 클래스 내부에서 처리하기 위해 바인딩
         this.handleMouseDown = this.handleMouseDown.bind(this);
     }
@@ -342,7 +397,7 @@ class AssetBar {
      */
     init() {
         if (!this.container) return;
-        
+
         // 1. 에셋 슬롯 생성 (요청하신 Box, Sphere, Cone)
         this.assetSlots = [
             // SVG 아이콘을 사용한 예시 (Tailwind 아이콘)
@@ -359,7 +414,7 @@ class AssetBar {
                 </div>
             </div>
         `;
-        
+
         // 3. 이벤트 리스너 추가
         this.addListeners();
     }
@@ -384,8 +439,8 @@ class AssetBar {
      */
     handleMouseDown(event) {
         // 기본 드래그 동작 방지
-        event.preventDefault(); 
-        
+        event.preventDefault();
+
         const assetType = event.currentTarget.dataset.assetType;
         if (assetType && this.onSlotGrab) {
             // (다음 단계) 콜백 함수를 호출하여 TutorialPage에 '잡기' 시작을 알림
