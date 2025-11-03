@@ -20,6 +20,7 @@ export function TutorialPage(container) {
     let renderer, scene, camera, controls, raycaster, mouse, plane;
     let grabbedObject = null;
     let animationId = null;
+    let assetBar = null;
 
     // --- HTML 뼈대 (두 단계를 모두 포함) ---
     container.innerHTML = `
@@ -50,6 +51,12 @@ export function TutorialPage(container) {
         <div id="tutorial-practice-step" class="relative w-full h-full" style="display: none;">
             <h1 class="absolute top-10 left-1/2 -translate-x-1/2 z-10 text-4xl font-bold text-green-400">3D 연습 환경</h1>
             <p class="absolute top-20 left-1/2 -translate-x-1/2 z-10 text-gray-400">(손동작으로 큐브를 클릭/드래그 해보세요)</p>
+            
+            <div id="asset-bar-container" 
+                class="absolute top-60 left-1/2 -translate-x-1/2 z-10 w-11/12 max-w-md">
+                <!-- AssetBar.js가 여기에 렌더링됩니다 -->
+            </div>
+
             <button id="btn-practice-done" class="absolute top-40 left-1/2 -translate-x-1/2 z-10 z-10 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
             연습 완료 (메인으로 이동)
             </button>
@@ -115,7 +122,8 @@ export function TutorialPage(container) {
         renderer.domElement.addEventListener('mousedown', onMouseDown, false);
         renderer.domElement.addEventListener('mouseup', onMouseUp, false);
 
-        // (Phase 2) TODO: 여기에 에셋 바(Asset Bar) 3D 객체들 생성
+        assetBar = new AssetBar('#asset-bar-container', onAssetGrab);
+        assetBar.init();
         // (Phase 3-5) TODO: onMouseDown/Move/Up 함수 내용 구현
 
         // 8. 애니메이션 루프 시작
@@ -145,6 +153,12 @@ export function TutorialPage(container) {
 
         // 3D 리소스 정리
         if (renderer) renderer.dispose();
+
+        if (assetBar) {
+            assetBar.destroy();
+            assetBar = null;
+        }
+
         if (scene) {
             scene.traverse(object => {
                 if (object.geometry) object.geometry.dispose();
@@ -152,6 +166,21 @@ export function TutorialPage(container) {
             });
         }
         if (renderer) renderer.domElement.remove();
+    }
+
+    /**
+     * 에셋 바의 슬롯에서 mousedown이 발생했을 때 호출될 콜백
+     * (다음 단계에서 구현)
+     * @param {string} assetType - 'box', 'sphere', 'cone'
+     */
+    function onAssetGrab(assetType) {
+        console.log(`(다음 단계) Asset bar에서 ${assetType} 잡기 시작`);
+        
+        // (다음 단계 구현)
+        // 1. assetType에 따라 새 3D 객체(Box, Sphere...) 생성
+        // 2. grabbedObject = newObject;
+        // 3. scene.add(grabbedObject);
+        // 4. (선택) onMouseMove()를 수동으로 한번 호출하여 커서 위치로 즉시 이동
     }
 
     /**
@@ -258,3 +287,120 @@ export function TutorialPage(container) {
     };
 }
 
+/**
+ * 개별 에셋 슬롯을 나타내는 클래스
+ */
+class AssetSlot {
+    constructor(assetType, iconHTML) {
+        this.assetType = assetType; // 'box', 'sphere', 'cone' 등
+        this.iconHTML = iconHTML;     // 슬롯에 표시될 SVG 또는 텍스트
+        this.element = null;          // 이 슬롯에 해당하는 DOM 요소
+    }
+
+    /**
+     * 이 슬롯의 HTML 문자열을 반환합니다.
+     */
+    render() {
+        return `
+            <button 
+                type="button"
+                data-asset-type="${this.assetType}"
+                class="asset-slot w-16 h-16 bg-gray-700 rounded-xl flex items-center justify-center 
+                       flex-shrink-0 text-white text-sm hover:bg-indigo-600 transition-colors"
+                title="Drag ${this.assetType}"
+            >
+                ${this.iconHTML}
+            </button>
+        `;
+    }
+}
+
+/**
+ * 에셋 바 전체를 관리하는 메인 클래스
+ */
+class AssetBar {
+    /**
+     * @param {string} containerSelector - 에셋 바가 렌더링될 div의 CSS 선택자
+     * @param {function(string)} onSlotGrab - 슬롯에서 mousedown 이벤트 발생 시 호출될 콜백
+     */
+    constructor(containerSelector, onSlotGrab) {
+        this.container = document.querySelector(containerSelector);
+        if (!this.container) {
+            console.error(`AssetBar: 컨테이너(${containerSelector})를 찾을 수 없습니다.`);
+            return;
+        }
+        
+        this.onSlotGrab = onSlotGrab; // 'mousedown' 시 실행할 콜백
+        this.assetSlots = [];         // AssetSlot 인스턴스 배열
+        
+        // mousedown 이벤트를 클래스 내부에서 처리하기 위해 바인딩
+        this.handleMouseDown = this.handleMouseDown.bind(this);
+    }
+
+    /**
+     * 에셋 바를 초기화하고, 슬롯을 생성하며, 렌더링합니다.
+     */
+    init() {
+        if (!this.container) return;
+        
+        // 1. 에셋 슬롯 생성 (요청하신 Box, Sphere, Cone)
+        this.assetSlots = [
+            // SVG 아이콘을 사용한 예시 (Tailwind 아이콘)
+            new AssetSlot('box', `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`),
+            new AssetSlot('sphere', `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>`),
+            new AssetSlot('cone', `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 7.8l-7.7 7.7-4-4L2 18"></path><path d="M16 16h4v4"></path></svg>`) // (임시 아이콘, Cone 아이콘이 없어 TrendUp 사용)
+        ];
+
+        // 2. HTML 렌더링
+        this.container.innerHTML = `
+            <div class="bg-gray-800 bg-opacity-80 backdrop-blur-sm p-3 rounded-full">
+                <div class="flex space-x-3 overflow-x-auto">
+                    ${this.assetSlots.map(slot => slot.render()).join('')}
+                </div>
+            </div>
+        `;
+        
+        // 3. 이벤트 리스너 추가
+        this.addListeners();
+    }
+
+    /**
+     * 각 슬롯 버튼에 mousedown 리스너를 추가합니다.
+     */
+    addListeners() {
+        this.container.querySelectorAll('.asset-slot').forEach(element => {
+            // AssetSlot 클래스 인스턴스에 DOM 요소를 연결
+            const type = element.dataset.assetType;
+            const slot = this.assetSlots.find(s => s.assetType === type);
+            if (slot) slot.element = element;
+
+            // 'mousedown'은 가상 마우스와 실제 마우스 모두에서 작동
+            element.addEventListener('mousedown', this.handleMouseDown);
+        });
+    }
+
+    /**
+     * 슬롯에서 mousedown 이벤트가 발생했을 때 처리합니다.
+     */
+    handleMouseDown(event) {
+        // 기본 드래그 동작 방지
+        event.preventDefault(); 
+        
+        const assetType = event.currentTarget.dataset.assetType;
+        if (assetType && this.onSlotGrab) {
+            // (다음 단계) 콜백 함수를 호출하여 TutorialPage에 '잡기' 시작을 알림
+            this.onSlotGrab(assetType);
+        }
+    }
+
+    /**
+     * 에셋 바를 파괴하고 이벤트 리스너를 정리합니다.
+     */
+    destroy() {
+        this.container.querySelectorAll('.asset-slot').forEach(element => {
+            element.removeEventListener('mousedown', this.handleMouseDown);
+        });
+        this.container.innerHTML = '';
+        this.assetSlots = [];
+    }
+}
