@@ -26,6 +26,9 @@ export default class Advection extends ShaderPass{
                     velocity: {
                         value: simProps.src.texture
                     },
+                    gradient: {
+                        value: simProps.gradient.texture
+                    },
                     dt: {
                         value: simProps.dt
                     },

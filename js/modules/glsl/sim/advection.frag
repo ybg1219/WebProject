@@ -1,5 +1,6 @@
 precision highp float;
 uniform sampler2D velocity;
+uniform sampler2D gradient;
 uniform float dt;
 uniform bool isBFECC;
 // uniform float uvScale;
@@ -35,6 +36,9 @@ void main(){
         // gl_FragColor = vec4(spot_old2, 0.0, 0.0);
         vec2 newVel2 = texture2D(velocity, spot_old2).xy; 
         float lambda = 0.97; // 확산 계수 조절
-        gl_FragColor = vec4(newVel2, 0.0, 0.0)*lambda;
+
+        vec2 grad = texture2D(gradient, uv).xy;
+
+        gl_FragColor = vec4(grad *0.5 + newVel2, 0.0, 0.0)*lambda;
     }
 }

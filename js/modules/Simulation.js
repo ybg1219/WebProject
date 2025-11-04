@@ -114,6 +114,7 @@ export default class Simulation {
             cellScale: this.cellScale,
             fboSize: this.fboSize,
             dt: this.options.dt,
+            gradient : this.fbos.gradient,
             src: this.fbos.vel_0,
             dst: this.fbos.vel_1
         });
