@@ -106,16 +106,23 @@ void main() {
     float noisy_offset_normalized = noise(time_input) * 2.0 - 1.0;
 
     // 최종 시간 오프셋 = 정규화된 노이즈값 * 진폭
-    float time_offset = noisy_offset_normalized * 1.5; //u_osc_amplitude;
+    float time_offset = noisy_offset_normalized; //u_osc_amplitude;
     
     // 5-3. 최종 입력 = 공간 위치 + 시간 오프셋
     float harmonic_input = spatial_input + time_offset;
     
     // 5-4. harmonic 함수 호출
     float osc_val = harmonic(harmonic_input);
+
+    vec2 dir_normalized = vec2(0.0); // 기본값 (dir가 0일 때)
+    float dir_len = length(dir);
+
+    if (dir_len > 0.0001) {
+        dir_normalized = dir / dir_len;
+    }
     
     // 5-5. 진동 성분 벡터 계산
-    vec2 osc = u_osc_strength * f * g * dir * osc_val;
+    vec2 osc = u_osc_strength * f * g * dir_normalized * osc_val;
 
     // --- 6. 최종 힘 = 선형 흐름 + 회전 + 진동 ---
     vec2 force = v_lin*g + osc; // + rot

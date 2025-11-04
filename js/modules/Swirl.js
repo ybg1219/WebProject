@@ -25,11 +25,11 @@ export default class Swirl extends ShaderPass {
                     // px: { value: simProps.cellScale },
                     noise_frequency: { value: 4.0 },
                     noise_strength: { value: 0.8 },
-                    u_osc_frequency: { value: 3.141592*1.0 },
-                    u_osc_strength: { value: 0.1  },
+                    u_osc_frequency: { value: 3.141592*1.5 },
+                    u_osc_strength: { value: 0.01  },
                     dt : { value: simProps.dt },
                     u_time: { value: simProps.timeSeed }, // 기본 time seed + dt 누적
-                    u_osc_speed: { value: 0.1  }
+                    u_osc_speed: { value: 0.2  }
                 }
             },
             output: simProps.dst

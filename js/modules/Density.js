@@ -30,7 +30,7 @@ export default class Density extends ShaderPass{
                         value : 0.0
                     },
                     strength : {
-                        value : 0.9
+                        value : 0.5
                     },
                     boundarySpace: {
                         value: simProps.boundarySpace
