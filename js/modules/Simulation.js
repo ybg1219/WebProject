@@ -145,11 +145,19 @@ export default class Simulation {
             cursor_size: this.options.cursor_size,
             dst: this.fbos.vel_1,
         });
-        this.swirl = new Swirl({
+        this.swirlLeft = new Swirl({
             cellScale: this.cellScale,
             cursor_size: this.options.cursor_size,
             dst: this.fbos.vel_1,
             dt: this.options.dt,
+            timeSeed: Math.random() * 1000.0
+        });
+        this.swirlRight = new Swirl({
+            cellScale: this.cellScale,
+            cursor_size: this.options.cursor_size,
+            dst: this.fbos.vel_1,
+            dt: this.options.dt,
+            timeSeed: Math.random() * 1000.0
         });
 
         this.viscous = new Viscous({
@@ -230,7 +238,8 @@ export default class Simulation {
             this.externalForceLeft,
             this.externalForceRight,
             this.externalForceBody,
-            this.swirl,
+            this.swirlLeft,
+            this.swirlRight,
             this.viscous,
             this.divergence,
             this.poisson,
@@ -352,7 +361,7 @@ export default class Simulation {
                     (leftShoulder.coords.x !== INACTIVE_VEC2.x || leftShoulder.coords.y !== INACTIVE_VEC2.y)) {
                     
                     console.log("left swirl", leftHand.coords, leftShoulder.coords);
-                    this.swirl.update({
+                    this.swirlLeft.update({
                         left: leftHand,
                         right: leftShoulder,
                         cursor_size: this.options.cursor_size,
@@ -363,7 +372,7 @@ export default class Simulation {
                 if ((rightHand.coords.x !== INACTIVE_VEC2.x || rightHand.coords.y !== INACTIVE_VEC2.y) 
                     && (rightShoulder.coords.x !== INACTIVE_VEC2.x || rightShoulder.coords.y !== INACTIVE_VEC2.y)) {
                     
-                    this.swirl.update({
+                    this.swirlRight.update({
                         left: rightHand,
                         right: rightShoulder,
                         cursor_size: this.options.cursor_size,
