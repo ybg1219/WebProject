@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import ShaderPass from "./ShaderPass";
-import swirl_vert from './glsl/sim/basic.vert';
+import face_vert from "./glsl/sim/face.vert";
 import swirl_frag from './glsl/sim/swirl.frag';
 
 export default class Swirl extends ShaderPass {
@@ -10,7 +10,7 @@ export default class Swirl extends ShaderPass {
     constructor(simProps) {
         super({
             material: {
-                vertexShader: swirl_vert,
+                vertexShader: face_vert,
                 fragmentShader: swirl_frag,
                 blending: THREE.AdditiveBlending,
                 uniforms: {
@@ -23,10 +23,10 @@ export default class Swirl extends ShaderPass {
                     strength: { value: 6.0 },  
                     radius: { value: 10.0 },
                     // px: { value: simProps.cellScale },
-                    noise_frequency: { value: 5.0 },
-                    noise_strength: { value: 0.3 },
-                    u_osc_frequency: { value: 3.141592 },
-                    u_osc_strength: { value: 0.3  },
+                    noise_frequency: { value: 4.0 },
+                    noise_strength: { value: 0.8 },
+                    u_osc_frequency: { value: 3.141592*1.0 },
+                    u_osc_strength: { value: 0.1  },
                     dt : { value: simProps.dt },
                     u_time: { value: 0.0 },
                     u_osc_speed: { value: 0.1  }
@@ -41,25 +41,25 @@ export default class Swirl extends ShaderPass {
     /**
      * 매 프레임 호출되어 와류 효과의 유니폼 값을 업데이트합니다.
      * @param {object} props - 외부에서 전달되는 속성들.
-     * @param {object} props.leftHand - 왼손 추적 데이터.
-     * @param {object} props.rightHand - 오른손 추적 데이터.
+     * @param {object} props.left - 왼쪽 추적 데이터.
+     * @param {object} props.right - 오른쪽 추적 데이터.
      * @param {Vector} cellScale - 1/width, 1/ height.
      * @param {number} cursor_size - 커서 사이즈 조정 파라미터, 클리핑
      * @param {number} mouse_force - 외력 크기 조정 파라미터
      */
     update(props) {
-        const { leftHand, rightHand, cursor_size, cellScale, mouse_force } = props;
+        const { left, right, cursor_size, cellScale, mouse_force } = props;
 
         // 입력 데이터가 유효한지 확인합니다.
-        if (!leftHand || !rightHand) return;
+        if (!left || !right) return;
 
-        this.uniforms.p0.value.copy(leftHand.coords);
-        this.uniforms.p1.value.copy(rightHand.coords);
+        this.uniforms.p0.value.copy(left.coords);
+        this.uniforms.p1.value.copy(right.coords);
 
         const forceScale = 1.0;
 
-        this.uniforms.v0.value.copy( leftHand.diff ).multiplyScalar(forceScale);
-        this.uniforms.v1.value.copy( rightHand.diff ).multiplyScalar(forceScale);
+        this.uniforms.v0.value.copy( left.diff ).multiplyScalar(forceScale);
+        this.uniforms.v1.value.copy( right.diff ).multiplyScalar(forceScale);
         
         // 힘의 세기는 force 벡터의 길이에 비례하도록 설정합니다.
         this.uniforms.strength.value = mouse_force * 0.1; // 세기를 증폭시켜 효과를 명확하게 합니다.

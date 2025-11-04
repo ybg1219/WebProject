@@ -35,8 +35,8 @@ export const MAX_BODY_PARTS = BODY_PART_ORDER.length; // 9
 const INACTIVE_VEC2 = new THREE.Vector2(-10.0, -10.0);
 
 
-export default class Simulation{
-    constructor(props){
+export default class Simulation {
+    constructor(props) {
         //this.props = props;
         this.activeTracker = props.activeTracker;
 
@@ -61,7 +61,7 @@ export default class Simulation{
             pressure_0: null,
             pressure_1: null,
 
-            gradient : null,
+            gradient: null,
         };
 
         this.options = { // reference 값으로 변경 하자마자 값이 바뀜.
@@ -75,41 +75,41 @@ export default class Simulation{
             dt: 0.014,
             isViscous: false,
             BFECC: true,
-            isMouse : false
+            isMouse: false
         }; // 컨트롤의 파라미터 초기값
         const controls = new Controls(this.options);
         this.fboSize = new THREE.Vector2();
         this.cellScale = new THREE.Vector2();
         this.boundarySpace = new THREE.Vector2();
-        
+
 
         this.init();
     }
 
-    
-    init(){
+
+    init() {
         this.calcSize();
         this.createAllFBO();
         this.createShaderPass();
     }
 
-    createAllFBO(){
-        const type = ( /(iPad|iPhone|iPod)/g.test( navigator.userAgent ) ) ? THREE.HalfFloatType : THREE.FloatType;
+    createAllFBO() {
+        const type = (/(iPad|iPhone|iPod)/g.test(navigator.userAgent)) ? THREE.HalfFloatType : THREE.FloatType;
         // / /g 정규식 리터럴 안에 문자 넣고, or 연산자 | 사용
 
-        for(let key in this.fbos){ // fbos 를 돌면서 fbo에 RT 할당.
+        for (let key in this.fbos) { // fbos 를 돌면서 fbo에 RT 할당.
             this.fbos[key] = new THREE.WebGLRenderTarget(
                 this.fboSize.x,
                 this.fboSize.y,
                 { type: type }
             );
-        }   
+        }
     }
 
-    createShaderPass(){
+    createShaderPass() {
         // 배열 초기화
         this.shaderPasses = [];
-        
+
         this.advection = new Advection({
             cellScale: this.cellScale,
             fboSize: this.fboSize,
@@ -151,7 +151,7 @@ export default class Simulation{
             dst: this.fbos.vel_1,
             dt: this.options.dt,
         });
-        
+
         this.viscous = new Viscous({
             cellScale: this.cellScale,
             boundarySpace: this.boundarySpace,
@@ -242,7 +242,7 @@ export default class Simulation{
         );
     }
 
-    calcSize(){
+    calcSize() {
         const width = Math.round(this.options.resolution * Common.width);
         const height = Math.round(this.options.resolution * Common.height);
         console.log(`격자 해상도 : ${width} x ${height}`)
@@ -253,10 +253,10 @@ export default class Simulation{
         this.fboSize.set(width, height);
     }
 
-    resize(){
+    resize() {
         this.calcSize();
 
-        for(let key in this.fbos){
+        for (let key in this.fbos) {
             this.fbos[key].setSize(this.fboSize.x, this.fboSize.y);
         }
     }
@@ -297,17 +297,17 @@ export default class Simulation{
             if (partData?.coords) {
                 const pos = partData.coords;
                 const isInside = pos.x > -boundaryX && pos.x < boundaryX &&
-                                 pos.y > -boundaryY && pos.y < boundaryY;
-                
+                    pos.y > -boundaryY && pos.y < boundaryY;
+
                 if (isInside) {
                     // 경계 내에 있을 때만 객체에 해당 부위를 추가합니다.
                     filteredCoords[partName] = partData;
                 }
                 else {
                     // 전개 구문(...)을 사용해 partData를 얕게 복사하고, coords 속성만 덮어씁니다.
-                    filteredCoords[partName] = { 
-                        ...partData, 
-                        coords: INACTIVE_VEC2 
+                    filteredCoords[partName] = {
+                        ...partData,
+                        coords: INACTIVE_VEC2
                     };
                 }
             }
@@ -315,12 +315,12 @@ export default class Simulation{
         return filteredCoords;
     }
 
-    update(){
+    update() {
         // --- 0. 데이터 준비: 트래커로부터 사용자 정보를 한 번만 가져옵니다. ---
         const people = this.activeTracker ? this.activeTracker.getPeople() : [];
 
         // --- 1. 경계 및 이류(Advection) 계산 ---
-        if(this.options.isBounce){ // 경계 여부
+        if (this.options.isBounce) { // 경계 여부
             this.boundarySpace.set(0, 0);
         } else {
             this.boundarySpace.copy(this.cellScale);
@@ -328,13 +328,13 @@ export default class Simulation{
 
         this.advection.update(this.options);
 
-        
+
         let allBodyCoords = [];
         // --- 2. 외부 힘(External Forces) 적용 ---
         if (this.options.isMouse) {
             this.applyExternalForce(Mouse, this.externalForce);
         } else if (this.activeTracker) {
-            
+
             allBodyCoords = people.map(person => this._getFilteredBodyCoords(person))
             //console.log(allBodyCoords)
             allBodyCoords.forEach(person => {
@@ -343,35 +343,41 @@ export default class Simulation{
                 // console.log("left", person.leftHand.coords, "diff", person.leftHand.diff);
                 this.applyExternalForce(person.rightHand, this.externalForceRight);
                 // console.log("right", person.rightHand.coords, "diff", person.rightHand.diff);
-                
+
                 // --- 양손을 이용한 Swirl 효과 적용 ---
                 const { leftHand, rightHand, leftShoulder, rightShoulder } = person;
 
                 // 양손이 모두 감지되고 움직였을 때만 와류를 생성합니다.
-                //if (leftHand && leftHand.moved && rightHand && rightHand.moved) {
+                if ((leftHand.coords.x !== INACTIVE_VEC2.x || leftHand.coords.y !== INACTIVE_VEC2.y) &&
+                    (leftShoulder.coords.x !== INACTIVE_VEC2.x || leftShoulder.coords.y !== INACTIVE_VEC2.y)) {
+                    
+                    console.log("left swirl", leftHand.coords, leftShoulder.coords);
                     this.swirl.update({
-                        leftHand: leftHand,
-                        rightHand: leftShoulder,
+                        left: leftHand,
+                        right: leftShoulder,
                         cursor_size: this.options.cursor_size,
                         cellScale: this.cellScale,
                         mouse_force: this.options.mouse_force // 힘의 세기 조절
                     });
-
+                }
+                if ((rightHand.coords.x !== INACTIVE_VEC2.x || rightHand.coords.y !== INACTIVE_VEC2.y) 
+                    && (rightShoulder.coords.x !== INACTIVE_VEC2.x || rightShoulder.coords.y !== INACTIVE_VEC2.y)) {
+                    
                     this.swirl.update({
-                        leftHand: rightHand,
-                        rightHand: rightShoulder,
+                        left: rightHand,
+                        right: rightShoulder,
                         cursor_size: this.options.cursor_size,
                         cellScale: this.cellScale,
                         mouse_force: this.options.mouse_force // 힘의 세기 조절
                     });
-                //}
+                }
             });
         }
 
         // --- 3. 유체 물리 계산 ---
         let vel = this.fbos.vel_1;
 
-        if(this.options.isViscous){
+        if (this.options.isViscous) {
             vel = this.viscous.update({
                 viscosity: this.options.viscous,
                 iterations: this.options.iterations_viscous,
@@ -379,13 +385,13 @@ export default class Simulation{
             });
         }
 
-        this.divergence.update({vel});
+        this.divergence.update({ vel });
 
         const pressure = this.poisson.update({
             iterations: this.options.iterations_poisson,
         });
 
-        this.pressure.update({ vel , pressure});
+        this.pressure.update({ vel, pressure });
 
         //--- 4. 밀도(Density) 업데이트 ---
         vel = this.fbos.vel_1;

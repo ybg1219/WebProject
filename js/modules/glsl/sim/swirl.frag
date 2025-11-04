@@ -1,7 +1,7 @@
 precision highp float;
 
 // Vertex Shader로부터 UV 좌표를 받습니다.
-varying vec2 vUv;
+varying vec2 uv;
 
 // 유니폼 변수들
 uniform vec2 fboSize;  // FBO(화면)의 해상도
@@ -57,28 +57,8 @@ float noise(float t) {
     
     return mix(a, b, f); // 부드럽게 보간된 노이즈 값
 }
-/**
- * FBM (Fractal Brownian Motion)
- * noise() 함수를 여러 옥타브(빈도)로 겹쳐서
- * 더 복잡하고 자연스러운 노이즈를 만듭니다.
- */
-float fbm(float x) {
-    float total = 0.0;
-    float amplitude = 0.5; // 첫 진폭
-    float frequency = 1.0; // 첫 빈도
-    
-    // 4~5 겹 정도 겹칩니다.
-    for (int i = 0; i < 3; i++) {
-        total += noise(x * frequency) * amplitude;
-        
-        frequency *= 2.0; // 다음 옥타브는 2배 더 촘촘하게
-        amplitude *= 0.5; // 다음 옥타브는 0.5배 더 약하게
-    }
-    return total;
-}
 
 void main() {
-    vec2 uv = vUv;
 
     // --- 1. 보간 파라미터 t 계산 ---
     vec2 p0_uv = p0 * 0.5 + 0.5;
@@ -126,7 +106,7 @@ void main() {
     float noisy_offset_normalized = noise(time_input) * 2.0 - 1.0;
 
     // 최종 시간 오프셋 = 정규화된 노이즈값 * 진폭
-    float time_offset = noisy_offset_normalized * 5.0; //u_osc_amplitude;
+    float time_offset = noisy_offset_normalized * 1.5; //u_osc_amplitude;
     
     // 5-3. 최종 입력 = 공간 위치 + 시간 오프셋
     float harmonic_input = spatial_input + time_offset;
@@ -138,7 +118,7 @@ void main() {
     vec2 osc = u_osc_strength * f * g * dir * osc_val;
 
     // --- 6. 최종 힘 = 선형 흐름 + 회전 + 진동 ---
-    vec2 force = v_lin * g + osc; // + rot
+    vec2 force = v_lin*g + osc; // + rot
 
 
     // 최종 외력을 색상으로 출력합니다. (실제 시뮬레이션에서는 velocity FBO에 기록됩니다)
