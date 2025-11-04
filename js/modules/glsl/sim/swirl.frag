@@ -60,6 +60,9 @@ float noise(float t) {
 
 void main() {
 
+    float hands_dist = distance(p0, p1);
+    float dist_threshold = 0.6;
+
     // --- 1. 보간 파라미터 t 계산 ---
     vec2 p0_uv = p0 * 0.5 + 0.5;
     vec2 p1_uv = p1 * 0.5 + 0.5;
@@ -114,7 +117,7 @@ void main() {
     // 5-4. harmonic 함수 호출
     float osc_val = harmonic(harmonic_input);
 
-    vec2 dir_normalized = vec2(0.0); // 기본값 (dir가 0일 때)
+    vec2 dir_normalized = vec2(0.0); // 기본값 NaN 방지 (dir가 0일 때)
     float dir_len = length(dir);
 
     if (dir_len > 0.0001) {
@@ -122,7 +125,10 @@ void main() {
     }
     
     // 5-5. 진동 성분 벡터 계산
-    vec2 osc = u_osc_strength * f * g * dir_normalized * osc_val;
+    vec2 osc = vec2(0.0); // 기본값은 0
+    if (hands_dist >= dist_threshold) {
+        osc = u_osc_strength * f * g * dir_normalized * osc_val;
+    }
 
     // --- 6. 최종 힘 = 선형 흐름 + 회전 + 진동 ---
     vec2 force = v_lin*g + osc; // + rot
