@@ -70,7 +70,7 @@ export default class Simulation {
             mouse_force: 20,
             resolution: 0.5,
             cursor_size: 100,
-            viscous: 500,
+            viscous: 250,
             isBounce: false,
             dt: 0.014,
             isViscous: false,
@@ -160,6 +160,14 @@ export default class Simulation {
             dt: this.options.dt,
             timeSeed: Math.random() * 1000.0
         });
+        
+        this.vortex = new Vortex({
+            cellScale: this.cellScale,
+            velocity: this.fbos.vel_0,
+            dst: this.fbos.vel_1,
+            fboSize: this.fboSize,
+            dt: this.options.dt,
+        });
 
         this.viscous = new Viscous({
             cellScale: this.cellScale,
@@ -221,13 +229,6 @@ export default class Simulation {
             cellScale: this.cellScale,
             src: this.fbos.diffuse_0,
             dst: this.fbos.gradient,
-            fboSize: this.fboSize,
-            dt: this.options.dt,
-        });
-        this.vortex = new Vortex({
-            cellScale: this.cellScale,
-            velocity: this.fbos.vel_1,
-            dst: this.fbos.vel_0,
             fboSize: this.fboSize,
             dt: this.options.dt,
         });
@@ -383,6 +384,7 @@ export default class Simulation {
                 }
             });
         }
+        this.vortex.update({fboSize: this.fboSize});
 
         // --- 3. 유체 물리 계산 ---
         let vel = this.fbos.vel_1;
@@ -405,8 +407,6 @@ export default class Simulation {
 
         //--- 4. 밀도(Density) 업데이트 ---
         vel = this.fbos.vel_1;
-
-        // this.vortex.update({vel : vel, fboSize: this.fboSize});
 
         allBodyCoords.forEach(person => {
             const personSourcePos = Object.values(person).map(part => part.coords);

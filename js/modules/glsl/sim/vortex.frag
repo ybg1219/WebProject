@@ -70,8 +70,7 @@ float snoise(vec2 v) {
 
     // --- 최종 반환 ---
     // 3개 꼭짓점의 최종 기여도(g)와 가중치(m)를 모두 내적하여 합산합니다.
-    // 130.0을 곱해 출력 값의 범위를 조절합니다.
-    return 130.0 * dot(m, g);
+    return dot(m, g);
 }
 
 // --- Curl Noise 계산 함수 ---
@@ -79,9 +78,9 @@ float snoise(vec2 v) {
 // 1. 포텐셜(Potential, ψ) 계산
 // 2D에서는 포텐셜은 그냥 노이즈 값 그 자체입니다.
 float getPotential(vec2 p) {
-    float scale = 30.0;
-    vec2 offset_p = p * scale + vec2(u_time, 0.0);
-    // 0.01을 곱해 노이즈를 확대(Scale)하여 더 큰 소용돌이를 만듭니다.
+    float scale = 10.0;
+    float time = mod(u_time, 289.0)* 0.5;
+    vec2 offset_p = p * scale - vec2(0.0 , time);
     return snoise(offset_p);
 }
 
@@ -119,5 +118,5 @@ void main() {
 
     // 속도 벡터를 시각화합니다.
     // x축 속도는 R(빨강) 채널, y축 속도는 G(초록) 채널에 매핑합니다.
-    gl_FragColor = vec4( curl * 0.0001 , 0.0, 1.0);
+    gl_FragColor = vec4( curl * 0.003 , 0.0, 1.0);
 }

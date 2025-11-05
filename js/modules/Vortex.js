@@ -1,4 +1,5 @@
 import face_vert from "./glsl/sim/face.vert";
+import padding_vert from "./glsl/sim/padding.vert";
 
 import vortex_frag from "./glsl/sim/vortex.frag";
 import ShaderPass from "./ShaderPass";
@@ -38,7 +39,7 @@ export default class Vortex extends ShaderPass{
         super.init();
     }
 
-    update({ vel , fboSize}){
+    update({ fboSize}){
         this.uniforms.fboSize.value = fboSize;
         this.uniforms.u_time.value += this.uniforms.dt.value;
 

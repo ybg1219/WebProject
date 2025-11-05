@@ -39,6 +39,6 @@ void main(){
 
         vec2 grad = texture2D(gradient, uv).xy;
 
-        gl_FragColor = vec4(grad *0.5 + newVel2, 0.0, 0.0)*lambda;
+        gl_FragColor = vec4(grad *0.1 + newVel2, 0.0, 0.0)*lambda;
     }
 }
