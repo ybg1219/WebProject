@@ -4,6 +4,8 @@ import * as THREE from "three";
 import Simulation from "./Simulation";
 import face_vert from "./glsl/sim/face.vert";
 import color_frag from "./glsl/sim/color.frag";
+import color_heat from "./glsl/sim/color_heat.frag";
+import color_grad from "./glsl/sim/color_grad.frag";
 
 export default class Output{
      /**
@@ -27,10 +29,11 @@ export default class Output{
             new THREE.PlaneGeometry(2, 2),
             new THREE.RawShaderMaterial({
                 vertexShader: face_vert,
-                fragmentShader: color_frag,
+                fragmentShader: color_grad,
+                transparent: true,
                 uniforms: {
                     density: {
-                        value: this.simulation.fbos.gradient.texture
+                        value: this.simulation.fbos.diffuse_0.texture
                     },
                     boundarySpace: {
                         value: new THREE.Vector2()
