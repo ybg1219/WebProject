@@ -1,20 +1,27 @@
 precision highp float;
 
+// --- 소스 위치 ---
 uniform vec2 pointPositions[MAX_BODY_PARTS];
 uniform vec2 linePositions[MAX_BODY_PARTS*2];
 uniform int lineCount; // 유효한 선의 개수
 uniform int pointCount; // 유효한 선의 개수
 
-uniform sampler2D velocity;
-uniform sampler2D density;
+// --- 입력 밀도 ---
+// (Advection과 Diffuse가 완료된 텍스처를 읽어옴)
+uniform sampler2D density; 
 
+// --- 소스 설정 ---
 uniform float radius;    // 소싱 반경
 uniform float strength;  // 밀도 증가량
-varying vec2 uv;
 
-uniform float dt;
-uniform vec2 fboSize;
+// --- 헬퍼 유니폼 ---
+varying vec2 uv;
 uniform vec2 px;
+uniform vec2 fboSize; // (헬퍼 함수에서만 사용)
+
+// ------------------------------------
+// 헬퍼 함수 (Sourcing용)
+// ------------------------------------
 
 // 공통 falloff 함수
 float falloff(float d, float radius) {
@@ -60,12 +67,15 @@ float sdfLineFalloff(vec2 p, vec2 a, vec2 b, float radius) {
     return falloff(d, radius);
 }
 
+// ------------------------------------
+// 메인 함수
+// ------------------------------------
 void main() {
 
-    // 0. 연기 소싱
+    // --- 1. 연기 소싱 (Sourcing) ---
     float source = 0.0;
 
-    // 1. 점 소스 계산: 개별 신체 부위
+    // 1-1. 점 소스 계산
     for (int i = 0; i < MAX_BODY_PARTS; i++) {
         if (i >= pointCount) break;
         vec2 p = pointPositions[i];
@@ -73,37 +83,25 @@ void main() {
         source += strength * computeFalloff(uv, pointPositions[i], radius) * 0.3;
     }
 
-   // 2. 선 소스 계산
-    // JavaScript에서 보낸 유효한 선의 개수(lineCount)만큼만 반복합니다.
+    // 1-2. 선 소스 계산
     for (int i = 0; i < MAX_BODY_PARTS; i++) {
-        if (i >= lineCount) {
-            break;
-        }
+        if (i >= lineCount) break;
         vec2 p1 = linePositions[i * 2];
         vec2 p2 = linePositions[i * 2 + 1];
         source += strength * sdfLineFalloff(uv, p1, p2, radius * 0.7) * 0.2;
     }
 
-    // 3. buoyancy 
+    // --- 2. 소멸 (Dissipation) ---
+    // Advection(이류)이 빠졌으므로, 'uv' (현재 픽셀)에서 밀도를 읽어옵니다.
+    float prevDensity = texture2D(density, uv).x;
 
-    vec2 ratio = max(fboSize.x, fboSize.y) / fboSize;
-    vec2 vel = texture2D(velocity, uv).xy;
-
-    // float buoyancyCoefficient = 0.01;
-    // vec2 gravity = vec2(0.0, -1.0); // 아래 방향
-    // vec2 d = texture2D(density, uv).rr;
-    // vec2 buoyancyForce = - buoyancyCoefficient * (d) * gravity;
-    // vel += buoyancyForce;
-
-    // 3. 과거 밀도 위치 추적 (Advection for density)    
-    vec2 uv2 = uv - vel * dt * ratio;
-    // uv2 = clamp(uv2, vec2(0.0), vec2(1.0)); 
-
-    // dissipation 소멸 계수 lambda로 연기 사라지는 속도 조절
+    // dissipation 소멸 계수
     float lambda = 0.99;
-    float dv = lambda*texture2D(density, uv2).x; // 과거 밀도
+    float dv = lambda * prevDensity; // 읽어온 값에 소멸 적용
 
-    // 4. 밀도 결과 = 이동된 밀도 + 소싱
-    gl_FragColor = vec4(dv + source); // r=g=b=a로 밀도 저장
-    
+    // --- 3. 최종 밀도 = 소멸된 밀도 + 새 소스 ---
+    float finalDensity = dv + source;
+
+    // r=g=b=a로 밀도 저장
+    gl_FragColor = vec4(finalDensity, 0.0, 0.0, 1.0); 
 }

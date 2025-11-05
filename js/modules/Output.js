@@ -29,11 +29,11 @@ export default class Output{
             new THREE.PlaneGeometry(2, 2),
             new THREE.RawShaderMaterial({
                 vertexShader: face_vert,
-                fragmentShader: color_grad,
+                fragmentShader: color_frag,
                 transparent: true,
                 uniforms: {
                     density: {
-                        value: this.simulation.fbos.diffuse_0.texture
+                        value: this.simulation.fbos.density_0.texture
                     },
                     boundarySpace: {
                         value: new THREE.Vector2()

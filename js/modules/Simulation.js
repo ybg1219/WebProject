@@ -9,6 +9,7 @@ import Divergence from "./Divergence";
 import Poisson from "./Poisson";
 import Pressure from "./Pressure";
 import Density from "./Density";
+import DensityAdvection from "./DensityAdvection";
 import Diffuse from "./Diffuse";
 import Gradient from "./Gradient";
 import Swirl from "./Swirl";
@@ -204,15 +205,13 @@ export default class Simulation {
             dt: this.options.dt,
         });
 
-        this.density = new Density({ // Density constructor radius 추가됨. 조절 여부?
+        this.densityAdvection = new DensityAdvection({
             cellScale: this.cellScale,
-            boundarySpace: this.boundarySpace,
-            cursor_size: this.options.cursor_size,
-            vel: this.fbos.vel_0,
-            den: this.fbos.diffuse_0,
-            dst: this.fbos.density_1,
             fboSize: this.fboSize,
             dt: this.options.dt,
+            density : this.fbos.density_0,
+            src: this.fbos.vel_0,
+            dst : this.fbos.density_1,
         });
 
         this.densityDiffuse = new Diffuse({
@@ -225,9 +224,19 @@ export default class Simulation {
             dt: this.options.dt,
         });
 
+        this.density = new Density({ // Density constructor radius 추가됨. 조절 여부?
+            cellScale: this.cellScale,
+            boundarySpace: this.boundarySpace,
+            cursor_size: this.options.cursor_size,
+            den: this.fbos.diffuse_0,
+            dst: this.fbos.density_0,
+            fboSize: this.fboSize,
+            dt: this.options.dt,
+        });
+
         this.gradient = new Gradient({
             cellScale: this.cellScale,
-            src: this.fbos.diffuse_0,
+            src: this.fbos.density_0,
             dst: this.fbos.gradient,
             fboSize: this.fboSize,
             dt: this.options.dt,
@@ -247,6 +256,7 @@ export default class Simulation {
             this.poisson,
             this.pressure,
             this.density,
+            this.densityAdvection,
             this.densityDiffuse,
             this.gradient,
             this.vortex
@@ -362,7 +372,6 @@ export default class Simulation {
                 if ((leftHand.coords.x !== INACTIVE_VEC2.x || leftHand.coords.y !== INACTIVE_VEC2.y) &&
                     (leftShoulder.coords.x !== INACTIVE_VEC2.x || leftShoulder.coords.y !== INACTIVE_VEC2.y)) {
                     
-                    console.log("left swirl", leftHand.coords, leftShoulder.coords);
                     this.swirlLeft.update({
                         left: leftHand,
                         right: leftShoulder,
@@ -405,27 +414,24 @@ export default class Simulation {
 
         this.pressure.update({ vel, pressure });
 
-        //--- 4. 밀도(Density) 업데이트 ---
-        vel = this.fbos.vel_1;
+        //--- 4. 밀도 이류 (Density Advection) 업데이트 ---
+        this.densityAdvection.update(this.options);
 
-        allBodyCoords.forEach(person => {
-            const personSourcePos = Object.values(person).map(part => part.coords);
-            // 한 사람의 좌표 배열(sourcePos)을 전달하여 density를 업데이트합니다.
-            this.density.update({
-                cursor_size: this.options.cursor_size,
-                cellScale: this.cellScale,
-                vel: vel,
-                sourcePos: personSourcePos
-            });
-        });
         // --- 5. 밀도 확산(Diffusion) 업데이트 ---
         this.densityDiffuse.update({
             viscosity: this.options.viscous,
             iterations: this.options.iterations_viscous,
             dt: this.options.dt
         });
-
-        this.fbos.density_0 = this.fbos.diffuse_0;
+        allBodyCoords.forEach(person => {
+            const personSourcePos = Object.values(person).map(part => part.coords);
+            // 한 사람의 좌표 배열(sourcePos)을 전달하여 density를 업데이트합니다.
+            this.density.update({
+                cursor_size: this.options.cursor_size,
+                cellScale: this.cellScale,
+                sourcePos: personSourcePos
+            });
+        });
 
         this.gradient.update()
     }

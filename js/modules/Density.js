@@ -32,15 +32,6 @@ export default class Density extends ShaderPass{
                     strength : {
                         value : 0.5
                     },
-                    boundarySpace: {
-                        value: simProps.boundarySpace
-                    },
-                    velocity: {
-                        value: simProps.vel.texture
-                    },
-                    density: {
-                        value: simProps.den.texture
-                    },
                     px: {
                         value: simProps.cellScale
                     },
@@ -82,11 +73,10 @@ export default class Density extends ShaderPass{
         this.uniforms.linePositions.value = new Float32Array(MAX_BODY_PARTS * 4); // 선 개수 * 점 2개 * xy 2개
     }
 
-    update({ cursor_size ,cellScale, vel, sourcePos }) {
+    update({ cursor_size ,cellScale, sourcePos }) {
         
         this.uniforms.radius.value = cursor_size;
         this.uniforms.px.value = cellScale;
-        this.uniforms.velocity.value = vel.texture;
         
         // 여러 개의 소스 위치를 0~1로 변환해서 각 유니폼에 전달
         const toUv = ({ x, y }) => new THREE.Vector2((x + 1.0) * 0.5, (y + 1.0) * 0.5);
@@ -103,7 +93,6 @@ export default class Density extends ShaderPass{
         }
         this.uniforms.pointPositions.value.set(validPointCoords);
         this.uniforms.pointCount.value = validPointCoords.length/2;
-        // console.log(validPointCoords);
 
         // 3. 선 소스(Line Source) 데이터 채우기
         const validLineCoords = [];
@@ -120,26 +109,11 @@ export default class Density extends ShaderPass{
                 validLineCoords.push(partA.x, partA.y, partB.x, partB.y);
             }
         });
-        // console.log(validLineCoords);
 
         // 유효한 선 데이터를 Float32Array에 복사하고, 유효한 선의 개수를 업데이트합니다.
         this.uniforms.linePositions.value.set(validLineCoords);
         this.uniforms.lineCount.value = validLineCoords.length / 4; // 선 하나당 4개의 float
 
-        // Ping-Pong 스왑
-        // const den0 = this.props.output0;
-        // const den1 = this.props.output1;
-
-        // this.uniforms.density.value = den0.texture;
-        // this.props.output = den1;
-
         super.update();
-
-        // swap 역할 수행: output1 → 다음 프레임의 input
-        // const temp = den0;
-        // this.props.output0 = den1;
-        // this.props.output1 = temp;
-
-        return this.props.output;
     }
 }
