@@ -14,6 +14,7 @@ import Diffuse from "./Diffuse";
 import Gradient from "./Gradient";
 import Swirl from "./Swirl";
 import Vortex from "./Vortex"
+import Buoyancy from "./Buoyancy";
 
 import Mouse from "./Mouse";
 
@@ -71,6 +72,7 @@ export default class Simulation {
             mouse_force: 20,
             resolution: 0.5,
             cursor_size: 100,
+            buoyancy: 0.03,
             viscous: 250,
             isBounce: false,
             dt: 0.014,
@@ -167,6 +169,13 @@ export default class Simulation {
             velocity: this.fbos.vel_0,
             dst: this.fbos.vel_1,
             fboSize: this.fboSize,
+            dt: this.options.dt,
+        });
+
+        this.buoyancy = new Buoyancy({
+            density : this.fbos.density_0,
+            buoyancy : this.options.buoyancy,
+            dst: this.fbos.vel_1,
             dt: this.options.dt,
         });
 
@@ -394,6 +403,11 @@ export default class Simulation {
             });
         }
         this.vortex.update({fboSize: this.fboSize});
+        this.buoyancy.update({
+            density: this.fbos.density_0, 
+            buoyancy: this.options.buoyancy, // (부력 강도)
+            dt: this.options.dt
+        });
 
         // --- 3. 유체 물리 계산 ---
         let vel = this.fbos.vel_1;
