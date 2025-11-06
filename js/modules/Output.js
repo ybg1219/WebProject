@@ -75,7 +75,7 @@ export default class Output{
         try {
             // 1. 시뮬레이션 리소스 연쇄 정리 (가장 중요)
             if (this.simulation && this.simulation.destroy) {
-                //this.simulation.destroy();
+                this.simulation.destroy();
             }
 
             // 2. Output의 Three.js 리소스(최종 화면 메쉬) 정리

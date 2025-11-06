@@ -115,14 +115,14 @@ export default class Controls {
         guiElement.style.position = 'fixed'; // 화면에 고정
         
         // 상단에서 50% 위치로 이동
-        guiElement.style.top = '90px';       
+        guiElement.style.top = '95px';       
         // Y축으로 -50% 만큼 이동하여 세로 중앙 정렬
         guiElement.style.transform = 'translateY(0%)'; 
         
         // 왼쪽(left) 속성 해제
         guiElement.style.left = 'auto';      
         // [핵심] 오른쪽 '변'에 0px로 붙입니다.
-        guiElement.style.right = '100px';  
+        guiElement.style.right = '10%';  
         
         // --- 2. 색상 변경 ---
         // 커스텀 스타일(CSS)을 적용하는 함수를 호출합니다.
@@ -141,5 +141,11 @@ export default class Controls {
         this.gui.add(this.params, "dt", 1 / 200, 1 / 30);
         this.gui.add(this.params, 'BFECC');
         this.gui.close();
+    }
+    destroy() {
+        if (this.gui) {
+            this.gui.destroy();
+            this.gui = null; // 참조를 제거하여 가비지 컬렉션 돕기
+        }
     }
 }

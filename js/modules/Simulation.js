@@ -80,7 +80,7 @@ export default class Simulation {
             BFECC: true,
             isMouse: false
         }; // 컨트롤의 파라미터 초기값
-        const controls = new Controls(this.options);
+        this.controls = new Controls(this.options);
         this.fboSize = new THREE.Vector2();
         this.cellScale = new THREE.Vector2();
         this.boundarySpace = new THREE.Vector2();
@@ -453,6 +453,7 @@ export default class Simulation {
     destroy() {
         console.log("Destroying Simulation (FBOs and Shaders)...");
         try {
+            this.controls?.destroy();
             // 1. 모든 FBO 텍스처를 GPU 메모리에서 해제
             for (const key in this.fbos) {
                 if (this.fbos[key]) {
