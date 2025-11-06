@@ -25,14 +25,14 @@ module.exports = {
                     {
                         loader: 'babel-loader',
                         options: {
-                          presets: [
-                            ['@babel/preset-env', {
-                              targets: "defaults",
-                              useBuiltIns: "usage",
-                              corejs: 3
-                            }]
-                          ],
-                          plugins: ['@babel/plugin-transform-runtime']
+                            presets: [
+                                ['@babel/preset-env', {
+                                    targets: "defaults",
+                                    useBuiltIns: "usage",
+                                    corejs: 3
+                                }]
+                            ],
+                            plugins: ['@babel/plugin-transform-runtime']
                         }
                     }
                 ]
@@ -44,26 +44,35 @@ module.exports = {
         ],
     },
     plugins: [
-        // static directory나 htmlwebpackplugin 중 하나만 사용해야했다.. 특히 vm### 출력의 원인이었음.
-        // new HtmlWebpackPlugin({
-        //     template: './dist/index.html',
-        // }),
+        new HtmlWebpackPlugin({
+            template: './dist/index.html', // [수정] 템플릿 경로 (루트의 index.html)
+            filename: 'index.html', // 출력 파일 이름
+            inject: 'body', // 스크립트를 body 끝에 주입
+        }),
+        // [★추가★]
+        // 2. GitHub Pages의 404 새로고침 트릭을 위해
+        //    index.html과 똑같은 내용의 404.html을 생성
+        new HtmlWebpackPlugin({
+            template: './dist/index.html', // 동일한 템플릿 사용
+            filename: '404.html',   // 출력 파일 이름만 다르게
+            inject: 'body',
+        }),
         new CopyWebpackPlugin([
             {
-            from: path.resolve(__dirname, 'node_modules/@mediapipe/pose'),
-            to: 'mediapipe/pose', // hands 폴더로 복사
-            // globOptions: {
-            //     ignore: ['**/*.ts'] // 타입스크립트 소스는 제외
-            // }
+                from: path.resolve(__dirname, 'node_modules/@mediapipe/pose'),
+                to: 'mediapipe/pose', // hands 폴더로 복사
+                // globOptions: {
+                //     ignore: ['**/*.ts'] // 타입스크립트 소스는 제외
+                // }
             },
             {
-            from: path.resolve(__dirname, 'node_modules/@mediapipe/camera_utils'),
-            to: 'mediapipe/camera',
-            // globOptions: {
-            //     ignore: ['**/*.ts']
-            // }
+                from: path.resolve(__dirname, 'node_modules/@mediapipe/camera_utils'),
+                to: 'mediapipe/camera',
+                // globOptions: {
+                //     ignore: ['**/*.ts']
+                // }
             }
-    ])
+        ])
     ],
     devServer: {
         static: {
@@ -73,7 +82,8 @@ module.exports = {
         port: 3001,
         compress: false,
         open: true,
-        hot : false
+        hot: false,
+        historyApiFallback: true,
     },
     target: ["web", "es2020"], // ESM 지원을 위해 반드시 필요
     experiments: {
