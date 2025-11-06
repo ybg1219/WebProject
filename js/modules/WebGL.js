@@ -51,8 +51,8 @@ export default class Webgl{
         document.body.appendChild(this.stats.dom);
 
         // 시뮬레이션 아웃풋 초기화 및 입력 모듈 초기화
-        // await VideoManager.startCamera();
-        await VideoManager.loadVideoFile("/videos/hiphop.mp4"); // 여기에 mp4 파일 경로
+        await VideoManager.startCamera();
+        // await VideoManager.loadVideoFile("/videos/hiphop.mp4"); // 여기에 mp4 파일 경로
 
 
         Mouse.init();

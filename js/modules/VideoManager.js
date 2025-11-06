@@ -21,7 +21,7 @@ class VideoManager {
         this.video.style.top = '0';
         this.video.style.left = '0';
         this.video.style.zIndex = '-10';
-        this.video.style.opacity = '1'; 
+        this.video.style.opacity = '0'; 
         this.video.style.transform = 'scaleX(-1)';
         this.video.style.pointerEvents = 'none';
         this.setSize(width, height);
