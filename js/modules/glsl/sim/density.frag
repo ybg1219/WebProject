@@ -1,8 +1,8 @@
 precision highp float;
 
 // --- 소스 위치 ---
-uniform vec2 pointPositions[MAX_BODY_PARTS];
-uniform vec2 linePositions[MAX_BODY_PARTS*2];
+uniform vec2 pointPositions[MAX_TOTAL_PARTS];
+uniform vec2 linePositions[MAX_TOTAL_PARTS*2];
 uniform int lineCount; // 유효한 선의 개수
 uniform int pointCount; // 유효한 선의 개수
 
@@ -76,7 +76,7 @@ void main() {
     float source = 0.0;
 
     // 1-1. 점 소스 계산
-    for (int i = 0; i < MAX_BODY_PARTS; i++) {
+    for (int i = 0; i < MAX_TOTAL_PARTS; i++) {
         if (i >= pointCount) break;
         vec2 p = pointPositions[i];
         if (p.x < 0.0 || p.y < 0.0) continue;
@@ -84,7 +84,7 @@ void main() {
     }
 
     // 1-2. 선 소스 계산
-    for (int i = 0; i < MAX_BODY_PARTS; i++) {
+    for (int i = 0; i < MAX_TOTAL_PARTS ; i++) {
         if (i >= lineCount) break;
         vec2 p1 = linePositions[i * 2];
         vec2 p2 = linePositions[i * 2 + 1];

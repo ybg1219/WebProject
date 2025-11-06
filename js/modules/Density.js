@@ -4,21 +4,21 @@ import density_frag from "./glsl/sim/density.frag";
 import ShaderPass from "./ShaderPass";
 
 import * as THREE from "three";
-import { BODY_PART_ORDER, MAX_BODY_PARTS } from "./Simulation";
-
+import { BODY_PART_ORDER, MAX_BODY_PARTS, MAX_PEOPLE} from "./Simulation";
+// export const MAX_TOTAL_PARTS = MAX_BODY_PARTS * MAX_PEOPLE;
 export default class Density extends ShaderPass {
     constructor(simProps) {
+        const MAX_TOTAL_PARTS = MAX_BODY_PARTS * MAX_PEOPLE;
         super({
             material: {
                 vertexShader: face_vert,
                 fragmentShader: `
                     // MAX_BODY_PARTS 정의
-                    #define MAX_BODY_PARTS ${MAX_BODY_PARTS}
+                    #define MAX_TOTAL_PARTS ${MAX_TOTAL_PARTS}
                     
                     // 기존 셰이더 코드
                     ${density_frag}
                 `,
-                blendmode: THREE.AdditiveBlending,
                 uniforms: {
                     // 점 소스를 위한 좌표 배열
                     pointPositions: { value: null },
@@ -41,6 +41,9 @@ export default class Density extends ShaderPass {
                     },
                     fboSize: {
                         value: simProps.fboSize
+                    },
+                    numPeople: {
+                        value: 1
                     }
                 }
             },
@@ -49,7 +52,8 @@ export default class Density extends ShaderPass {
             output0: simProps.den,
             output1: simProps.dst
         })
-        this.landmarkMaxSize = MAX_BODY_PARTS;
+        this.landmarkMaxSize = MAX_TOTAL_PARTS;
+        this.partsPerPerson = BODY_PART_ORDER.length;
         this.bodyConnectionIndices = [
             // Torso (몸통)
             [BODY_PART_ORDER.indexOf('head'), BODY_PART_ORDER.indexOf('center')],
@@ -81,12 +85,13 @@ export default class Density extends ShaderPass {
 
     init() {
         super.init();
-
+        
+        const MAX_TOTAL_PARTS = MAX_BODY_PARTS * MAX_PEOPLE;
         // 점 좌표 배열 초기화
-        this.uniforms.pointPositions.value = new Float32Array(MAX_BODY_PARTS * 2);
+        this.uniforms.pointPositions.value = new Float32Array(MAX_TOTAL_PARTS * 2);
 
         // 선 좌표 배열 초기화
-        this.uniforms.linePositions.value = new Float32Array(MAX_BODY_PARTS * 4); // 선 개수 * 점 2개 * xy 2개
+        this.uniforms.linePositions.value = new Float32Array(MAX_TOTAL_PARTS * 4); // 선 개수 * 점 2개 * xy 2개
     }
 
     update({ cursor_size, cellScale, sourcePos }) {
@@ -101,7 +106,8 @@ export default class Density extends ShaderPass {
             console.warn("sourcePos overflow: ", sourcePos.length, ">", this.landmarkMaxSize);
         }
         const uvCoords = sourcePos.map(toUv);
-
+        
+        // 점 소스
         const validPointCoords = [];
         for (let i = 0; i < uvCoords.length; i++) {
             if (uvCoords[i].x <= -1.0 && uvCoords[i].y <= -1.0) continue;
@@ -110,21 +116,34 @@ export default class Density extends ShaderPass {
         this.uniforms.pointPositions.value.set(validPointCoords);
         this.uniforms.pointCount.value = validPointCoords.length / 2;
 
-        // 3. 선 소스(Line Source) 데이터 채우기
+        // 선 소스
+        // 2-1. 총 몇 명의 데이터가 들어왔는지 계산
         const validLineCoords = [];
-        this.bodyConnectionIndices.forEach(([indexA, indexB]) => {
+        const numPeople = uvCoords.length / this.partsPerPerson;
 
-            if (indexA === -1 || indexB === -1) return; // BODY_PART_ORDER에 없는 이름일 경우 예외처리
+        // 2-2. 사람 수만큼 루프
+        for (let i = 0; i < numPeople; i++) {
+            // 2-3. 이 사람의 데이터가 시작되는 "오프셋"
+            const personOffset = i * this.partsPerPerson;
 
-            const partA = uvCoords[indexA];
-            const partB = uvCoords[indexB];
+            // 2-4. 뼈대 연결 규칙 순회
+            this.bodyConnectionIndices.forEach(([indexA, indexB]) => {
+                if (indexA === -1 || indexB === -1) return;
 
-            // 두 점이 모두 유효한 경우에만 (sentinel 값이 아닐 경우) 선 목록에 추가합니다.
-            // toUv 변환 후 sentinel 값은 음수가 되므로, x >= 0.0 으로 유효성을 검사할 수 있습니다.
-            if (partA && partB && partA.x >= 0.0 && partB.x >= 0.0) {
-                validLineCoords.push(partA.x, partA.y, partB.x, partB.y);
-            }
-        });
+                // 2-5. [핵심] 오프셋을 더해 실제 인덱스 계산
+                const actualIndexA = personOffset + indexA;
+                const actualIndexB = personOffset + indexB;
+
+                if (actualIndexA >= uvCoords.length || actualIndexB >= uvCoords.length) return;
+
+                const partA = uvCoords[actualIndexA];
+                const partB = uvCoords[actualIndexB];
+
+                if (partA && partB && partA.x >= -1.0 && partB.x >= -1.0) {
+                    validLineCoords.push(partA.x, partA.y, partB.x, partB.y);
+                }
+            });
+        }
 
         // 유효한 선 데이터를 Float32Array에 복사하고, 유효한 선의 개수를 업데이트합니다.
         this.uniforms.linePositions.value.set(validLineCoords);

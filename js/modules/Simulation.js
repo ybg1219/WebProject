@@ -35,7 +35,8 @@ export const BODY_PART_ORDER = [
     'rightKnee'     // 13
 ];
 // GLSL의 MAX_POSITIONS와 일치시켜야 합니다.
-export const MAX_BODY_PARTS = BODY_PART_ORDER.length; // 9
+export const MAX_BODY_PARTS = BODY_PART_ORDER.length; // 13
+export const MAX_PEOPLE = 2; // ✅ 앱이 지원할 최대 인원수 (예: 4명)
 
 // 유효하지 않은 좌표를 나타내는 특수 값 (sentinel value)
 const INACTIVE_VEC2 = new THREE.Vector2(-10.0, -10.0);
@@ -370,7 +371,7 @@ export default class Simulation {
         } else if (this.activeTracker) {
 
             allBodyCoords = people.map(person => this._getFilteredBodyCoords(person))
-            console.log(allBodyCoords);
+            // console.log(allBodyCoords);
             allBodyCoords.forEach(person => {
                 this.applyExternalForce(person.head, this.externalForceBody);
                 this.applyExternalForce(person.leftHand, this.externalForceLeft);
@@ -441,15 +442,24 @@ export default class Simulation {
             iterations: this.options.iterations_viscous,
             dt: this.options.dt
         });
-        allBodyCoords.forEach(person => {
+
+        // allBodyCoords 배열을 MAX_PEOPLE 개수만큼 "자릅니다".
+        const limitedBodyCoords = allBodyCoords.slice(0, MAX_PEOPLE);
+
+        const allSourcePos = [];
+        limitedBodyCoords.forEach(person => {
             const personSourcePos = Object.values(person).map(part => part.coords);
-            // 한 사람의 좌표 배열(sourcePos)을 전달하여 density를 업데이트합니다.
+            allSourcePos.push(...personSourcePos);
+        });
+
+        if (allSourcePos.length > 0) {
             this.density.update({
                 cursor_size: this.options.cursor_size,
                 cellScale: this.cellScale,
-                sourcePos: personSourcePos
+                sourcePos: allSourcePos,
+                numPeople: allBodyCoords.length,
             });
-        });
+        }
 
         this.gradient.update()
     }
