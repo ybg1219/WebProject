@@ -20,9 +20,9 @@ class VideoManager {
         this.video.style.position = 'absolute';
         this.video.style.top = '0';
         this.video.style.left = '0';
-        this.video.style.zIndex = '0';
-        // 개발 중에는 보이도록 opacity: 1, 최종적으로 0으로 변경
-        this.video.style.opacity = '0';
+        this.video.style.zIndex = '-10';
+        this.video.style.opacity = '1'; 
+        this.video.style.transform = 'scaleX(-1)';
         this.video.style.pointerEvents = 'none';
         this.setSize(width, height);
         $wrapper.appendChild(this.video);
