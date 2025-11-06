@@ -12,7 +12,11 @@ class BodyTracking {
         this.running = false; // 루프 제어를 위한 플래그
 
         this.people = [];
-        this.bodyKeys = ["head", "leftHand", "rightHand", "center", "leftShoulder", "rightShoulder", "heap", "leftFoot", "rightFoot"];
+        this.bodyKeys = [
+            "head", "leftHand", "rightHand", "center",
+            "leftShoulder", "rightShoulder", "leftHeap", "rightHeap", "leftFoot", "rightFoot",
+            "leftElbow", "rightElbow", "leftKnee", "rightKnee"
+        ];
     }
 
 
@@ -115,11 +119,15 @@ class BodyTracking {
     async cameraStart() {
 
         // 비디오 메타데이터가 로드되어야 videoWidth/Height를 알 수 있습니다.
-        await new Promise(resolve => {
-            this.videoElement.onloadedmetadata = () => resolve();
-        });
-
-        this.videoElement.play();
+        if (this.videoElement.readyState < 1) { // readyState < 1: HAVE_NOTHING
+            await new Promise(resolve => {
+                // 아직 로드되지 않았다면 리스너를 등록하고 기다림
+                this.videoElement.onloadedmetadata = () => {
+                    this.videoElement.onloadedmetadata = null; // 리스너 제거
+                    resolve();
+                };
+            });
+        }
 
         // 비디오가 재생되면 매 프레임 추적을 시작합니다.
         const process = async () => {
@@ -127,6 +135,7 @@ class BodyTracking {
             if (!this.running) return;
 
             await this.pose.send({ image: this.videoElement });
+            // console.log("Processing Frame..."); // ⬅️ 이 로그가 찍히는지 확인
             requestAnimationFrame(process);
         };
 

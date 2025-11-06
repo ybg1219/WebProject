@@ -67,11 +67,16 @@ class VideoManager {
      * (디버그용) 로컬 비디오 파일을 로드합니다.
      */
     async loadVideoFile(filePath) {
-        this.video.src = filePath;
-        this.video.loop = true;
-        this.video.autoplay = true;
-        this.video.muted = true;
+        try {
+            this.video.src = filePath;
+            this.video.loop = true;
+            this.video.autoplay = true;
+            this.video.muted = true;
         await this.video.play();
+        } catch (err) {
+            console.error('동영상 접근 실패:', err);
+            throw err; // 에러를 상위로 전파하여 LandingPage에서 catch하도록 함
+        }
     }
 
     /**

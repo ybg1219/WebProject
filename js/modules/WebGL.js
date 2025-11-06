@@ -15,7 +15,7 @@ export default class Webgl{
 
         // --- 시뮬레이션 옵션 ---
         this.options = {
-            isMultiPerson: true, // 이 값을 false로 바꾸면 단일 모드로 실행됩니다.
+            isMultiPerson: false, // 이 값을 false로 바꾸면 단일 모드로 실행됩니다.
         };
 
         // 공통인 렌더러 요소들 초기화
@@ -51,8 +51,8 @@ export default class Webgl{
         document.body.appendChild(this.stats.dom);
 
         // 시뮬레이션 아웃풋 초기화 및 입력 모듈 초기화
-        //await VideoManager.startCamera();
-         await VideoManager.loadVideoFile("/videos/dancer.mp4"); // 여기에 mp4 파일 경로
+        // await VideoManager.startCamera();
+        await VideoManager.loadVideoFile("/videos/house.mp4"); // 여기에 mp4 파일 경로
 
 
         Mouse.init();

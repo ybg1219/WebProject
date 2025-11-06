@@ -94,7 +94,7 @@ export default class Density extends ShaderPass {
         this.uniforms.linePositions.value = new Float32Array(MAX_TOTAL_PARTS * 4); // 선 개수 * 점 2개 * xy 2개
     }
 
-    update({ cursor_size, cellScale, sourcePos }) {
+    update({ cursor_size, cellScale, sourcePos, numPeople }) {
 
         this.uniforms.radius.value = cursor_size;
         this.uniforms.px.value = cellScale;
@@ -119,7 +119,8 @@ export default class Density extends ShaderPass {
         // 선 소스
         // 2-1. 총 몇 명의 데이터가 들어왔는지 계산
         const validLineCoords = [];
-        const numPeople = uvCoords.length / this.partsPerPerson;
+        // const numPeople = uvCoords.length / this.partsPerPerson;
+        console.log("Number of People:", numPeople);
 
         // 2-2. 사람 수만큼 루프
         for (let i = 0; i < numPeople; i++) {
