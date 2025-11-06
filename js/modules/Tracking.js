@@ -9,7 +9,11 @@ class Tracking {
         this.landmarks = [];
         this.video = null;
         
-        this.bodyKeys =  ["head", "leftHand", "rightHand", "center", "leftShoulder", "rightShoulder", "heap", "leftFoot", "rightFoot"];
+        this.bodyKeys =  [
+            "head", "leftHand", "rightHand", "center", 
+            "leftShoulder", "rightShoulder", "leftHeap","rightHeap", "leftFoot", "rightFoot",
+            "leftElbow", "rightElbow", "leftKnee", "rightKnee"
+        ];
         this.people = [];  // -> 각 사람(person)의 bodyKey 데이터를 담음
         this.running = false;
     }
@@ -118,16 +122,21 @@ class Tracking {
             const rightHand = personLandmarks[16];
             const leftShoulder = personLandmarks[11];
             const rightShoulder = personLandmarks[12];
-            const leftHip = personLandmarks[23];
-            const rightHip = personLandmarks[24];
+            const leftHeap = personLandmarks[23];
+            const rightHeap = personLandmarks[24];
             const leftFoot = personLandmarks[29];
             const rightFoot = personLandmarks[30];
 
             // 중간 지점 계산
             const neckX = (leftShoulder.x + rightShoulder.x) / 2;
             const neckY = (leftShoulder.y + rightShoulder.y) / 2;
-            const heapX = (leftHip.x + rightHip.x) / 2;
-            const heapY = (leftHip.y + rightHip.y) / 2;
+            const heapX = (leftHeap.x + rightHeap.x) / 2;
+            const heapY = (leftHeap.y + rightHeap.y) / 2;
+
+            const leftElbow = personLandmarks[13];
+            const rightElbow = personLandmarks[14];
+            const leftKnee = personLandmarks[25];
+            const rightKnee = personLandmarks[26];
 
             // 각 신체 부위 좌표 업데이트
             this.updatePartCoords(personData.head, head.x, head.y);
@@ -136,9 +145,15 @@ class Tracking {
             this.updatePartCoords(personData.leftShoulder, leftShoulder.x, leftShoulder.y);
             this.updatePartCoords(personData.rightShoulder, rightShoulder.x, rightShoulder.y);
             this.updatePartCoords(personData.center, neckX, neckY);
-            this.updatePartCoords(personData.heap, heapX, heapY);
+            this.updatePartCoords(personData.leftHeap, leftHeap.x , leftHeap.y);
+            this.updatePartCoords(personData.rightHeap, rightHeap.x, rightHeap.y);
             this.updatePartCoords(personData.leftFoot, leftFoot.x, leftFoot.y);
             this.updatePartCoords(personData.rightFoot, rightFoot.x, rightFoot.y);
+
+            this.updatePartCoords(personData.leftElbow, leftElbow.x, leftElbow.y);
+            this.updatePartCoords(personData.rightElbow, rightElbow.x, rightElbow.y);
+            this.updatePartCoords(personData.leftKnee, leftKnee.x, leftKnee.y);
+            this.updatePartCoords(personData.rightKnee, rightKnee.x, rightKnee.y);
             
             return personData;
         });

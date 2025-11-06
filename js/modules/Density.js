@@ -4,10 +4,10 @@ import density_frag from "./glsl/sim/density.frag";
 import ShaderPass from "./ShaderPass";
 
 import * as THREE from "three";
-import { BODY_PART_ORDER, MAX_BODY_PARTS } from "./Simulation"; 
+import { BODY_PART_ORDER, MAX_BODY_PARTS } from "./Simulation";
 
-export default class Density extends ShaderPass{
-    constructor(simProps){
+export default class Density extends ShaderPass {
+    constructor(simProps) {
         super({
             material: {
                 vertexShader: face_vert,
@@ -18,19 +18,20 @@ export default class Density extends ShaderPass{
                     // 기존 셰이더 코드
                     ${density_frag}
                 `,
+                blendmode: THREE.AdditiveBlending,
                 uniforms: {
                     // 점 소스를 위한 좌표 배열
                     pointPositions: { value: null },
                     // 선 소스를 위한 좌표 배열
                     linePositions: { value: null },
-                    pointCount : { value : 0 },
+                    pointCount: { value: 0 },
                     // 유효한 선의 개수
-                    lineCount: { value: 0 }, 
+                    lineCount: { value: 0 },
                     radius: {
-                        value : 0.0
+                        value: 0.0
                     },
-                    strength : {
-                        value : 0.5
+                    strength: {
+                        value: 0.5
                     },
                     px: {
                         value: simProps.cellScale
@@ -38,7 +39,7 @@ export default class Density extends ShaderPass{
                     dt: {
                         value: simProps.dt
                     },
-                    fboSize : {
+                    fboSize: {
                         value: simProps.fboSize
                     }
                 }
@@ -50,34 +51,49 @@ export default class Density extends ShaderPass{
         })
         this.landmarkMaxSize = MAX_BODY_PARTS;
         this.bodyConnectionIndices = [
+            // Torso (몸통)
             [BODY_PART_ORDER.indexOf('head'), BODY_PART_ORDER.indexOf('center')],
             [BODY_PART_ORDER.indexOf('center'), BODY_PART_ORDER.indexOf('leftShoulder')],
             [BODY_PART_ORDER.indexOf('center'), BODY_PART_ORDER.indexOf('rightShoulder')],
-            [BODY_PART_ORDER.indexOf('center'), BODY_PART_ORDER.indexOf('heap')],
-            [BODY_PART_ORDER.indexOf('heap'), BODY_PART_ORDER.indexOf('leftFoot')],
-            [BODY_PART_ORDER.indexOf('heap'), BODY_PART_ORDER.indexOf('rightFoot')],
-            [BODY_PART_ORDER.indexOf('rightShoulder'), BODY_PART_ORDER.indexOf('rightHand')],
-            [BODY_PART_ORDER.indexOf('leftShoulder'), BODY_PART_ORDER.indexOf('leftHand')],
+            [BODY_PART_ORDER.indexOf('leftShoulder'), BODY_PART_ORDER.indexOf('leftHeap')], // 왼쪽 어깨 -> 왼쪽 엉덩이
+            [BODY_PART_ORDER.indexOf('rightShoulder'), BODY_PART_ORDER.indexOf('rightHeap')], // 오른쪽 어깨 -> 오른쪽 엉덩이
+            [BODY_PART_ORDER.indexOf('leftHeap'), BODY_PART_ORDER.indexOf('rightHeap')], // 엉덩이 연결
+
+            // Left Arm (왼팔) - [어깨 -> 팔꿈치], [팔꿈치 -> 손]
+            [BODY_PART_ORDER.indexOf('leftShoulder'), BODY_PART_ORDER.indexOf('leftElbow')],
+            [BODY_PART_ORDER.indexOf('leftElbow'), BODY_PART_ORDER.indexOf('leftHand')],
+
+            // Right Arm (오른팔) - [어깨 -> 팔꿈치], [팔꿈치 -> 손]
+            [BODY_PART_ORDER.indexOf('rightShoulder'), BODY_PART_ORDER.indexOf('rightElbow')],
+            [BODY_PART_ORDER.indexOf('rightElbow'), BODY_PART_ORDER.indexOf('rightHand')],
+
+            // Left Leg (왼다리) - [엉덩이 -> 무릎], [무릎 -> 발]
+            [BODY_PART_ORDER.indexOf('leftHeap'), BODY_PART_ORDER.indexOf('leftKnee')],
+            [BODY_PART_ORDER.indexOf('leftKnee'), BODY_PART_ORDER.indexOf('leftFoot')],
+
+            // Right Leg (오른다리) - [엉덩이 -> 무릎], [무릎 -> 발]
+            [BODY_PART_ORDER.indexOf('rightHeap'), BODY_PART_ORDER.indexOf('rightKnee')],
+            [BODY_PART_ORDER.indexOf('rightKnee'), BODY_PART_ORDER.indexOf('rightFoot')],
         ];
         this.init();
     }
 
 
-    init(){
+    init() {
         super.init();
 
         // 점 좌표 배열 초기화
         this.uniforms.pointPositions.value = new Float32Array(MAX_BODY_PARTS * 2);
-        
+
         // 선 좌표 배열 초기화
         this.uniforms.linePositions.value = new Float32Array(MAX_BODY_PARTS * 4); // 선 개수 * 점 2개 * xy 2개
     }
 
-    update({ cursor_size ,cellScale, sourcePos }) {
-        
+    update({ cursor_size, cellScale, sourcePos }) {
+
         this.uniforms.radius.value = cursor_size;
         this.uniforms.px.value = cellScale;
-        
+
         // 여러 개의 소스 위치를 0~1로 변환해서 각 유니폼에 전달
         const toUv = ({ x, y }) => new THREE.Vector2((x + 1.0) * 0.5, (y + 1.0) * 0.5);
 
@@ -92,17 +108,17 @@ export default class Density extends ShaderPass{
             validPointCoords.push(uvCoords[i].x, uvCoords[i].y);
         }
         this.uniforms.pointPositions.value.set(validPointCoords);
-        this.uniforms.pointCount.value = validPointCoords.length/2;
+        this.uniforms.pointCount.value = validPointCoords.length / 2;
 
         // 3. 선 소스(Line Source) 데이터 채우기
         const validLineCoords = [];
         this.bodyConnectionIndices.forEach(([indexA, indexB]) => {
 
             if (indexA === -1 || indexB === -1) return; // BODY_PART_ORDER에 없는 이름일 경우 예외처리
-            
+
             const partA = uvCoords[indexA];
             const partB = uvCoords[indexB];
-            
+
             // 두 점이 모두 유효한 경우에만 (sentinel 값이 아닐 경우) 선 목록에 추가합니다.
             // toUv 변환 후 sentinel 값은 음수가 되므로, x >= 0.0 으로 유효성을 검사할 수 있습니다.
             if (partA && partB && partA.x >= 0.0 && partB.x >= 0.0) {

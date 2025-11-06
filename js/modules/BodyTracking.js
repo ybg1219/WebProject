@@ -15,7 +15,7 @@ class BodyTracking {
         this.bodyKeys = ["head", "leftHand", "rightHand", "center", "leftShoulder", "rightShoulder", "heap", "leftFoot", "rightFoot"];
     }
 
-    
+
     /**
      * 한 사람(person)의 전체 신체 데이터 구조를 생성합니다.
      * @returns {Object.<string, {coords: THREE.Vector2, coords_old: THREE.Vector2, diff: THREE.Vector2, timer: number, moved: boolean}>}
@@ -43,7 +43,7 @@ class BodyTracking {
     async init(video) {
         if (this.running) return; // 중복 실행 방지
         this.running = true;
-        
+
         this.videoElement = video;
 
         // 재초기화 시 이전 인스턴스가 있다면 안전하게 정리합니다.
@@ -83,7 +83,7 @@ class BodyTracking {
             if (this.people.length === 0) {
                 this.people.push(this.createPersonData());
             }
-            
+
             const personData = this.people[0];
             const landmarks = results.poseLandmarks;
 
@@ -96,9 +96,15 @@ class BodyTracking {
             this.updatePartCoords(personData.leftShoulder, landmarks[11].x, landmarks[11].y);
             this.updatePartCoords(personData.rightShoulder, landmarks[12].x, landmarks[12].y);
             this.updatePartCoords(personData.center, neck.x, neck.y);
-            this.updatePartCoords(personData.heap, heap.x, heap.y);
+            // this.updatePartCoords(personData.heap, heap.x, heap.y);
             this.updatePartCoords(personData.leftFoot, landmarks[29].x, landmarks[29].y);
             this.updatePartCoords(personData.rightFoot, landmarks[30].x, landmarks[30].y);
+            this.updatePartCoords(personData.leftHeap, landmarks[23].x, landmarks[23].y);
+            this.updatePartCoords(personData.rightHeap, landmarks[24].x, landmarks[24].y);
+            this.updatePartCoords(personData.leftElbow, landmarks[13].x, landmarks[13].y);
+            this.updatePartCoords(personData.rightElbow, landmarks[14].x, landmarks[14].y);
+            this.updatePartCoords(personData.leftKnee, landmarks[25].x, landmarks[25].y);
+            this.updatePartCoords(personData.rightKnee, landmarks[26].x, landmarks[26].y);
         } else {
             this.people = [];
             this.landmarks = []; // 이 부분이 누락되어 있었습니다.
@@ -107,8 +113,6 @@ class BodyTracking {
 
 
     async cameraStart() {
-        // const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        // this.videoElement.srcObject = stream;
 
         // 비디오 메타데이터가 로드되어야 videoWidth/Height를 알 수 있습니다.
         await new Promise(resolve => {
@@ -125,7 +129,7 @@ class BodyTracking {
             await this.pose.send({ image: this.videoElement });
             requestAnimationFrame(process);
         };
-        
+
         process();
     }
 

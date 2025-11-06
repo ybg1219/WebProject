@@ -96,7 +96,7 @@ void main() {
     float prevDensity = texture2D(density, uv).x;
 
     // dissipation 소멸 계수
-    float lambda = 0.99;
+    float lambda = 0.97;
     float dv = lambda * prevDensity; // 읽어온 값에 소멸 적용
 
     // --- 3. 최종 밀도 = 소멸된 밀도 + 새 소스 ---

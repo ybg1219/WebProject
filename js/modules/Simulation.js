@@ -25,11 +25,15 @@ export const BODY_PART_ORDER = [
     'center',       // 3
     'leftShoulder', // 4
     'rightShoulder',// 5
-    'heap',         // 6
-    'leftFoot',     // 7
-    'rightFoot'     // 8
+    'leftHeap',     // 6 
+    'rightHeap',    // 7 
+    'leftFoot',     // 8
+    'rightFoot',    // 9
+    'leftElbow',    // 10
+    'rightElbow',   // 11
+    'leftKnee',     // 12
+    'rightKnee'     // 13
 ];
-
 // GLSL의 MAX_POSITIONS와 일치시켜야 합니다.
 export const MAX_BODY_PARTS = BODY_PART_ORDER.length; // 9
 
@@ -117,7 +121,7 @@ export default class Simulation {
             cellScale: this.cellScale,
             fboSize: this.fboSize,
             dt: this.options.dt,
-            gradient : this.fbos.gradient,
+            gradient: this.fbos.gradient,
             src: this.fbos.vel_0,
             dst: this.fbos.vel_1
         });
@@ -163,7 +167,7 @@ export default class Simulation {
             dt: this.options.dt,
             timeSeed: Math.random() * 1000.0
         });
-        
+
         this.vortex = new Vortex({
             cellScale: this.cellScale,
             velocity: this.fbos.vel_0,
@@ -173,8 +177,8 @@ export default class Simulation {
         });
 
         this.buoyancy = new Buoyancy({
-            density : this.fbos.density_0,
-            buoyancy : this.options.buoyancy,
+            density: this.fbos.density_0,
+            buoyancy: this.options.buoyancy,
             dst: this.fbos.vel_1,
             dt: this.options.dt,
         });
@@ -218,9 +222,9 @@ export default class Simulation {
             cellScale: this.cellScale,
             fboSize: this.fboSize,
             dt: this.options.dt,
-            density : this.fbos.density_0,
+            density: this.fbos.density_0,
             src: this.fbos.vel_0,
-            dst : this.fbos.density_1,
+            dst: this.fbos.density_1,
         });
 
         this.densityDiffuse = new Diffuse({
@@ -366,7 +370,7 @@ export default class Simulation {
         } else if (this.activeTracker) {
 
             allBodyCoords = people.map(person => this._getFilteredBodyCoords(person))
-            //console.log(allBodyCoords)
+            console.log(allBodyCoords);
             allBodyCoords.forEach(person => {
                 this.applyExternalForce(person.head, this.externalForceBody);
                 this.applyExternalForce(person.leftHand, this.externalForceLeft);
@@ -380,7 +384,7 @@ export default class Simulation {
                 // 양손이 모두 감지되고 움직였을 때만 와류를 생성합니다.
                 if ((leftHand.coords.x !== INACTIVE_VEC2.x || leftHand.coords.y !== INACTIVE_VEC2.y) &&
                     (leftShoulder.coords.x !== INACTIVE_VEC2.x || leftShoulder.coords.y !== INACTIVE_VEC2.y)) {
-                    
+
                     this.swirlLeft.update({
                         left: leftHand,
                         right: leftShoulder,
@@ -389,9 +393,9 @@ export default class Simulation {
                         mouse_force: this.options.mouse_force // 힘의 세기 조절
                     });
                 }
-                if ((rightHand.coords.x !== INACTIVE_VEC2.x || rightHand.coords.y !== INACTIVE_VEC2.y) 
+                if ((rightHand.coords.x !== INACTIVE_VEC2.x || rightHand.coords.y !== INACTIVE_VEC2.y)
                     && (rightShoulder.coords.x !== INACTIVE_VEC2.x || rightShoulder.coords.y !== INACTIVE_VEC2.y)) {
-                    
+
                     this.swirlRight.update({
                         left: rightHand,
                         right: rightShoulder,
@@ -402,9 +406,9 @@ export default class Simulation {
                 }
             });
         }
-        this.vortex.update({fboSize: this.fboSize});
+        this.vortex.update({ fboSize: this.fboSize });
         this.buoyancy.update({
-            density: this.fbos.density_0, 
+            density: this.fbos.density_0,
             buoyancy: this.options.buoyancy, // (부력 강도)
             dt: this.options.dt
         });
