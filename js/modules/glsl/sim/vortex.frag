@@ -78,8 +78,8 @@ float snoise(vec2 v) {
 // 1. 포텐셜(Potential, ψ) 계산
 // 2D에서는 포텐셜은 그냥 노이즈 값 그 자체입니다.
 float getPotential(vec2 p) {
-    float scale = 10.0;
-    float time = mod(u_time, 289.0)* 0.5;
+    float scale = 8.0;
+    float time = mod(u_time, 289.0)* 0.3;
     vec2 offset_p = p * scale - vec2(0.0 , time);
     return snoise(offset_p);
 }
@@ -87,7 +87,7 @@ float getPotential(vec2 p) {
 // 2. 2D Curl 계산
 // v = (∂ψ/∂y, -∂ψ/∂x)
 vec2 computeCurl(vec2 p) {
-    float e = 0.01; // 미분을 위한 아주 작은 거리
+    float e = 0.001; // 미분을 위한 아주 작은 거리
 
     // y에 대한 편미분 (∂ψ/∂y)
     float potentialY1 = getPotential(vec2(p.x, p.y + e));
@@ -118,5 +118,5 @@ void main() {
 
     // 속도 벡터를 시각화합니다.
     // x축 속도는 R(빨강) 채널, y축 속도는 G(초록) 채널에 매핑합니다.
-    gl_FragColor = vec4( curl * 0.003 , 0.0, 1.0);
+    gl_FragColor = vec4( curl * 0.005 , 0.0, 1.0);
 }

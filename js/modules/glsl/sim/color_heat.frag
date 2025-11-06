@@ -14,7 +14,6 @@ vec3 heatmap(float v) {
     vec3 midColor = vec3(0.8, 0.2, 0.0);   // 진한 주황색 (중간 밀도) - 조금 더 붉게
     vec3 hotColor = vec3(1.0, 1.0, 0.0);   // ★★★ 아주 밝은 순수한 노란색 (가장 높은 밀도) ★★★
     vec3 brightestColor = vec3(1.0, 1.0, 0.8); // ★ 추가: 거의 흰색에 가까운 밝은 노랑 (최고 밀도)
-    float alpha = smoothstep(0.05, 1.0, den);
 
     // 3. 색상 혼합 (임계값 조정)
     vec3 color = mix(coolColor, midColor, smoothstep(0.0, 0.3, value)); // 차가운 색에서 중간 색으로 전환
@@ -28,8 +27,9 @@ void main() {
     
     // 밀도 텍스처의 x 채널에서 밀도 값을 읽어옵니다.
     float den = texture2D(density, uv).x;
+    float alpha = smoothstep(0.05, 1.0, den);
     den = log(1.0 + den);
-    
+
     // 밀도 값을 색상으로 변환합니다.
     vec3 color = heatmap(den);
     

@@ -7,11 +7,11 @@ import ShaderPass from "./ShaderPass";
 import * as THREE from "three";
 
 
-export default class Vortex extends ShaderPass{
-    constructor(simProps){
+export default class Vortex extends ShaderPass {
+    constructor(simProps) {
         super({
             material: {
-                vertexShader: face_vert,
+                vertexShader: padding_vert,
                 fragmentShader: vortex_frag,
                 blending: THREE.AdditiveBlending,
                 uniforms: {
@@ -21,11 +21,14 @@ export default class Vortex extends ShaderPass{
                     dt: {
                         value: simProps.dt
                     },
+                    boundarySpace: { 
+                        value: simProps.cellScale 
+                    },
                     px: {
                         value: simProps.cellScale
                     },
                     u_time: {
-                        value : 0.0
+                        value: 0.0
                     },
                 },
             },
@@ -35,11 +38,11 @@ export default class Vortex extends ShaderPass{
         this.init();
     }
 
-    init(){
+    init() {
         super.init();
     }
 
-    update({ fboSize}){
+    update({ fboSize }) {
         this.uniforms.fboSize.value = fboSize;
         this.uniforms.u_time.value += this.uniforms.dt.value;
 
