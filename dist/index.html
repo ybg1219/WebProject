@@ -13,12 +13,12 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // 3. (선택) Tailwind 커스텀 폰트 설정
-        // tailwind.config.js 파일 대신 CDN에서 바로 설정
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
+                        // [★수정★] 'Inter' 대신 '"Noto Sans KR"'을 기본 sans-serif 폰트로 지정
+                        'sans': ['"Noto Sans KR"', 'ui-sans-serif', 'system-ui'],
                         'dancing': ['"Dancing Script"', 'cursive']
                     }
                 }

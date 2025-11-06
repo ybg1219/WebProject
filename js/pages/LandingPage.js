@@ -27,29 +27,29 @@ export function LandingPage(container) {
           전체 화면을 채우는 다크 모드 컨테이너 (bg-gray-900)
           모든 자식 요소를 중앙 정렬합니다 (flex, items-center, justify-center)
         -->
-        <div class="landing-container flex items-center justify-center h-screen w-screen bg-gray-900 text-white font-sans overflow-hidden">
-            
+        <div class="landing-container flex items-center justify-center h-screen w-screen bg-gradient-to-r from-blue-400 to-blue-600 text-slate-50 font-sans overflow-hidden">
+   
             <!-- 
               1. 3D 애니메이션으로 대체될 H1 타이틀
                  (애니메이션 재생 전까지 임시로 펄스 효과를 줍니다)
             -->
-            <h1 class="title-animation text-6xl md:text-8xl font-bold text-white animate-pulse">flowground</h1>
+            <h1 class="title-animation text-6xl md:text-8xl font-bold text-indigo animate-pulse">flowground</h1>
             
             <!-- 
               2. 튜토리얼 프롬프트 (카드 디자인)
-                 - bg-gray-800: 배경색
+                 - bg-blue-800: 배경색
                  - rounded-lg, shadow-xl: 둥근 모서리와 그림자
                  - p-8: 패딩
                  - max-w-md, w-full: 최대 너비 고정, 모바일에선 꽉 차게
             -->
-            <div class="prompt bg-gray-800 p-8 rounded-lg shadow-xl max-w-md w-11/12 text-center" style="display: none;">
-                <h2 class="text-3xl font-bold mb-4">튜토리얼을 보시겠습니까?</h2>
-                <p class="text-gray-300 mb-8">손동작으로 연기를 다루는 방법을 배웁니다.</p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button id="btn-tutorial-yes" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+            <div class="prompt relative z-10 bg-slate-300/20 backdrop-blur-lg border border-white/10 p-12 rounded-2xl shadow-xl max-w-2xl w-11/12 text-center" style="display: none;">
+                <h2 class="text-white text-3xl font-bold mb-4">튜토리얼이 필요하신가요?</h2>
+                <p class="text-gray-200 mb-10"> 제스처를 이용해 웹페이지를 탐험하기 위한 튜토리얼입니다.</p>
+                <div class="flex flex-col sm:flex-row gap-12 justify-center">
+                    <button id="btn-tutorial-yes" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold py-6 px-8 rounded-lg transition-colors duration-200">
                         예 (학습하기)
                     </button>
-                    <button id="btn-tutorial-no" class="w-full sm:w-auto bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+                    <button id="btn-tutorial-no" class="w-full sm:w-auto bg-slate-100/70 hover:bg-slate-100 text-blue-900 font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
                         아니오 (바로 시작)
                     </button>
                 </div>
@@ -59,12 +59,12 @@ export function LandingPage(container) {
               3. 카메라 권한 요청 메시지 (카드 디자인)
                  (권한을 기다리는 동안 스피너를 표시합니다)
             -->
-            <div class="permission-message bg-gray-800 p-8 rounded-lg shadow-xl max-w-md w-11/12 text-center" style="display: none;">
-                <h2 class="text-3xl font-bold mb-4">카메라 권한</h2>
-                <p class="text-gray-300 mb-6">손동작 인식을 위해 카메라 권한이 필요합니다.<br>브라우저의 권한 허용 팝업을 확인해주세요.</p>
+            <div class="permission-message z-10 bg-slate-300/10 backdrop-blur-lg border border-white/10 p-12 rounded-2xl shadow-xl max-w-md w-11/12 text-center" style="display: none;">
+                <h2 class="text-3xl text-white font-bold mb-4">카메라 권한</h2>
+                <p class="text-gray-200  mb-6">손동작 인식을 위해 카메라 권한이 필요합니다.<br>브라우저의 권한 허용 팝업을 확인해주세요.</p>
                 <!-- Tailwind CSS 스피너 -->
                 <div class="mt-6">
-                    <svg class="animate-spin h-8 w-8 text-indigo-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -213,7 +213,17 @@ function runParticleAnimation(container, titleElement) {
         container.appendChild(renderer.domElement); // <body>가 아닌 지정된 컨테이너에 추가
 
         const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
+        controls.enableDamping = true; 
+        controls.enableZoom = false; // 줌 비활성화
+        controls.enablePan = false; // 패닝 비활성화
+
+        // 자동 궤도(Orbital) 애니메이션 활성화
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1.0; // 궤도 속도 (1.0
+
+        // 수직 회전 각도 제한 (너무 위아래로 돌지 않도록)
+        controls.minPolarAngle = Math.PI / 2.4; // (약 81도)
+        controls.maxPolarAngle = Math.PI / 1.6; // (약 100도)
 
         // 3. 폰트 로드 및 텍스트 지오메트리 생성
         const fontLoader = new FontLoader();
@@ -236,8 +246,8 @@ function runParticleAnimation(container, titleElement) {
                 // 4. 텍스트 지오메트리 생성 (이전과 동일)
                 const textGeometry = new TextGeometry('flowground', {
                     font: font,
-                    size: 3,
-                    height: 0.2,
+                    size: 1.5,
+                    height: 0.4,
                     curveSegments: 12,
                     bevelEnabled: true,
                     bevelThickness: 0.03,

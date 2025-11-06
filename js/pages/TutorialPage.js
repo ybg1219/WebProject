@@ -34,33 +34,29 @@ export function TutorialPage(container) {
                 <p class="text-gray-400 mt-4">(임시 플레이스홀더 - 2초 후 사라짐)</p>
             </div>
 
-            <div id="practice-prompt" class="prompt z-10 bg-gray-800 p-8 rounded-lg shadow-xl max-w-md w-11/12 text-center mt-8" style="display: none;">
-                <h2 class="text-3xl font-bold mb-4">연습 페이지로 가시겠습니까?</h2>
-                <p class="text-gray-300 mb-8">방금 배운 손동작(클릭, 드래그)을 연습합니다.</p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button id="btn-practice-yes" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
-                    예 (연습하기)
-                    </button>
-                    <button id="btn-practice-no" class="w-full sm:w-auto bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
-                    아니오 (바로 시작)
-                    </button>
+            <div id="practice-prompt" class="prompt z-10 bg-white/10 backdrop-blur-lg border border-white/10 p-12 rounded-2xl shadow-xl max-w-2xl w-11/12 text-center mt-8" style="display: none;">
+                <h2 class="text-3xl font-bold mb-4 text-white">연습 페이지로 가시겠습니까?</h2>
+                <p class="text-gray-200 mb-20">방금 배운 손동작(클릭, 드래그)을 연습합니다.</p>
+                <div class="flex flex-col sm:flex-row gap-12 justify-center">
+                    <button id="btn-practice-yes" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-6 px-8 rounded-lg transition-colors duration-200">예 (연습하기)</button>
+                    <button id="btn-practice-no" class="w-full sm:w-auto bg-white/20 hover:bg-white/30 text-white font-semibold py-6 px-8 rounded-lg transition-colors duration-200">아니오 (바로 시작)</button>
                 </div>
             </div>
         </div>
 
         <!-- --- 역할 2: 3D 연습 단계 --- -->
         <div id="tutorial-practice-step" class="relative w-full h-full" style="display: none;">
-            <h1 class="absolute top-10 left-1/2 -translate-x-1/2 z-10 text-4xl font-bold text-green-400">3D 연습 환경</h1>
-            <p class="absolute top-20 left-1/2 -translate-x-1/2 z-10 text-gray-400">(손동작으로 큐브를 클릭/드래그 해보세요)</p>
+            <h1 class="absolute top-10 left-1/2 -translate-x-1/2 z-10 text-4xl font-bold text-white [text-shadow:_0_2px_4px_rgb(0_0_0_/_50%)]">3D 연습 환경</h1>
+            <p class="absolute top-20 left-1/2 -translate-x-1/2 z-10 text-gray-200 [text-shadow:_0_1px_2px_rgb(0_0_0_/_50%)]">(손동작으로 3D 물체를 클릭/드래그 해보세요)</p>
             
+            <!-- Phase 2: HTML 에셋 바 컨테이너 -->
             <div id="asset-bar-container" 
-                class="absolute top-60 left-1/2 -translate-x-1/2 z-10 w-11/12 max-w-md">
-                <!-- AssetBar.js가 여기에 렌더링됩니다 -->
+                class="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 w-11/12 max-w-md">
+                <!-- AssetBar.js가 여기에 렌더링됩니다 (AssetBar.js의 스타일이 적용됨) -->
             </div>
 
-            <button id="btn-practice-done" class="absolute top-40 left-1/2 -translate-x-1/2 z-10 z-10 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
-            연습 완료 (메인으로 이동)
-            </button>
+            <!-- 버튼 스타일 (LandingPage와 통일) -->
+            <button id="btn-practice-done" class="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">연습 완료 (메인으로 이동)</button>
         </div>
     </div>
     `;
