@@ -9,7 +9,7 @@ class Tracking {
         this.landmarks = [];
         this.video = null;
         
-        this.bodyKeys = ["head", "leftHand", "rightHand", "center", "heap", "leftFoot", "rightFoot"];
+        this.bodyKeys =  ["head", "leftHand", "rightHand", "center", "leftShoulder", "rightShoulder", "heap", "leftFoot", "rightFoot"];
         this.people = [];  // -> 각 사람(person)의 bodyKey 데이터를 담음
         this.running = false;
     }
@@ -133,6 +133,8 @@ class Tracking {
             this.updatePartCoords(personData.head, head.x, head.y);
             this.updatePartCoords(personData.leftHand, leftHand.x, leftHand.y);
             this.updatePartCoords(personData.rightHand, rightHand.x, rightHand.y);
+            this.updatePartCoords(personData.leftShoulder, leftShoulder.x, leftShoulder.y);
+            this.updatePartCoords(personData.rightShoulder, rightShoulder.x, rightShoulder.y);
             this.updatePartCoords(personData.center, neckX, neckY);
             this.updatePartCoords(personData.heap, heapX, heapY);
             this.updatePartCoords(personData.leftFoot, leftFoot.x, leftFoot.y);
