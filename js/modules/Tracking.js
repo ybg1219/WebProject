@@ -8,14 +8,24 @@ class Tracking {
         this.poseLandmarker = null;
         this.landmarks = [];
         this.video = null;
-        
-        this.bodyKeys =  [
-            "head", "leftHand", "rightHand", "center", 
-            "leftShoulder", "rightShoulder", "leftHeap","rightHeap", "leftFoot", "rightFoot",
+
+        this.bodyKeys = [
+            "head", "leftHand", "rightHand", "center",
+            "leftShoulder", "rightShoulder", "leftHeap", "rightHeap", "leftFoot", "rightFoot",
             "leftElbow", "rightElbow", "leftKnee", "rightKnee"
         ];
         this.people = [];  // -> 각 사람(person)의 bodyKey 데이터를 담음
         this.running = false;
+
+        /**
+         * ★ Web Worker 관련 속성 추가
+         */
+        this.worker = null;
+        // Worker가 현재 프레임을 처리 중인지 나타내는 플래그 (Back-pressure)
+        this.isWorkerBusy = false;
+
+        // ★★★ (추가) Worker 준비 상태 플래그
+        this.isWorkerReady = false;
     }
 
     /**
@@ -43,29 +53,67 @@ class Tracking {
         });
         return person;
     }
-    
-    async init( video) {
+
+    /**
+     * ★★★ init 수정 ★★★
+     * MediaPipe 초기화 대신 Web Worker를 생성합니다.
+     */
+    async init(video) {
         this.running = false;
         this.video = video;
-        
-        const fileset = await FilesetResolver.forVisionTasks(
-            "./mediapipe/wasm"
-        );
 
-        // 이전에 생성된 인스턴스가 있다면 안전하게 close 합니다.
-        if (this.poseLandmarker) {
-            this.poseLandmarker.close();
+        // 기존 Worker가 있다면 종료
+        if (this.worker) {
+            this.worker.terminate();
         }
 
-        this.poseLandmarker = await PoseLandmarker.createFromOptions(fileset, {
-            baseOptions: {
-                modelAssetPath: `./mediapipe/models/pose_landmarker_lite.task`
-            },
-            runningMode: "VIDEO",
-            numPoses: 2
+        // 1. Web Worker 생성 (ES Module 지원)
+        // 'tracking.worker.js'는 실제 파일 경로여야 합니다.
+        // ★★★ 수정된 부분 ★★★
+        // 'type: 'module'' 옵션을 제거합니다.
+        this.worker = new Worker(new URL('./tracking.worker.js', import.meta.url), {
+            type: 'classic' // 워커 내부에서 import 구문을 사용하려면 'module' 타입이 필요
         });
 
-        this.startTracking();
+        // ★★★ (수정) Worker 메시지 핸들러
+        // 2. Worker로부터 메시지(결과) 수신
+        this.worker.onmessage = (event) => {
+            const { type, payload } = event.data; // 표준화된 형식 사용
+
+            if (type === 'READY') {
+                console.log("Main: Worker is ready.");
+                this.isWorkerReady = true;
+                this.startTracking(); // Worker가 준비된 후에만 추적 시작
+            } else if (type === 'RESULT') {
+                const poseResult = payload;
+                if (poseResult) {
+                    this.handlePoseResult(poseResult);
+                }
+                // Worker가 다음 프레임을 받을 준비가 되었음을 표시
+                this.isWorkerBusy = false;
+            }
+            // ★★★ (추가) Worker로부터 구체적인 에러 메시지 수신
+            else if (type === 'ERROR') {
+                console.error("Worker reported an error:", payload.message, payload.stack);
+                // 에러 발생 시에도 Worker는 작업을 마친 것으로 간주
+                this.isWorkerBusy = false;
+            }
+        };
+
+        this.worker.onerror = (err) => {
+            console.error("Worker error:", err);
+            this.isWorkerBusy = false;
+        };
+
+        // 3. Worker에 초기화 메시지 전송 (Wasm/모델 경로 전달)
+        this.worker.postMessage({
+            type: 'INIT',
+            wasmPath: '/mediapipe/wasm',
+            modelPath: '/mediapipe/models/pose_landmarker_lite.task'
+        });
+
+        // ★★★ (수정) init에서 startTracking() 호출 제거
+        // this.startTracking();
     }
     /**
      * 비디오 프레임에서 포즈 추적을 시작합니다.
@@ -82,14 +130,36 @@ class Tracking {
         const offctx = offscreen.getContext("2d");
 
         const process = async () => {
-            if (!this.running) return; // destroy()가 호출되면 루프가 멈춥니다.
+            if (!this.running) return;
+
+            // 1. Worker가 바쁘면(이전 프레임 처리 중) 이번 프레임은 건너뜀
+            if (this.isWorkerBusy) {
+                requestAnimationFrame(process);
+                return;
+            }
+
+            // 2. Worker를 바쁜 상태로 설정
+            this.isWorkerBusy = true;
+
             const now = performance.now();
             offctx.drawImage(this.video, 0, 0, offscreen.width, offscreen.height);
-            
-            // 비디오 프레임에서 포즈 감지
-            const result = this.poseLandmarker.detectForVideo(offscreen, now);
-            this.handlePoseResult(result);
 
+            // 3. Worker에 전송할 ImageBitmap 생성 (zero-copy)
+            // await createImageBitmap은 매우 빠르지만, rAF 밖에서 실행하는 것이 더 좋습니다.
+            // 하지만 여기서는 편의상 rAF 내에 둡니다.
+            const imageBitmap = await createImageBitmap(offscreen);
+
+            // 4. 'detectForVideo' 대신 Worker에 메시지 전송
+            this.worker.postMessage(
+                {
+                    type: 'DETECT',
+                    frame: imageBitmap,
+                    timestamp: now
+                },
+                [imageBitmap] // ImageBitmap을 Transferable로 전달 (소유권 이전)
+            );
+
+            // 5. 메인 스레드는 즉시 다음 프레임 루프를 예약 (차단 없음)
             requestAnimationFrame(process);
         };
 
@@ -107,7 +177,7 @@ class Tracking {
             return;
         }
         this.landmarks = poseResult.landmarks;
-        
+
 
         // 감지된 사람 수만큼 순회
         this.people = poseResult.landmarks.map((personLandmarks, personIndex) => {
@@ -145,7 +215,7 @@ class Tracking {
             this.updatePartCoords(personData.leftShoulder, leftShoulder.x, leftShoulder.y);
             this.updatePartCoords(personData.rightShoulder, rightShoulder.x, rightShoulder.y);
             this.updatePartCoords(personData.center, neckX, neckY);
-            this.updatePartCoords(personData.leftHeap, leftHeap.x , leftHeap.y);
+            this.updatePartCoords(personData.leftHeap, leftHeap.x, leftHeap.y);
             this.updatePartCoords(personData.rightHeap, rightHeap.x, rightHeap.y);
             this.updatePartCoords(personData.leftFoot, leftFoot.x, leftFoot.y);
             this.updatePartCoords(personData.rightFoot, rightFoot.x, rightFoot.y);
@@ -154,7 +224,7 @@ class Tracking {
             this.updatePartCoords(personData.rightElbow, rightElbow.x, rightElbow.y);
             this.updatePartCoords(personData.leftKnee, leftKnee.x, leftKnee.y);
             this.updatePartCoords(personData.rightKnee, rightKnee.x, rightKnee.y);
-            
+
             return personData;
         });
     }
@@ -171,7 +241,7 @@ class Tracking {
         // 타이머가 있다면 초기화
         if (partData.timer) clearTimeout(partData.timer);
 
-        partData.coords.set((1-x)* 2 - 1, -(y * 2 - 1));
+        partData.coords.set((1 - x) * 2 - 1, -(y * 2 - 1));
         partData.moved = true;
 
         // 100ms 후 움직임 상태를 false로 변경
@@ -235,7 +305,7 @@ class Tracking {
             this.poseLandmarker.close();
             this.poseLandmarker = null;
         }
-        
+
         // 3. 데이터 배열을 초기화합니다.
         this.people = [];
         this.landmarks = [];

@@ -14,7 +14,7 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         clean: true,
         environment: {
-            module: true, // ESM 사용 허용
+            module: false, // ESM 사용 허용
         },
     },
     module: {
@@ -71,7 +71,7 @@ module.exports = {
                     to: '.', // dist 폴더 루트에 복사
                     globOptions: {
                         // index.html은 HtmlWebpackPlugin이 처리하므로 복사 대상에서 제외
-                        ignore: ['**/index.html'] 
+                        ignore: ['**/index.html']
                     }
                 }
             ]
@@ -90,7 +90,7 @@ module.exports = {
     },
     target: ["web", "es2020"], // ESM 지원을 위해 반드시 필요
     experiments: {
-        outputModule: true,      // module: true output을 허용
+        outputModule: false,      // module: true output을 허용
         topLevelAwait: true, // MediaPipe task는 top-level await 필요
     },
 };
