@@ -36,7 +36,7 @@ export const BODY_PART_ORDER = [
 ];
 // GLSL의 MAX_POSITIONS와 일치시켜야 합니다.
 export const MAX_BODY_PARTS = BODY_PART_ORDER.length; // 13
-export const MAX_PEOPLE = 4; // ✅ 앱이 지원할 최대 인원수 (예: 4명)
+export const MAX_PEOPLE = 2; // ✅ 앱이 지원할 최대 인원수 (예: 4명)
 
 // 유효하지 않은 좌표를 나타내는 특수 값 (sentinel value)
 const INACTIVE_VEC2 = new THREE.Vector2(-10.0, -10.0);

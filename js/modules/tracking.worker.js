@@ -17,10 +17,10 @@ async function initPoseLandmarker(wasmPath, modelPath) {
     
     poseLandmarker = await PoseLandmarker.createFromOptions(fileset, {
         baseOptions: {
-            modelAssetPath: modelPath
+            modelAssetPath: modelPath,
         },
         runningMode: "VIDEO", 
-        numPoses: 4
+        numPoses: 2
     });
 
     console.log("Worker: PoseLandmarker initialized.");

@@ -123,41 +123,29 @@ class Tracking {
         this.running = true;
 
         // 성능 향상을 위해 저해상도 캔버스 사용
-        const offscreen = document.createElement("canvas");
+        // const offscreen = document.createElement("canvas");
         const scale = 0.5;
-        offscreen.width = this.video.videoWidth * scale;
-        offscreen.height = this.video.videoHeight * scale;
+        // offscreen.width = this.video.videoWidth * scale;
+        // offscreen.height = this.video.videoHeight * scale;
+        const offscreen = new OffscreenCanvas(this.video.videoWidth * scale, this.video.videoHeight * scale);
         const offctx = offscreen.getContext("2d");
 
-        const process = async () => {
+        let lastDetect = 0;
+        const DETECT_INTERVAL = 1000 / 500; // 15 fps
+
+        const process = async (ts) => {
             if (!this.running) return;
 
             // 1. Worker가 바쁘면(이전 프레임 처리 중) 이번 프레임은 건너뜀
-            if (this.isWorkerBusy) {
-                requestAnimationFrame(process);
-                return;
-            }
-
-            // 2. Worker를 바쁜 상태로 설정
+            if (!this.isWorkerBusy && (ts - lastDetect) > DETECT_INTERVAL) {
             this.isWorkerBusy = true;
+            lastDetect = ts;
 
-            const now = performance.now();
             offctx.drawImage(this.video, 0, 0, offscreen.width, offscreen.height);
+            const frame = await createImageBitmap(offscreen);
 
-            // 3. Worker에 전송할 ImageBitmap 생성 (zero-copy)
-            // await createImageBitmap은 매우 빠르지만, rAF 밖에서 실행하는 것이 더 좋습니다.
-            // 하지만 여기서는 편의상 rAF 내에 둡니다.
-            const imageBitmap = await createImageBitmap(offscreen);
-
-            // 4. 'detectForVideo' 대신 Worker에 메시지 전송
-            this.worker.postMessage(
-                {
-                    type: 'DETECT',
-                    frame: imageBitmap,
-                    timestamp: now
-                },
-                [imageBitmap] // ImageBitmap을 Transferable로 전달 (소유권 이전)
-            );
+            this.worker.postMessage({ type: "DETECT", frame, timestamp: ts }, [frame]);
+        }
 
             // 5. 메인 스레드는 즉시 다음 프레임 루프를 예약 (차단 없음)
             requestAnimationFrame(process);
