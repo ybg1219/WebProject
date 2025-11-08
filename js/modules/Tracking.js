@@ -49,7 +49,7 @@ class Tracking {
         this.video = video;
         
         const fileset = await FilesetResolver.forVisionTasks(
-            "/mediapipe/wasm"
+            "./mediapipe/wasm"
         );
 
         // 이전에 생성된 인스턴스가 있다면 안전하게 close 합니다.
@@ -59,7 +59,7 @@ class Tracking {
 
         this.poseLandmarker = await PoseLandmarker.createFromOptions(fileset, {
             baseOptions: {
-                modelAssetPath: `/mediapipe/models/pose_landmarker_lite.task`
+                modelAssetPath: `./mediapipe/models/pose_landmarker_lite.task`
             },
             runningMode: "VIDEO",
             numPoses: 2
@@ -87,7 +87,7 @@ class Tracking {
             offctx.drawImage(this.video, 0, 0, offscreen.width, offscreen.height);
             
             // 비디오 프레임에서 포즈 감지
-            const result = await this.poseLandmarker.detectForVideo(offscreen, now);
+            const result = this.poseLandmarker.detectForVideo(offscreen, now);
             this.handlePoseResult(result);
 
             requestAnimationFrame(process);

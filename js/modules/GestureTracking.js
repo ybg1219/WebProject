@@ -39,14 +39,14 @@ class GestureTracking {
         try {
             // MediaPipe 리소스 로드 (WASM 파일)
             const vision = await FilesetResolver.forVisionTasks(
-                "/mediapipe/wasm" // WASM 리소스가 복사된 경로
+                "./mediapipe/wasm" // WASM 리소스가 복사된 경로
             );
 
             // GestureRecognizer 생성
             this.gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
                 baseOptions: {
                     // 모델 파일(.task)도 정적 파일로 복사해야 합니다.
-                    modelAssetPath: `/mediapipe/models/gesture_recognizer.task`,
+                    modelAssetPath: `./mediapipe/models/gesture_recognizer.task`,
                     delegate: "GPU"
                 },
                 runningMode: "VIDEO",
