@@ -12,6 +12,7 @@ module.exports = {
     output: {
         filename: 'main.min.js',
         path: path.resolve(__dirname, 'dist'),
+        clean: true,
         environment: {
             module: true, // ESM 사용 허용
         },
@@ -45,7 +46,7 @@ module.exports = {
     },
     plugins: [
         new HtmlWebpackPlugin({
-            template: './dist/index.html', // [수정] 템플릿 경로 (루트의 index.html)
+            template: './public/index.html', // [수정] 템플릿 경로 (루트의 index.html)
             filename: 'index.html', // 출력 파일 이름
             inject: 'body', // 스크립트를 body 끝에 주입
         }),
@@ -53,26 +54,28 @@ module.exports = {
         // 2. GitHub Pages의 404 새로고침 트릭을 위해
         //    index.html과 똑같은 내용의 404.html을 생성
         new HtmlWebpackPlugin({
-            template: './dist/index.html', // 동일한 템플릿 사용
+            template: './public/index.html', // 동일한 템플릿 사용
             filename: '404.html',   // 출력 파일 이름만 다르게
             inject: 'body',
         }),
-        new CopyWebpackPlugin([
-            {
-                from: path.resolve(__dirname, 'node_modules/@mediapipe/pose'),
-                to: 'mediapipe/pose', // hands 폴더로 복사
-                // globOptions: {
-                //     ignore: ['**/*.ts'] // 타입스크립트 소스는 제외
-                // }
-            },
-            {
-                from: path.resolve(__dirname, 'node_modules/@mediapipe/camera_utils'),
-                to: 'mediapipe/camera',
-                // globOptions: {
-                //     ignore: ['**/*.ts']
-                // }
-            }
-        ])
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    // 1. MediaPipe WASM 파일 복사
+                    from: path.resolve(__dirname, 'node_modules/@mediapipe/tasks-vision/wasm'),
+                    to: 'mediapipe/wasm'
+                },
+                {
+                    // 3. public 폴더의 모든 내용(비디오 포함)을 dist로 복사
+                    from: 'public/',
+                    to: '.', // dist 폴더 루트에 복사
+                    globOptions: {
+                        // index.html은 HtmlWebpackPlugin이 처리하므로 복사 대상에서 제외
+                        ignore: ['**/index.html'] 
+                    }
+                }
+            ]
+        })
     ],
     devServer: {
         static: {

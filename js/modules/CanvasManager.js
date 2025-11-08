@@ -1,7 +1,4 @@
-import {
-  drawLandmarks,
-  drawConnectors,
-} from "@mediapipe/drawing_utils";
+import { DrawingUtils, PoseLandmarker } from "@mediapipe/tasks-vision";
 const POSE_CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 7],
   [0, 4], [4, 5], [5, 6], [6, 8],
@@ -26,6 +23,7 @@ class CanvasManager {
         // VideoManager.init($wrapper, width, height);
         this.canvas = document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d');
+        this.drawingUtils = new DrawingUtils(this.ctx);
 
         this.canvas.style.position = 'absolute';
         this.canvas.style.top = '0';
@@ -46,7 +44,7 @@ class CanvasManager {
     // const { video, ctx } = VideoManager.getElement();
     // CanvasManager.draw(video, landmarks)
     // CanvasManager.draw(video, landmarks)
-        return { video: this.video, ctx: this.ctx };
+        return { ctx: this.ctx };
     }
 
     setSize(width, height) {
@@ -103,15 +101,17 @@ class CanvasManager {
                 const color = this.getColorForPerson(idx);
                 const label = `Person ${idx + 1}`; // 필요하면 이름 배열로 대체 가능
 
-                drawConnectors(this.ctx, personLandmarks, POSE_CONNECTIONS, {
-                    color,
-                    lineWidth: 2
-                });
+                // PoseLandmarker에서 공식 POSE_CONNECTIONS를 가져와 사용합니다.
+                this.drawingUtils.drawConnectors(
+                    personLandmarks, 
+                    PoseLandmarker.POSE_CONNECTIONS, 
+                    { color, lineWidth: 2 }
+                );
 
-                drawLandmarks(this.ctx, personLandmarks, {
-                    radius: 3,
-                    color,
-                });
+                this.drawingUtils.drawLandmarks(
+                    personLandmarks, 
+                    { radius: 3, color }
+                );
 
                 // 바운딩 박스 + 라벨 그리기
                 this.drawBox(personLandmarks, color, label);

@@ -171,11 +171,7 @@ class Tracking {
         // 타이머가 있다면 초기화
         if (partData.timer) clearTimeout(partData.timer);
 
-        const screenX = Math.floor((1 - x) * Common.width);
-        const screenY = Math.floor(y * Common.height);
-
-        // WebGL 좌표계(-1.0 ~ 1.0)로 변환하여 저장
-        partData.coords.set((screenX / Common.width) * 2 - 1, -(screenY / Common.height) * 2 + 1);
+        partData.coords.set((1-x)* 2 - 1, -(y * 2 - 1));
         partData.moved = true;
 
         // 100ms 후 움직임 상태를 false로 변경
