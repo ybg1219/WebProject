@@ -230,6 +230,7 @@ function runParticleAnimation(container, titleElement) {
         let particleSystem;
         let originalPositions;
         let particleVelocities;
+        let textMesh;
         const clock = new THREE.Clock();
         // 폰트 경로 수정: Webpack으로 빌드할 경우, 폰트 파일은 정적 에셋으로 제공되어야 합니다.
         // 우선 'three/examples/fonts/' 경로를 사용, 에러 시 import 된 폰트 데이터 사용
