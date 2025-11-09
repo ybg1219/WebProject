@@ -25,6 +25,9 @@ class Tracking {
         // FPS 제한 설정 (60fps)
         this.fpsInterval = 1000 / 60;
         this.lastFrameTime = 0;
+
+        this.canvasWidth = 0;
+        this.canvasHeight = 0;
         
         // Worker 재시작 관련
         this.workerRestartAttempts = 0;
@@ -106,7 +109,7 @@ class Tracking {
         };
 
         // ✅ 비디오 크기 검증 후 OffscreenCanvas 생성
-        const scale = 0.5;
+        const scale = 0.3; // 해상도 조정 비율
         const videoWidth = this.video.videoWidth;
         const videoHeight = this.video.videoHeight;
         
@@ -115,7 +118,11 @@ class Tracking {
             throw new Error("Video not ready: invalid dimensions");
         }
         
-        console.log("Initializing with video size:", videoWidth, "x", videoHeight);
+        // ✅ 캔버스 크기 저장 (createImageBitmap에서 사용)
+        this.canvasWidth = Math.floor(videoWidth * scale);
+        this.canvasHeight = Math.floor(videoHeight * scale);
+        
+        console.log(`Initializing: Video ${videoWidth}x${videoHeight} → Canvas ${this.canvasWidth}x${this.canvasHeight}`);
         
         const offscreenCanvas = document.createElement("canvas");
         offscreenCanvas.width = videoWidth * scale;
@@ -239,14 +246,11 @@ class Tracking {
             this.isWorkerBusy = true;
 
             // 비디오에서 ImageBitmap 생성
-            const imageBitmap = await createImageBitmap(this.video);
-            
-            if (imageBitmap.width === 0 || imageBitmap.height === 0) {
-                console.warn("Skipped frame: invalid ImageBitmap size");
-                this.isWorkerBusy = false;
-                imageBitmap.close(); // ✅ 수정: 변수명 오타 수정
-                return;
-            }
+            const imageBitmap = await createImageBitmap(this.video, {
+                resizeWidth: this.canvasWidth,
+                resizeHeight: this.canvasHeight,
+                resizeQuality: 'low'
+            });
 
             // Worker에게 ImageBitmap과 타임스탬프 전송 (소유권 이전)
             this.worker.postMessage({
