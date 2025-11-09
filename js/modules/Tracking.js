@@ -67,9 +67,12 @@ class Tracking {
             this.worker.terminate();
         }
 
+        // ✅ 비디오 메타데이터 로드 대기
+        await this.waitForVideoReady();
+
         // Web Worker 생성 (ES Module 지원)
         this.worker = new Worker(new URL('./tracking.worker.js', import.meta.url), {
-            type: 'classic' // ✅ 수정: import 구문 사용을 위해 module 타입 지정
+            type: 'classic'
         });
 
         // Worker 메시지 핸들러
@@ -79,16 +82,8 @@ class Tracking {
             if (type === 'READY') {
                 console.log("Main: Worker is ready.");
                 this.isWorkerReady = true;
-                this.workerRestartAttempts = 0; // 성공 시 재시작 카운터 리셋
-                
-                if (this.video.readyState < 2) {
-                    this.video.onloadeddata = () => {
-                        this.video.onloadeddata = null;
-                        this.startTracking();
-                    };
-                } else {
-                    this.startTracking();
-                }
+                this.workerRestartAttempts = 0;
+                this.startTracking();
             } else if (type === 'RESULT') {
                 const poseResult = payload;
                 if (poseResult) {
@@ -110,16 +105,25 @@ class Tracking {
             this.handleWorkerError();
         };
 
-        // OffscreenCanvas 생성 및 제어권 이전
+        // ✅ 비디오 크기 검증 후 OffscreenCanvas 생성
         const scale = 0.5;
+        const videoWidth = this.video.videoWidth;
+        const videoHeight = this.video.videoHeight;
+        
+        if (videoWidth === 0 || videoHeight === 0) {
+            console.error("Video dimensions are invalid:", videoWidth, videoHeight);
+            throw new Error("Video not ready: invalid dimensions");
+        }
+        
+        console.log("Initializing with video size:", videoWidth, "x", videoHeight);
+        
         const offscreenCanvas = document.createElement("canvas");
-        offscreenCanvas.width = this.video.videoWidth * scale;
-        offscreenCanvas.height = this.video.videoHeight * scale;
+        offscreenCanvas.width = videoWidth * scale;
+        offscreenCanvas.height = videoHeight * scale;
 
         const transferableCanvas = offscreenCanvas.transferControlToOffscreen();
 
         // GH Pages 배포를 위한 경로 설정
-        // 필요시 BASE_URL 환경변수로 관리 가능
         const basePath = import.meta.env?.BASE_URL || './';
         
         this.worker.postMessage({
@@ -128,6 +132,44 @@ class Tracking {
             wasmPath: `${basePath}mediapipe/wasm`,
             modelPath: `${basePath}mediapipe/models/pose_landmarker_lite.task`
         }, [transferableCanvas]);
+    }
+
+    /**
+     * ✅ 추가: 비디오 메타데이터 로드 대기
+     */
+    async waitForVideoReady() {
+        return new Promise((resolve, reject) => {
+            // 이미 준비되었으면 즉시 반환
+            if (this.video.readyState >= 2) {
+                resolve();
+                return;
+            }
+
+            // 타임아웃 설정 (5초)
+            const timeout = setTimeout(() => {
+                this.video.removeEventListener('loadedmetadata', onLoaded);
+                reject(new Error("Video failed to load metadata within 5 seconds"));
+            }, 5000);
+
+            const onLoaded = () => {
+                clearTimeout(timeout);
+                // 추가 안전 체크: videoWidth/Height가 실제로 0이 아닌지 확인
+                if (this.video.videoWidth > 0 && this.video.videoHeight > 0) {
+                    resolve();
+                } else {
+                    // 한번 더 기다려보기
+                    setTimeout(() => {
+                        if (this.video.videoWidth > 0 && this.video.videoHeight > 0) {
+                            resolve();
+                        } else {
+                            reject(new Error("Video dimensions are still 0 after loadedmetadata"));
+                        }
+                    }, 100);
+                }
+            };
+
+            this.video.addEventListener('loadedmetadata', onLoaded, { once: true });
+        });
     }
 
     /**
