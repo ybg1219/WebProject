@@ -3,6 +3,8 @@ import {
     PoseLandmarker
 } from '@mediapipe/tasks-vision';
 let poseLandmarker = null;
+let offscreenCanvas = null; // 워커가 제어할 캔버스
+let offctx = null; // 워커가 제어할 캔버스의 컨텍스트
 
 /**
  * MediaPipe PoseLandmarker를 초기화합니다.
@@ -36,7 +38,11 @@ self.onmessage = async (event) => {
     
     try {
         if (type === 'INIT') {
-            const { wasmPath, modelPath } = event.data;
+            const { canvas, wasmPath, modelPath } = event.data;
+
+            offscreenCanvas = canvas; 
+            offctx = offscreenCanvas.getContext("2d");
+
             await initPoseLandmarker(wasmPath, modelPath);
         
         } else if (type === 'DETECT') {
@@ -47,8 +53,18 @@ self.onmessage = async (event) => {
             }
 
             const { frame, timestamp } = event.data;
+
+            if (frame.width === 0 || frame.height === 0) {
+                console.warn("Worker skipped empty frame");
+                frame.close();
+                self.postMessage({ type: "RESULT", payload: null });
+                return;
+            }
+            
+            offctx.drawImage(frame, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
+            
             // 5. detectForVideo 실행
-            const result = await poseLandmarker.detectForVideo(frame, timestamp);
+            const result = await poseLandmarker.detectForVideo(offscreenCanvas, timestamp);
             
             // 6. ImageBitmap의 메모리를 수동으로 해제합니다. (중요)
             frame.close(); 

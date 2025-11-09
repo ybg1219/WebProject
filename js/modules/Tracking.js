@@ -14,37 +14,38 @@ class Tracking {
             "leftShoulder", "rightShoulder", "leftHeap", "rightHeap", "leftFoot", "rightFoot",
             "leftElbow", "rightElbow", "leftKnee", "rightKnee"
         ];
-        this.people = [];  // -> 각 사람(person)의 bodyKey 데이터를 담음
+        this.people = [];
         this.running = false;
 
-        /**
-         * ★ Web Worker 관련 속성 추가
-         */
+        // Web Worker 관련 속성
         this.worker = null;
-        // Worker가 현재 프레임을 처리 중인지 나타내는 플래그 (Back-pressure)
         this.isWorkerBusy = false;
-
-        // ★★★ (추가) Worker 준비 상태 플래그
         this.isWorkerReady = false;
+        
+        // FPS 제한 설정 (60fps)
+        this.fpsInterval = 1000 / 60;
+        this.lastFrameTime = 0;
+        
+        // Worker 재시작 관련
+        this.workerRestartAttempts = 0;
+        this.maxWorkerRestartAttempts = 3;
     }
 
     /**
      * 신체 부위 하나의 데이터 구조를 생성합니다.
-     * @returns {{coords: THREE.Vector2, coords_old: THREE.Vector2, diff: THREE.Vector2, timer: number, moved: boolean}}
      */
     createPartData() {
         return {
-            coords: new THREE.Vector2(), // 현재 좌표
-            coords_old: new THREE.Vector2(), // 이전 프레임 좌표
-            diff: new THREE.Vector2(), // 좌표 변화량
-            timer: null, // 움직임 감지를 위한 타이머
-            moved: false // 움직임 여부
+            coords: new THREE.Vector2(),
+            coords_old: new THREE.Vector2(),
+            diff: new THREE.Vector2(),
+            timer: null,
+            moved: false
         };
     }
 
     /**
      * 한 사람(person)의 전체 신체 데이터 구조를 생성합니다.
-     * @returns {Object.<string, {coords: THREE.Vector2, coords_old: THREE.Vector2, diff: THREE.Vector2, timer: number, moved: boolean}>}
      */
     createPersonData() {
         const person = {};
@@ -55,8 +56,7 @@ class Tracking {
     }
 
     /**
-     * ★★★ init 수정 ★★★
-     * MediaPipe 초기화 대신 Web Worker를 생성합니다.
+     * MediaPipe 대신 Web Worker를 생성합니다.
      */
     async init(video) {
         this.running = false;
@@ -67,96 +67,160 @@ class Tracking {
             this.worker.terminate();
         }
 
-        // 1. Web Worker 생성 (ES Module 지원)
-        // 'tracking.worker.js'는 실제 파일 경로여야 합니다.
-        // ★★★ 수정된 부분 ★★★
-        // 'type: 'module'' 옵션을 제거합니다.
+        // Web Worker 생성 (ES Module 지원)
         this.worker = new Worker(new URL('./tracking.worker.js', import.meta.url), {
-            type: 'classic' // 워커 내부에서 import 구문을 사용하려면 'module' 타입이 필요
+            type: 'classic' // ✅ 수정: import 구문 사용을 위해 module 타입 지정
         });
 
-        // ★★★ (수정) Worker 메시지 핸들러
-        // 2. Worker로부터 메시지(결과) 수신
+        // Worker 메시지 핸들러
         this.worker.onmessage = (event) => {
-            const { type, payload } = event.data; // 표준화된 형식 사용
+            const { type, payload } = event.data;
 
             if (type === 'READY') {
                 console.log("Main: Worker is ready.");
                 this.isWorkerReady = true;
-                this.startTracking(); // Worker가 준비된 후에만 추적 시작
+                this.workerRestartAttempts = 0; // 성공 시 재시작 카운터 리셋
+                
+                if (this.video.readyState < 2) {
+                    this.video.onloadeddata = () => {
+                        this.video.onloadeddata = null;
+                        this.startTracking();
+                    };
+                } else {
+                    this.startTracking();
+                }
             } else if (type === 'RESULT') {
                 const poseResult = payload;
                 if (poseResult) {
                     this.handlePoseResult(poseResult);
                 }
-                // Worker가 다음 프레임을 받을 준비가 되었음을 표시
                 this.isWorkerBusy = false;
-            }
-            // ★★★ (추가) Worker로부터 구체적인 에러 메시지 수신
-            else if (type === 'ERROR') {
+            } else if (type === 'ERROR') {
                 console.error("Worker reported an error:", payload.message, payload.stack);
-                // 에러 발생 시에도 Worker는 작업을 마친 것으로 간주
                 this.isWorkerBusy = false;
+                
+                // 심각한 에러 발생 시 Worker 재시작 시도
+                this.handleWorkerError();
             }
         };
 
         this.worker.onerror = (err) => {
             console.error("Worker error:", err);
             this.isWorkerBusy = false;
+            this.handleWorkerError();
         };
 
-        // 3. Worker에 초기화 메시지 전송 (Wasm/모델 경로 전달)
+        // OffscreenCanvas 생성 및 제어권 이전
+        const scale = 0.5;
+        const offscreenCanvas = document.createElement("canvas");
+        offscreenCanvas.width = this.video.videoWidth * scale;
+        offscreenCanvas.height = this.video.videoHeight * scale;
+
+        const transferableCanvas = offscreenCanvas.transferControlToOffscreen();
+
+        // GH Pages 배포를 위한 경로 설정
+        // 필요시 BASE_URL 환경변수로 관리 가능
+        const basePath = import.meta.env?.BASE_URL || './';
+        
         this.worker.postMessage({
             type: 'INIT',
-            wasmPath: '/mediapipe/wasm',
-            modelPath: '/mediapipe/models/pose_landmarker_lite.task'
-        });
-
-        // ★★★ (수정) init에서 startTracking() 호출 제거
-        // this.startTracking();
+            canvas: transferableCanvas,
+            wasmPath: `${basePath}mediapipe/wasm`,
+            modelPath: `${basePath}mediapipe/models/pose_landmarker_lite.task`
+        }, [transferableCanvas]);
     }
+
     /**
-     * 비디오 프레임에서 포즈 추적을 시작합니다.
+     * ✅ 추가: Worker 에러 처리 및 재시작 로직
      */
+    handleWorkerError() {
+        if (this.workerRestartAttempts >= this.maxWorkerRestartAttempts) {
+            console.error("Worker failed to restart after multiple attempts. Tracking stopped.");
+            this.stopTracking();
+            return;
+        }
+        
+        console.warn(`Attempting to restart worker (attempt ${this.workerRestartAttempts + 1}/${this.maxWorkerRestartAttempts})`);
+        this.workerRestartAttempts++;
+        this.isWorkerReady = false;
+        
+        // 기존 Worker 종료 및 재시작
+        if (this.worker) {
+            this.worker.terminate();
+        }
+        
+        // 100ms 후 재시작
+        setTimeout(() => {
+            this.init(this.video);
+        }, 100);
+    }
+
     startTracking() {
         if (this.running) return;
         this.running = true;
 
-        // 성능 향상을 위해 저해상도 캔버스 사용
-        // const offscreen = document.createElement("canvas");
-        const scale = 0.5;
-        // offscreen.width = this.video.videoWidth * scale;
-        // offscreen.height = this.video.videoHeight * scale;
-        const offscreen = new OffscreenCanvas(this.video.videoWidth * scale, this.video.videoHeight * scale);
-        const offctx = offscreen.getContext("2d");
+        // 루프 시작 시점의 시간을 기록
+        this.lastFrameTime = performance.now();
 
-        let lastDetect = 0;
-        const DETECT_INTERVAL = 1000 / 500; // 15 fps
+        // 첫 프레임 요청
+        requestAnimationFrame(this.process);
+    }
 
-        const process = async (ts) => {
-            if (!this.running) return;
+    /**
+     * 매 프레임 실행되는 메인 루프 (60fps로 제한)
+     */
+    process = async (timestamp) => {
+        if (!this.running) return;
 
-            // 1. Worker가 바쁘면(이전 프레임 처리 중) 이번 프레임은 건너뜀
-            if (!this.isWorkerBusy && (ts - lastDetect) > DETECT_INTERVAL) {
-            this.isWorkerBusy = true;
-            lastDetect = ts;
+        // 다음 프레임을 즉시 요청 (루프 유지)
+        requestAnimationFrame(this.process);
 
-            offctx.drawImage(this.video, 0, 0, offscreen.width, offscreen.height);
-            const frame = await createImageBitmap(offscreen);
-
-            this.worker.postMessage({ type: "DETECT", frame, timestamp: ts }, [frame]);
+        // FPS 제한 로직
+        const elapsed = timestamp - this.lastFrameTime;
+        if (elapsed < this.fpsInterval) {
+            return;
         }
 
-            // 5. 메인 스레드는 즉시 다음 프레임 루프를 예약 (차단 없음)
-            requestAnimationFrame(process);
-        };
+        this.lastFrameTime = timestamp - (elapsed % this.fpsInterval);
 
-        process();
+        // ✅ 추가: Worker 준비 상태 체크
+        if (!this.isWorkerReady) {
+            return;
+        }
+
+        // Worker가 이전 프레임을 처리 중이면 건너뛰기
+        if (this.isWorkerBusy) {
+            return;
+        }
+
+        try {
+            this.isWorkerBusy = true;
+
+            // 비디오에서 ImageBitmap 생성
+            const imageBitmap = await createImageBitmap(this.video);
+            
+            if (imageBitmap.width === 0 || imageBitmap.height === 0) {
+                console.warn("Skipped frame: invalid ImageBitmap size");
+                this.isWorkerBusy = false;
+                imageBitmap.close(); // ✅ 수정: 변수명 오타 수정
+                return;
+            }
+
+            // Worker에게 ImageBitmap과 타임스탬프 전송 (소유권 이전)
+            this.worker.postMessage({
+                type: 'DETECT',
+                frame: imageBitmap,
+                timestamp: timestamp
+            }, [imageBitmap]);
+
+        } catch (err) {
+            console.error("Error in main thread process loop:", err);
+            this.isWorkerBusy = false;
+        }
     }
 
     /**
      * 감지된 포즈 결과를 처리하여 각 사람의 데이터를 업데이트합니다.
-     * @param {Object} poseResult - MediaPipe PoseLandmarker의 감지 결과
      */
     handlePoseResult(poseResult) {
         if (!poseResult.landmarks || poseResult.landmarks.length === 0) {
@@ -166,10 +230,8 @@ class Tracking {
         }
         this.landmarks = poseResult.landmarks;
 
-
         // 감지된 사람 수만큼 순회
         this.people = poseResult.landmarks.map((personLandmarks, personIndex) => {
-            // 이전에 추적되던 사람이 있다면 해당 데이터 재사용, 없다면 새로 생성
             const personData = this.people[personIndex] || this.createPersonData();
 
             if (!personLandmarks || personLandmarks.length < 33) return personData;
@@ -207,7 +269,6 @@ class Tracking {
             this.updatePartCoords(personData.rightHeap, rightHeap.x, rightHeap.y);
             this.updatePartCoords(personData.leftFoot, leftFoot.x, leftFoot.y);
             this.updatePartCoords(personData.rightFoot, rightFoot.x, rightFoot.y);
-
             this.updatePartCoords(personData.leftElbow, leftElbow.x, leftElbow.y);
             this.updatePartCoords(personData.rightElbow, rightElbow.x, rightElbow.y);
             this.updatePartCoords(personData.leftKnee, leftKnee.x, leftKnee.y);
@@ -219,9 +280,6 @@ class Tracking {
 
     /**
      * 특정 신체 부위의 좌표와 움직임 상태를 업데이트합니다.
-     * @param {Object} partData - 업데이트할 신체 부위 데이터 객체 (예: personData.head)
-     * @param {number} x - 랜드마크의 x 좌표 (0.0 ~ 1.0)
-     * @param {number} y - 랜드마크의 y 좌표 (0.0 ~ 1.0)
      */
     updatePartCoords(partData, x, y) {
         if (!partData) return;
@@ -265,14 +323,12 @@ class Tracking {
 
     /**
      * 추적된 모든 사람의 데이터를 반환합니다.
-     * @returns {Array<Object>}
      */
     getPeople() {
         return this.people;
     }
 
     getLandmarks() {
-        // landmarks가 정의되지 않았으면 빈 배열 반환
         if (!this.landmarks || !Array.isArray(this.landmarks)) {
             return [];
         }
@@ -280,23 +336,34 @@ class Tracking {
     }
 
     /**
-     * ★★★ 추가된 함수 ★★★
      * MediaPipe 인스턴스와 추적 루프를 안전하게 종료합니다.
      */
     destroy() {
-        console.log("Destroying Tracking (Multi-person)...");
-        // 1. requestAnimationFrame 루프를 중단시킵니다.
+        console.log("Destroying Tracking...");
+        
+        // requestAnimationFrame 루프를 중단시킵니다.
         this.running = false;
 
-        // 2. MediaPipe PoseLandmarker 인스턴스의 리소스를 해제합니다.
+        // Worker 종료
+        if (this.worker) {
+            this.worker.terminate();
+            this.worker = null;
+        }
+
+        // MediaPipe PoseLandmarker 인스턴스의 리소스를 해제합니다.
         if (this.poseLandmarker) {
             this.poseLandmarker.close();
             this.poseLandmarker = null;
         }
 
-        // 3. 데이터 배열을 초기화합니다.
+        // 데이터 배열을 초기화합니다.
         this.people = [];
         this.landmarks = [];
+        
+        // 상태 플래그 초기화
+        this.isWorkerBusy = false;
+        this.isWorkerReady = false;
+        this.workerRestartAttempts = 0;
     }
 }
 
