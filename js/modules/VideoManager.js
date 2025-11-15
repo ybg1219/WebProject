@@ -74,7 +74,7 @@ class VideoManager {
             this.video.muted = true;
         await this.video.play();
         } catch (err) {
-            console.error('동영상 접근 실패:', err);
+            console.error(filePath, '동영상 접근 실패:', err);
             throw err; // 에러를 상위로 전파하여 LandingPage에서 catch하도록 함
         }
     }

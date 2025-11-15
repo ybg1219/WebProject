@@ -14,7 +14,7 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         clean: true,
         environment: {
-            module: false, // ESM 사용 허용
+            module: true, // ESM 사용 허용
         },
     },
     module: {
@@ -49,6 +49,7 @@ module.exports = {
             template: './public/index.html', // [수정] 템플릿 경로 (루트의 index.html)
             filename: 'index.html', // 출력 파일 이름
             inject: 'body', // 스크립트를 body 끝에 주입
+            scriptLoading: 'module',
         }),
         // [★추가★]
         // 2. GitHub Pages의 404 새로고침 트릭을 위해
@@ -57,6 +58,7 @@ module.exports = {
             template: './public/index.html', // 동일한 템플릿 사용
             filename: '404.html',   // 출력 파일 이름만 다르게
             inject: 'body',
+            scriptLoading: 'module',
         }),
         new CopyWebpackPlugin({
             patterns: [
@@ -90,7 +92,7 @@ module.exports = {
     },
     target: ["web", "es2020"], // ESM 지원을 위해 반드시 필요
     experiments: {
-        outputModule: false,      // module: true output을 허용
+        outputModule: true,      // module: true output을 허용
         topLevelAwait: true, // MediaPipe task는 top-level await 필요
     },
 };
