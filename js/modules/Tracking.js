@@ -75,9 +75,8 @@ class Tracking {
 
         // Web Worker 생성 (ES Module 지원)
         this.worker = new Worker(new URL('./tracking.worker.js', import.meta.url), {
-            type: 'classic'
+            type: 'module'
         });
-
         // Worker 메시지 핸들러
         this.worker.onmessage = (event) => {
             const { type, payload } = event.data;
@@ -94,7 +93,7 @@ class Tracking {
                 }
                 this.isWorkerBusy = false;
             } else if (type === 'ERROR') {
-                console.error("Worker reported an error:", payload.message, payload.stack);
+                console.error('Worker reported:', event.data.payload.message, event.data.payload.stack);
                 this.isWorkerBusy = false;
                 
                 // 심각한 에러 발생 시 Worker 재시작 시도
@@ -131,13 +130,13 @@ class Tracking {
         const transferableCanvas = offscreenCanvas.transferControlToOffscreen();
 
         // GH Pages 배포를 위한 경로 설정
-        const basePath = import.meta.env?.BASE_URL || './';
+        // const basePath = import.meta.env?.BASE_URL || './';
         
         this.worker.postMessage({
             type: 'INIT',
             canvas: transferableCanvas,
-            wasmPath: `${basePath}mediapipe/wasm`,
-            modelPath: `${basePath}mediapipe/models/pose_landmarker_lite.task`
+            wasmPath: `./mediapipe/wasm`,
+            modelPath: `./mediapipe/models/pose_landmarker_lite.task`
         }, [transferableCanvas]);
     }
 
