@@ -74,7 +74,7 @@ class Tracking {
         await this.waitForVideoReady();
 
         // Web Worker 생성 (ES Module 지원)
-        this.worker = new Worker(new URL('./tracking.worker.js', import.meta.url), {
+        this.worker = new Worker(new URL('tracking.worker.js', import.meta.url), {
             type: 'module'
         });
         // Worker 메시지 핸들러
