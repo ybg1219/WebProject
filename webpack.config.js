@@ -14,7 +14,7 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         clean: true,
         environment: {
-            module: true, // ESM 사용 허용
+            module: false, // ESM 사용 허용
         },
     },
     module: {
@@ -92,7 +92,7 @@ module.exports = {
     },
     target: ["web", "es2020"], // ESM 지원을 위해 반드시 필요
     experiments: {
-        outputModule: true,      // module: true output을 허용
+        outputModule: false,      // module: true output을 허용
         topLevelAwait: true, // MediaPipe task는 top-level await 필요
     },
 };
