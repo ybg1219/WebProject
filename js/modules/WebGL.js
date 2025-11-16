@@ -50,15 +50,14 @@ export default class Webgl {
         this.stats = new Stats(); // 프레임 확인용.
         document.body.appendChild(this.stats.dom);
 
-        // base href 확인
-        const baseTag = document.querySelector('base');
-        console.log("document.baseURI:", document.baseURI);
-        console.log("base tag href:", baseTag ? baseTag.href : "없음");
+        // {process.env.PUBLIC_URL}확인
+        console.log("PUBLIC_URL:", process.env.PUBLIC_URL);
         
         // 시뮬레이션 아웃풋 초기화 및 입력 모듈 초기화
         // await VideoManager.startCamera();
         // await VideoManager.loadVideoFile("/videos/house.mp4"); // 여기에 mp4 파일 경로
-        await VideoManager.loadVideoFile("./videos/house.mp4");
+        const videoPath = `${process.env.PUBLIC_URL}videos/house.mp4`;
+        await VideoManager.loadVideoFile(videoPath);
 
         Mouse.init();
         // --- 옵션에 따라 적절한 트래커를 초기화하고 activeTracker에 할당 ---

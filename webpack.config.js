@@ -4,14 +4,16 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 // const TerserPlugin = require('terser-webpack-plugin'); // 만약 최소화가 필요하면 주석 해제
+const publicUrl = process.env.PUBLIC_URL || '/';
 
 module.exports = {
-    mode: "production", // 'production'을 사용하고 싶으면 변경
+    mode: process.env.NODE_ENV === 'production' ? 'production' : 'development', // YML에서 'production'으로 빌드
     entry: './js/main.js',
     // devtool: 'source-map', // VM### 대신 경로가 뜸.
     output: {
         filename: 'main.min.js',
         path: path.resolve(__dirname, 'dist'),
+        publicPath: publicUrl,
         clean: true,
         environment: {
             module: false, // ESM 사용 허용
@@ -49,7 +51,6 @@ module.exports = {
             template: './public/index.html', // [수정] 템플릿 경로 (루트의 index.html)
             filename: 'index.html', // 출력 파일 이름
             inject: 'body', // 스크립트를 body 끝에 주입
-            base: process.env.NODE_ENV === 'production' ? '/WebProject/' : '/',
         }),
         // [★추가★]
         // 2. GitHub Pages의 404 새로고침 트릭을 위해
@@ -76,6 +77,9 @@ module.exports = {
                     }
                 }
             ]
+        }),
+         new webpack.DefinePlugin({
+            'process.env.PUBLIC_URL': JSON.stringify(publicUrl)
         })
     ],
     devServer: {
