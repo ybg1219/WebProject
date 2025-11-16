@@ -2,6 +2,7 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 // webpack.config.js
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const webpack = require('webpack'); // ★ 1. 이 줄이 오류를 해결합니다.
 
 // const TerserPlugin = require('terser-webpack-plugin'); // 만약 최소화가 필요하면 주석 해제
 const publicUrl = process.env.PUBLIC_URL || '/';
