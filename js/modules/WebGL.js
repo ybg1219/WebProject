@@ -52,10 +52,17 @@ export default class Webgl {
 
         // 시뮬레이션 아웃풋 초기화 및 입력 모듈 초기화
         // await VideoManager.startCamera();
-        const base = window.location.pathname.split("/")[1] || "";
-        const videoPath = base ? `/${base}/videos/house.mp4` : `/videos/house.mp4`;
-        await VideoManager.loadVideoFile(videoPath);
+        // GH Pages에서는 레포 이름(WebProject)이 pathname 첫 번째 segment로 들어감
+        console.log("window.location", window.location);
+        const base = window.location.pathname.split("/").filter(Boolean)[0] || "";
 
+        // 동영상 파일 경로 생성
+        const videoPath = base
+            ? `/${base}/videos/house.mp4`  // GH Pages
+            : `/videos/house.mp4`;         // 로컬 서버
+
+        await VideoManager.loadVideoFile(videoPath);
+        console.log("videoPath", videoPath);
         Mouse.init();
         // --- 옵션에 따라 적절한 트래커를 초기화하고 activeTracker에 할당 ---
         if (this.options.isMultiPerson) {
