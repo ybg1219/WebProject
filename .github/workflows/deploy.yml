@@ -27,6 +27,8 @@ jobs:
 
       # 4. 빌드
       - name: Build project
+        env:
+          PUBLIC_URL: /WebProject/
         run: npm run build
 
       # 5. GitHub Pages에 배포
