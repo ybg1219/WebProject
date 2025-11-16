@@ -6,7 +6,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 // const TerserPlugin = require('terser-webpack-plugin'); // 만약 최소화가 필요하면 주석 해제
 
 module.exports = {
-    mode: "development", // 'production'을 사용하고 싶으면 변경
+    mode: "production", // 'production'을 사용하고 싶으면 변경
     entry: './js/main.js',
     // devtool: 'source-map', // VM### 대신 경로가 뜸.
     output: {
@@ -49,7 +49,6 @@ module.exports = {
             template: './public/index.html', // [수정] 템플릿 경로 (루트의 index.html)
             filename: 'index.html', // 출력 파일 이름
             inject: 'body', // 스크립트를 body 끝에 주입
-            scriptLoading: 'module',
         }),
         // [★추가★]
         // 2. GitHub Pages의 404 새로고침 트릭을 위해
@@ -58,7 +57,6 @@ module.exports = {
             template: './public/index.html', // 동일한 템플릿 사용
             filename: '404.html',   // 출력 파일 이름만 다르게
             inject: 'body',
-            scriptLoading: 'module',
         }),
         new CopyWebpackPlugin({
             patterns: [
