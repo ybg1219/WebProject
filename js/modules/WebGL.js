@@ -8,8 +8,8 @@ import Tracking from "./Tracking";
 import VideoManager from "./VideoManager";
 import CanvasManager from "./CanvasManager";
 
-export default class Webgl{
-    constructor(props){
+export default class Webgl {
+    constructor(props) {
         this.props = props; // document.body를 받아옴.
         this._destroyed = false;
 
@@ -24,7 +24,7 @@ export default class Webgl{
         // 비디오와 캔버스 초기화
         VideoManager.init(this.props.$wrapper, Common.width, Common.height);
         CanvasManager.init(this.props.$wrapper, Common.width, Common.height);
-        
+
         // requestAnimationFrame ID 저장을 위해 추가
         this.animationFrameId = null;
         // 이벤트 리스너 제거를 위해 bind된 함수를 변수에 저장
@@ -36,7 +36,7 @@ export default class Webgl{
                 this.loop();
             }
         });
-        
+
         // register resize
         window.addEventListener("resize", this.resize.bind(this)); // 이벤트 타입과 콜백함수
 
@@ -52,8 +52,9 @@ export default class Webgl{
 
         // 시뮬레이션 아웃풋 초기화 및 입력 모듈 초기화
         // await VideoManager.startCamera();
-        await VideoManager.loadVideoFile("videos/house.mp4"); // 여기에 mp4 파일 경로
-        // await VideoManager.loadVideoFile("./videos/house.mp4");
+        const base = window.location.pathname.split("/").filter(Boolean)[0] || "";
+        const videoPath = base ? `/${base}/videos/house.mp4` : `/videos/house.mp4`;
+        await VideoManager.loadVideoFile(videoPath);
 
         Mouse.init();
         // --- 옵션에 따라 적절한 트래커를 초기화하고 activeTracker에 할당 ---
@@ -72,19 +73,19 @@ export default class Webgl{
             options: this.options
         });
     }
-    
 
-    resize(){
+
+    resize() {
         if (this._destroyed) return;
 
         Common.resize();
         if (this.output) this.output.resize();
 
-        VideoManager.setSize( Common.width, Common.height);
-        CanvasManager.setSize( Common.width, Common.height);
+        VideoManager.setSize(Common.width, Common.height);
+        CanvasManager.setSize(Common.width, Common.height);
     }
 
-    render(){
+    render() {
         if (this._destroyed) return;
 
         Mouse.update();
@@ -96,7 +97,7 @@ export default class Webgl{
 
         Common.update();
         this.output.update();
-        
+
         // 랜드마크 그리기
         const landmarks = this.activeTracker ? (this.activeTracker.getLandmarks ? this.activeTracker.getLandmarks() : this.activeTracker.landmarks) : [];
         if (landmarks && landmarks.length > 0) {
@@ -104,7 +105,7 @@ export default class Webgl{
         }
     }
 
-    loop(){
+    loop() {
         if (this._destroyed) return;
 
         if (this.stats) this.stats.begin();
@@ -138,15 +139,15 @@ export default class Webgl{
             if (this.stats && this.stats.dom.parentNode) {
                 this.stats.dom.parentNode.removeChild(this.stats.dom);
             }
-            
+
             // 4. Output (Simulation) 연쇄 정리
             if (this.output && this.output.destroy) {
                 this.output.destroy();
             }
-            
+
             // 5. VideoManager 정리
             VideoManager.destroy();
-            
+
             // 6. Tracker 정리
             if (this.activeTracker && this.activeTracker.destroy) {
                 this.activeTracker.destroy();
