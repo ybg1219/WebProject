@@ -80,6 +80,7 @@ module.exports = {
     devServer: {
         static: {
             directory: path.join(__dirname, 'dist'),
+            publicPath: '/', // 루트 기준
         },
         host: '0.0.0.0',
         port: 3001,

@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { FilesetResolver, HandLandmarker, PoseLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
 import Common from "./Common";
 
 class Tracking {
