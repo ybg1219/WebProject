@@ -160,7 +160,7 @@ export function LandingPage(container) {
 
         } catch (error) {
             // 권한 요청 실패 시
-            console.error("카메라 시작 또는 트래킹 초기화 실패:", err);
+            console.error("카메라 시작 또는 트래킹 초기화 실패:", error);
             if (permMessage) permMessage.style.display = 'none';
             if (permDenied) permDenied.style.display = 'block';
         }
