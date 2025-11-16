@@ -75,7 +75,7 @@ class Tracking {
 
         // Web Worker 생성 (ES Module 지원)
         this.worker = new Worker(new URL('tracking.worker.js', import.meta.url), {
-            type: 'classic'
+            type: 'module'
         });
         // Worker 메시지 핸들러
         this.worker.onmessage = (event) => {
