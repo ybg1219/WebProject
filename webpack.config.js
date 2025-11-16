@@ -49,6 +49,7 @@ module.exports = {
             template: './public/index.html', // [수정] 템플릿 경로 (루트의 index.html)
             filename: 'index.html', // 출력 파일 이름
             inject: 'body', // 스크립트를 body 끝에 주입
+            base: process.env.NODE_ENV === 'production' ? '/WebProject/' : '/',
         }),
         // [★추가★]
         // 2. GitHub Pages의 404 새로고침 트릭을 위해
