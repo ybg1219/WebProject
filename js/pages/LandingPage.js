@@ -130,8 +130,18 @@ export function LandingPage(container) {
             if (!videoElement) {
                 throw new Error("VideoManager에서 video 요소를 가져오지 못했습니다.");
             }
-            await GestureTracking.init(videoElement); // tracking.js 시작
-            VirtualMouse.init();
+
+
+            // GestureTracking.gestureRecognizer가 null일 때만 (즉, 초기화 안 됐을 때만) init을 호출
+            if (!GestureTracking.gestureRecognizer) {
+                console.log("LandingPage: GestureTracking.init()을 처음 호출합니다.");
+                await GestureTracking.init(videoElement); // tracking.js 시작
+            } else {
+                console.log("LandingPage: GestureTracking이 이미 초기화되어 있으므로 init()을 건너뜁니다.");
+                // 비디오 엘리먼트가 바뀌었을 수 있으니 비디오만 업데이트
+                GestureTracking.start(videoElement);
+                GestureTracking.video = videoElement;
+            }VirtualMouse.init();
 
 
             // (임시) 2초 후 성공했다고 가정
