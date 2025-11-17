@@ -1,53 +1,111 @@
-// 라우트(경로-페이지 매핑) 정보를 저장할 객체
-const routes = {};
-// 현재 페이지의 리소스를 정리(cleanup)하는 함수를 저장할 변수
-let currentPageCleanup = null;
 import EventBus from './utils/EventBus.js';
 
 /**
- * 라우터 객체
+ * 앱의 기본 경로(Base Path).
+ * 예: 로컬("/", "gh-pages("/WebProject")
+ * 이 값은 main.js의 router.init(publicUrl)을 통해 주입됩니다.
  */
+let BASE = "/"; 
+
+const routes = {}; // 라우트 "목차" (순수 경로만 저장)
+let currentPageCleanup = null; // 현재 페이지의 정리 함수
+
 export const router = {
+
     /**
-     * 라우트를 등록하는 함수
-     * @param {string} path - URL 경로 (예: "/")
-     * @param {Function} pageComponent - 해당 경로에 렌더링할 페이지 컴포넌트 함수
+     * main.js에서 process.env.PUBLIC_URL 값을 받아 BASE를 설정합니다.
+     * @param {string} publicUrl 
+     */
+    init(publicUrl) {
+        BASE = publicUrl || "/";
+        console.log(`Router initialized with BASE: ${BASE}`);
+    },
+
+    /**
+     * 라우트 "목차"에 페이지 컴포넌트를 등록합니다.
+     * @param {string} path - 순수 내부 경로 (예: "/", "/about")
+     * @param {Function} pageComponent - 페이지 렌더링 함수
      */
     addRoute(path, pageComponent) {
         routes[path] = pageComponent;
     },
 
     /**
-     * URL 경로에 맞는 페이지를 로드하고 렌더링하는 함수
-     * @param {string} path - 이동할 URL 경로
+     * 브라우저의 전체 URL(fullPath)을 "목차"에서 찾을 내부 경로(path)로 변환합니다.
+     * @param {string} fullPath - 예: "/WebProject/simulation"
+     * @returns {string} - 예: "/simulation"
      */
-    loadRoute(path) {
-        const appContainer = document.querySelector("#app");
-        if (!appContainer) {
-            console.error("#app 요소를 찾을 수 없습니다.");
-            return;
+    normalizePath(fullPath) {
+        // BASE가 "/"인 경우 (로컬 dev)은 그대로 사용
+        if (BASE === "/") return fullPath || "/"; // fullPath가 ""일 경우 /로
+        
+        // GitHub Pages: /WebProject/simulation → /simulation
+        if (fullPath.startsWith(BASE)) {
+            const withoutBase = fullPath.replace(BASE, "");
+            return withoutBase === "" ? "/" : withoutBase; // /WebProject/ → /
         }
         
-        // 1. 이전 페이지의 정리(cleanup) 함수가 있다면 실행하여 리소스를 해제합니다.
+        // BASE 경로가 아닌 URL(예: /)로 접근 시 /로 강제
+        if (fullPath === "/") return "/"; 
+        
+        console.warn(`Path mismatch: ${fullPath} does not match BASE ${BASE}. Fallback to root.`);
+        return "/"; // 예외 상황 시 루트로
+    },
+
+    /**
+     * 실제 페이지를 로드하고 렌더링합니다.
+     * @param {string} fullPath - 브라우저의 location.pathname (예: "/WebProject/simulation")
+     */
+    loadRoute(fullPath) {
+        // 1. 전체 URL을 내부 경로로 변환
+        const path = this.normalizePath(fullPath);
+        
+        const appContainer = document.querySelector("#app");
+        if (!appContainer) {
+            console.error("#app not found");
+            return;
+        }
+
+        // 2. 이전 페이지 정리 함수 실행
         if (currentPageCleanup) {
             currentPageCleanup();
             currentPageCleanup = null;
         }
 
-        // 2. 경로에 맞는 페이지 컴포넌트를 찾습니다. 없으면 홈페이지로 이동합니다.
-        const page = routes[path] || routes["/"];
+        // 3. "목차"에서 새 페이지 컴포넌트를 찾음
+        const pageComponent = routes[path];
 
-        // 3. 새 페이지를 렌더링하고, 반환된 정리 함수를 저장합니다.
-        currentPageCleanup = page(appContainer);
+        if (!pageComponent) {
+            console.error("없는 route:", path, "(Original:", fullPath, ")");
+            // 404 Fallback: "/" (루트) 페이지로 이동
+            if (routes["/"]) {
+                // 루트로 강제 이동 (URL도 변경)
+                this.navigate("/"); 
+            }
+            return;
+        }
+        
+        // 4. 새 페이지 렌더링 및 정리 함수 저장
+        currentPageCleanup = pageComponent(appContainer, this); // router 자신을 전달 (LandingPage 등에서 navigate 사용)
+        
+        // 5. Nav 업데이트 등을 위해 이벤트 발행
         EventBus.emit('routeChanged', { pathname: path });
     },
 
     /**
-     * history.pushState를 사용하여 페이지를 이동하는 함수 (새로고침 없음)
-     * @param {string} path - 이동할 경로
+     * SPA 방식으로 페이지를 이동합니다.
+     * @param {string} path - 순수 내부 경로 (예: "/simulation")
      */
     navigate(path) {
-        history.pushState(null, null, path);
-        this.loadRoute(path);
+        // 1. 내부 경로를 브라우저에 표시할 전체 URL로 변환
+        // (BASE가 "/"이고 path가 "/simulation" -> "/simulation")
+        // (BASE가 "/WebProject"이고 path가 "/simulation" -> "/WebProject/simulation")
+        const fullPath = (BASE === "/" ? "" : BASE) + path;
+        
+        // 2. 브라우저 history 스택에 추가 (URL 변경)
+        history.pushState(null, null, fullPath);
+        
+        // 3. 페이지 렌더링
+        this.loadRoute(fullPath);
     }
 };
