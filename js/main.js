@@ -3,13 +3,15 @@ import EventBus from "./utils/EventBus";
 import WebGL from './modules/WebGL.js';
 import { router } from "./router.js";
 import { AboutPage } from "./pages/AboutPage.js";
-import {LandingPage} from "./pages/LandingPage.js";
-import {TutorialPage} from "./pages/TutorialPage.js";
-import {PracticePage} from "./pages/PracticePage.js";
+import { LandingPage } from "./pages/LandingPage.js";
+import { TutorialPage } from "./pages/TutorialPage.js";
+import { PracticePage } from "./pages/PracticePage.js";
 import { PhotoBoothPage } from "./pages/PhotoBoothPage.js";
 
 // 개발 환경 플래그 설정
-if(!window.isDev) window.isDev = false; // is dev 정의되어있지 않으면 개발환경을 끔. (디버그 용 코드드 한번에 꺼버리기)
+if (!window.isDev) window.isDev = false; // is dev 정의되어있지 않으면 개발환경을 끔. (디버그 용 코드드 한번에 꺼버리기)
+const publicUrl = process.env.PUBLIC_URL || '';
+
 
 /**
  * WebGL 시뮬레이션을 렌더링하는 메인 페이지 컴포넌트입니다.
@@ -72,6 +74,12 @@ function updateNav(pathname) {
     });
 }
 
+if (typeof router.init === 'function') {
+    router.init(publicUrl);
+} else {
+    console.warn("router.init() 함수가 없습니다. router.js를 확인하세요.");
+    router.publicUrl = publicUrl; // fallback
+}
 
 EventBus.on('routeChanged', (event) => { // (변경) 'subscribe' -> 'on'
     // CustomEvent를 사용하므로, 데이터는 event.detail 안에 있습니다.
@@ -88,12 +96,40 @@ router.addRoute("/photobooth", PhotoBoothPage);
 
 // 2. 네비게이션 링크(<a data-link>) 클릭 이벤트를 처리합니다.
 document.addEventListener("click", e => {
-    // 클릭된 요소가 'data-link' 속성을 가진 <a> 태그인지 확인
-    if (e.target.matches("a[data-link]")) {
-        e.preventDefault(); // 기본 페이지 이동(새로고침) 동작 방지
-        const href = e.target.getAttribute("href");
-        router.navigate(href);
+    // 1. 클릭된 요소가 <a> 태그이거나, <a>의 자식 요소인지 확인합니다.
+    const anchor = e.target.closest('a');
+
+    // 2. <a> 태그가 아니거나, href 속성이 없으면 무시합니다.
+    if (!anchor) {
+        return;
     }
+
+    const href = anchor.getAttribute('href');
+
+    // 3. 외부 링크(http), 앵커(#), 새 탭/창 링크는 브라우저 기본 동작에 맡깁니다.
+    if (!href || href.startsWith('http') || href.startsWith('#') || anchor.target === '_blank') {
+        return;
+    }
+
+    // 4. (중요) 브라우저의 기본 페이지 이동(새로고침)을 막습니다.
+    e.preventDefault();
+
+    let internalPath = href;
+
+    // 5. 만약 링크(href)에 이미 publicUrl(예: /WebProject/simulation)이 포함되어 있다면,
+    //    publicUrl 부분을 제거하여 순수 내부 경로(예: /simulation)만 남깁니다.
+    if (href.startsWith(publicUrl) && publicUrl !== '') {
+        internalPath = href.substring(publicUrl.length);
+    }
+
+    // 6. 내부 경로가 '/'로 시작하지 않으면(예: 'page.html'), SPA 라우트 대상이 아니므로 무시합니다.
+    if (!internalPath.startsWith('/')) {
+        console.warn(`Ignoring relative link: ${href}`);
+        return;
+    }
+
+    // 7. 계산된 내부 경로로 라우터를 통해 이동합니다.
+    router.navigate(internalPath); // 'internalPath'는 /simulation 같은 순수 경로
 });
 
 // 3. 브라우저의 뒤로가기/앞으로가기 버튼을 처리합니다.
@@ -104,7 +140,7 @@ window.addEventListener("popstate", () => {
 
 // 4. 페이지에 처음 접속했을 때, 현재 URL에 맞는 페이지를 로드합니다.
 document.addEventListener("DOMContentLoaded", () => {
-   const appContainer = document.getElementById('app');
+    const appContainer = document.getElementById('app');
     if (!appContainer) {
         console.error("라우터 컨테이너(#app)를 찾을 수 없습니다.");
         return;
