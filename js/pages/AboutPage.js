@@ -11,23 +11,19 @@ export function AboutPage(container) {
                 
                 <h1 class="text-4xl md:text-3xl font-bold mb-8 text-white">About This Project</h1>
                 
-                <!-- 
-                  [수정] 
-                  'grid' 대신 'flexbox'를 사용합니다.
-                  md:flex-row: 데스크톱에서 가로로 나열
-                  justify-center: 중앙 정렬
-                -->
-                <div class="flex flex-col md:flex-row justify-center items-start gap-8">
+                <div class="flex flex-col md:flex-row justify-center items-start gap-24">
                     
-                    <!-- 
-                      포스터 1 카드
-                      [수정] w-full과 h-full을 제거하고, 고정 높이 h-[600px]를 설정합니다.
-                      (너비는 자동으로 계산됩니다.)
-                    -->
-                    <div class="bg-slate-300/20 backdrop-blur-lg border border-white/10 rounded-2xl shadow-xl overflow-hidden h-[600px] flex items-center justify-center">
+                <!-- 
+                    포스터 1 카드
+                    [수정] 
+                    - transition-all, duration-300, ease-in-out: 부드러운 전환 효과
+                    - hover:scale-[1.4]: 600px * 1.67 = 1002px (약 1000px)로 확대
+                    - hover:z-10: 확대 시 다른 요소 위로 올라오도록 z-index 설정
+                -->
+                    <div class="bg-slate-300/20 backdrop-blur-lg border border-white/10 rounded-2xl shadow-xl overflow-hidden h-[550px] flex items-center justify-center
+                                transition-all duration-300 ease-in-out hover:scale-[1.4] hover:z-10">
                         <!-- 
-                          [수정] w-full을 제거합니다. 
-                          h-full (부모의 400px)과 object-contain에 의해 너비가 자동 계산됩니다.
+                          (내부 <img ...> 코드는 변경 없음)
                         -->
                         <img src="${process.env.PUBLIC_URL}image/poster1.jpg" alt="프로젝트 포스터 1" 
                              class="h-full object-contain" 
@@ -39,8 +35,11 @@ export function AboutPage(container) {
                         </div>
                     </div>
                     
-                    <!-- 포스터 2 카드 (동일하게 수정) -->
-                    <div class="bg-slate-300/20 backdrop-blur-lg border border-white/10 rounded-2xl shadow-xl overflow-hidden h-[600px] flex items-center justify-center">
+                    <!-- 
+                      포스터 2 카드 (동일하게 수정)
+                    -->
+                    <div class="bg-slate-300/20 backdrop-blur-lg border border-white/10 rounded-2xl shadow-xl overflow-hidden h-[550px] flex items-center justify-center
+                                transition-all duration-300 ease-in-out hover:scale-[1.4] hover:z-10">
                         <img src="${process.env.PUBLIC_URL}image/poster2.jpg" alt="프로젝트 포스터 2" 
                              class="h-full object-contain"
                              onerror="this.style.display='none'; this.nextSibling.style.display='flex';">
@@ -60,23 +59,23 @@ export function AboutPage(container) {
                     본 프로젝트는 최신 웹 기술과 컴퓨터 비전 기술의 융합을 통해 새로운 형태의 디지털 아트를 탐구하고자 합니다.
                 </p>
 
-                <!-- 홈으로 돌아가기 버튼 -->
-                <div class="mt-10 mb-20 text-center">
-                    <button id="btn-back-to-home" class="bg-slate-100/70 hover:bg-slate-100 text-blue-900 font-semibold py-3 px-8 rounded-lg transition-colors duration-200 shadow-md">
-                        홈으로 돌아가기
-                    </button>
+                <h2 class="text-3xl font-bold mt-16 mb-8 text-white text-center">Portfolio</h2>
+                <div class="flex justify-center mb-20"> <!-- 하단 여백 mb-20 추가 -->
+                    <!-- 포트폴리오 카드 -->
+                    <div class="bg-slate-300/20 backdrop-blur-lg border border-white/10 rounded-2xl shadow-xl overflow-hidden h-[600px] flex items-center justify-center">
+                        <img src="${process.env.PUBLIC_URL}image/portfolio.jpg" alt="포트폴리오 이미지" 
+                             class="h-full object-contain" 
+                             onerror="this.style.display='none'; this.nextSibling.style.display='flex';">
+                        
+                        <!-- 로드 실패 메시지 -->
+                        <div class="w-full h-full flex items-center justify-center bg-gray-700 text-gray-400" style="display:none;">
+                            이미지 로드 실패 (portpolio.jpg)
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     `;
-
-    // 버튼 이벤트 리스너
-    const backButton = container.querySelector('#btn-back-to-home');
-    if (backButton) {
-        backButton.addEventListener('click', () => {
-            window.location.hash = '/'; // 랜딩 페이지로 이동
-        });
-    }
 
     // 정리 함수
     return () => {
