@@ -107,7 +107,7 @@ class Tracking {
         };
 
         // ✅ 비디오 크기 검증 후 OffscreenCanvas 생성
-        const scale = 0.3; // 해상도 조정 비율
+        const scale = 0.2; // 해상도 조정 비율
         const videoWidth = this.video.videoWidth;
         const videoHeight = this.video.videoHeight;
         
