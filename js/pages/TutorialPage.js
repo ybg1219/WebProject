@@ -25,16 +25,22 @@ export function TutorialPage(container) {
 
     // --- HTML 뼈대 (두 단계를 모두 포함) ---
     container.innerHTML = `
-    <div class="tutorial-container flex items-center justify-center h-screen w-screen text-white font-sans overflow-hidden">
+    <div class="tutorial-container flex items-center justify-center h-screen w-screen text-white bg-gradient-to-r from-blue-400 to-blue-600  font-sans overflow-hidden">
 
         <div id="tutorial-video-step" class="flex flex-col items-center justify-center w-full h-full">
 
-            <div id="tutorial-video-placeholder" class="text-center">
-                <h2 class="text-4xl font-bold text-indigo-400">튜토리얼 영상 재생 중...</h2>
-                <p class="text-gray-400 mt-4">(임시 플레이스홀더 - 2초 후 사라짐)</p>
+            <div id="video-container" class="relative w-full h-auto aspect-video rounded-lg shadow-xl overflow-hidden">
+                <!-- 점선 네모 (z-10) -->
+                <div class="absolute inset-8 border-4 border-dashed border-white opacity-75 rounded-lg pointer-events-none z-10"></div>
+                <!-- 로딩 텍스트 (z-0) -->
+                <div id="video-loading-text" class="absolute inset-0 flex flex-col items-center justify-center z-0">
+                    <h2 class="text-4xl font-bold text-indigo-400">웹캠 로드 중...</h2>
+                    <p class="text-gray-400 mt-4">(VideoManager.getElement() 대기 중)</p>
+                </div>
             </div>
+            
 
-            <div id="practice-prompt" class="prompt z-10 bg-white/10 backdrop-blur-lg border border-white/10 p-12 rounded-2xl shadow-xl max-w-2xl w-11/12 text-center mt-8" style="display: none;">
+            <div id="practice-prompt" class="prompt z-20 absolute bg-white/10 backdrop-blur-lg border border-white/10 p-12 rounded-2xl shadow-xl max-w-2xl w-11/12 text-center" style="display: none;">
                 <h2 class="text-3xl font-bold mb-4 text-white">연습 페이지로 가시겠습니까?</h2>
                 <p class="text-gray-200 mb-20">방금 배운 손동작(클릭, 드래그)을 연습합니다.</p>
                 <div class="flex flex-col sm:flex-row gap-12 justify-center">
@@ -46,24 +52,23 @@ export function TutorialPage(container) {
 
         <!-- --- 역할 2: 3D 연습 단계 --- -->
         <div id="tutorial-practice-step" class="relative w-full h-full" style="display: none;">
-            <h1 class="absolute top-10 left-1/2 -translate-x-1/2 z-10 text-4xl font-bold text-white [text-shadow:_0_2px_4px_rgb(0_0_0_/_50%)]">3D 연습 환경</h1>
-            <p class="absolute top-20 left-1/2 -translate-x-1/2 z-10 text-gray-200 [text-shadow:_0_1px_2px_rgb(0_0_0_/_50%)]">(손동작으로 3D 물체를 클릭/드래그 해보세요)</p>
+            <p class="absolute top-80 left-1/2 -translate-x-1/2 z-10 text-gray-200 [text-shadow:_0_1px_2px_rgb(0_0_0_/_50%)]">(손동작으로 3D 물체를 클릭/드래그 해보세요)</p>
             
             <!-- Phase 2: HTML 에셋 바 컨테이너 -->
             <div id="asset-bar-container" 
-                class="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 w-11/12 max-w-md">
+                class="absolute top-48 left-1/2 -translate-x-1/2 z-10 inline-flex justify-center py-4 px-8 gap-6">
                 <!-- AssetBar.js가 여기에 렌더링됩니다 (AssetBar.js의 스타일이 적용됨) -->
             </div>
 
             <!-- 버튼 스타일 (LandingPage와 통일) -->
-            <button id="btn-practice-done" class="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">연습 완료 (메인으로 이동)</button>
+            <button id="btn-practice-done" class="absolute top-32 left-1/2 -translate-x-1/2 z-10 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">연습 완료 (메인으로 이동)</button>
         </div>
     </div>
     `;
 
     // --- DOM 요소 참조 ---
     const videoStep = container.querySelector('#tutorial-video-step');
-    const videoPlaceholder = container.querySelector('#tutorial-video-placeholder');
+    const videoLoadingText = container.querySelector('#video-loading-text');
     const practicePrompt = container.querySelector('#practice-prompt');
     const btnPracticeYes = container.querySelector('#btn-practice-yes');
     const btnPracticeNo = container.querySelector('#btn-practice-no');
@@ -270,20 +275,89 @@ export function TutorialPage(container) {
         }
     }
 
+    
+    let video = VideoManager.getElement();
+    // --- 초기 실행 ---
+    async function initializePage() {
+
+        if (!video) {
+            // Case 1: 새로고침 또는 직접 접근 (트래킹 모듈 초기화 필요)
+            console.log("VideoManager가 실행 중이 아님. TutorialPage에서 직접 초기화합니다.");
+            try {
+                // LandingPage와 동일하게 초기화 수행
+                VideoManager.init(document.body, window.innerWidth, window.innerHeight);
+                await VideoManager.startCamera();
+                video = VideoManager.getElement(); // 새로 생성된 비디오 가져오기
+                
+                if (!video) throw new Error("VideoManager가 비디오 요소를 생성하지 못했습니다.");
+
+                await GestureTracking.init(video);
+                VirtualMouse.init();
+                GestureTracking.start();
+                
+                console.log("TutorialPage에서 트래킹 모듈 초기화 완료.");
+
+            } catch (err) {
+                console.error("TutorialPage 카메라/트래킹 초기화 실패:", err);
+                if (videoLoadingText) {
+                    videoLoadingText.querySelector('h2').innerText = '웹캠 로드 실패';
+                    videoLoadingText.querySelector('p').innerText = '카메라 권한을 확인하고 새로고침하세요.';
+                }
+                // 비디오 로딩 실패 시, 2초 후 프롬프트만 표시
+                setTimeout(() => {
+                    if (practicePrompt) practicePrompt.style.display = 'block';
+                }, 2000);
+                return; // 함수 중단
+            }
+        } else {
+            // Case 2: LandingPage에서 정상적으로 넘어옴
+            console.log("VideoManager가 이미 실행 중입니다.");
+        }
+
+        if (video) {
+            video.style.opacity = '1';
+            video.classList.add('opacity-100');
+            video.classList.remove('opacity-0');
+            console.log("웹캠 비디오 Opacity를 1로 설정.");
+        } else {
+            // (이론상 catch 블록에서 걸러져야 하지만, 안전 장치)
+            console.error("InitializePage: videoElement가 여전히 null입니다.");
+            if (videoLoadingText) videoLoadingText.querySelector('h2').innerText = '웹캠 로드 실패';
+            return; 
+        }
+
+        // Case 1, 2 모두 비디오가 준비되었으므로 비디오 단계를 표시
+        showVideoStep(video);
+    }
+    initializePage();
+
 
     // --- 단계 전환 함수 (역할 분리) ---
     function showVideoStep() {
         if (videoStep) videoStep.style.display = 'flex';
         if (practiceStep) practiceStep.style.display = 'none';
 
-        // 2초 후 영상 숨기고 프롬프트 표시
+        // 비디오가 배경에서 보이므로, 로딩 텍스트를 즉시 숨깁니다.
+        if (videoLoadingText) videoLoadingText.style.display = 'none';
+
+        // 5초 후 프롬프트 표시 (점선 네모는 이미 보이고 있음)
         setTimeout(() => {
-            if (videoPlaceholder) videoPlaceholder.style.display = 'none';
             if (practicePrompt) practicePrompt.style.display = 'block';
-        }, 2000);
+        }, 10000); 
     }
+    // function showVideoStep() {
+    //     if (videoStep) videoStep.style.display = 'flex';
+    //     if (practiceStep) practiceStep.style.display = 'none';
+
+    //     // 2초 후 영상 숨기고 프롬프트 표시
+    //     setTimeout(() => {
+    //         if (videoPlaceholder) videoPlaceholder.style.display = 'none';
+    //         if (practicePrompt) practicePrompt.style.display = 'block';
+    //     }, 2000);
+    // }
 
     function showPracticeStep() {
+        video.style.opacity = '0';
         if (videoStep) videoStep.style.display = 'none';
         if (practiceStep) practiceStep.style.display = 'block';
         initPracticeScene(); // 3D 씬 시작
@@ -311,8 +385,7 @@ export function TutorialPage(container) {
     btnPracticeNo.addEventListener('click', handlePracticeNo);
     btnPracticeDone.addEventListener('click', handlePracticeDone);
 
-    // --- 초기 실행 ---
-    showVideoStep(); // 첫 단계(비디오)로 시작
+    
 
     // --- 정리(cleanup) 함수 ---
     return () => {
@@ -399,12 +472,11 @@ class AssetBar {
             // SVG 아이콘을 사용한 예시 (Tailwind 아이콘)
             new AssetSlot('box', `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`),
             new AssetSlot('sphere', `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>`),
-            new AssetSlot('cone', `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 7.8l-7.7 7.7-4-4L2 18"></path><path d="M16 16h4v4"></path></svg>`) // (임시 아이콘, Cone 아이콘이 없어 TrendUp 사용)
-        ];
+            new AssetSlot('cone', `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L4 21 Q12 23 20 21 Z"></path></svg>`)];
 
         // 2. HTML 렌더링
         this.container.innerHTML = `
-            <div class="bg-gray-800 bg-opacity-80 backdrop-blur-sm p-3 rounded-full">
+            <div class="bg-gray-800 bg-opacity-60 backdrop-blur-sm px-6 p-3 rounded-full">
                 <div class="flex space-x-3 overflow-x-auto">
                     ${this.assetSlots.map(slot => slot.render()).join('')}
                 </div>
