@@ -40,7 +40,7 @@ function MainPage(container) {
             <p class="text-gray-100 text-[10px] sm:text-xs font-light leading-relaxed break-keep">
                 구현된 연기의 움직임은 아직 풀지 못한 문제들을 일컫는 밀레니엄 문제 중 하나인 
                 <span class="text-indigo-800 font-medium">나비에 스토크스 방정식</span>을 기반으로 합니다.<br class="hidden sm:block"/>
-                따라서 완벽한 '해', '정답'을 대신 수치해석 기법을 사용하기 때문에 
+                따라서 완벽한 '해', '정답' 대신 수치해석 기법을 사용하기 때문에 
                 마치 시간의 윤년처럼 아주 작은 오차들이 쌓여 시스템이 불안정해집니다.
             </p>
             <p class="text-indigo-300 text-xs sm:text-sm font-medium mt-1 animate-pulse">
