@@ -19,10 +19,39 @@ const publicUrl = process.env.PUBLIC_URL || '';
  * @returns {Function} 페이지가 사라질 때 호출될 정리(cleanup) 함수
  */
 function MainPage(container) {
-    // WebGL 인스턴스를 저장할 변수
+    // [중요] container에 relative를 주어 내부 absolute 요소들이 이 영역 안에서만 배치되도록 합니다.
+    container.classList.add('relative', 'w-full', 'h-full');
+
+    // 1. WebGL 인스턴스 생성 (Canvas가 container에 append됨)
     let webglInstance = new WebGL({
         $wrapper: container
     });
+
+    // 2. [추가] 하단 안내 문구 생성
+    const disclaimerDiv = document.createElement('div');
+    
+    // 스타일: 
+    // - absolute bottom-4: 컨테이너 하단에 고정
+    // - pointer-events-none: 문구 위를 클릭해도 뒤의 시뮬레이션이 반응하도록 통과시킴
+    disclaimerDiv.className = "absolute top-32 left-0 w-full flex justify-center z-10 pointer-events-none px-4";
+    
+    disclaimerDiv.innerHTML = `
+        <div class="bg-gray-900/40 backdrop-blur-sm p-4 rounded-xl text-center max-w-4xl border border-white/5 shadow-lg">
+            <p class="text-gray-100 text-[10px] sm:text-xs font-light leading-relaxed break-keep">
+                구현된 연기의 움직임은 아직 풀지 못한 문제들을 일컫는 밀레니엄 문제 중 하나인 
+                <span class="text-indigo-800 font-medium">나비에 스토크스 방정식</span>을 기반으로 합니다.<br class="hidden sm:block"/>
+                따라서 완벽한 '해', '정답'을 대신 수치해석 기법을 사용하기 때문에 
+                마치 시간의 윤년처럼 아주 작은 오차들이 쌓여 시스템이 불안정해집니다.
+            </p>
+            <p class="text-indigo-300 text-xs sm:text-sm font-medium mt-1 animate-pulse">
+                따라서 멈춰있다면, 새로고침하거나 상단 바의 타이틀 flowground를 눌러주세요.
+            </p>
+        </div>
+    `;
+    
+    // [중요] container 안에 넣습니다. 페이지가 바뀌면 container가 비워지므로 이 문구도 함께 사라집니다.
+    container.appendChild(disclaimerDiv);
+
 
     // 페이지가 변경될 때 호출될 정리(cleanup) 함수를 반환합니다.
     return () => {
@@ -30,8 +59,12 @@ function MainPage(container) {
             webglInstance.destroy(); // WebGL 리소스 정리
         }
         webglInstance = null;
-        // 컨테이너 내용을 비워 다음 페이지를 준비합니다.
+        
+        // [중요] 여기서 container 내부를 싹 비웁니다 (캔버스 + 안내 문구 모두 삭제됨)
         container.innerHTML = '';
+        
+        // 추가했던 클래스 제거 (선택사항, 깔끔한 상태 유지를 위해)
+        container.classList.remove('relative', 'w-full', 'h-full');
     };
 }
 
