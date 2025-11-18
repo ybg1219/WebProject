@@ -50,9 +50,30 @@ export function TutorialPage(container) {
             </div>
         </div>
 
+        <div id="tutorial-text-overlay" 
+                 class="absolute bottom-30 left-1/2 -translate-x-1/2 z-10 
+                        w-11/12 max-w-3xl text-center p-4">
+
+                
+                <div class="w-full flex justify-center">
+                <img id="tutorial-image-content" 
+                src="" alt="튜토리얼 가이드"
+                class="h-32 sm:h-40 object-contain 
+                    transition-opacity duration-500 ease-in-out opacity-0
+                    [filter:drop-shadow(0_4px_6px_rgba(0,0,0,0.4))]">
+                </div>
+
+                <p id="tutorial-text-content" 
+                   class="w-full text-2xl font-semibold text-white text-center
+                          [text-shadow:_0_2px_4px_rgb(0_0_0_/_70%)] 
+                          transition-opacity duration-500 ease-in-out opacity-0">
+                    <!-- 텍스트가 여기에 JS로 삽입됩니다. -->
+                </p>
+            </div>
+
         <!-- --- 역할 2: 3D 연습 단계 --- -->
         <div id="tutorial-practice-step" class="relative w-full h-full" style="display: none;">
-            <p class="absolute top-80 left-1/2 -translate-x-1/2 z-10 text-gray-200 [text-shadow:_0_1px_2px_rgb(0_0_0_/_50%)]">(손동작으로 3D 물체를 클릭/드래그 해보세요)</p>
+            <p class="absolute top-80 left-1/2 -translate-x-1/2 z-10 text-gray-200 [text-shadow:_0_1px_2px_rgb(0_0_0_/_50%)]">(손으로 위의 바에서 물체를 잡아보세요. 잡고 물체를 이동한 후 바닥에 놓으면 됩니다.)</p>
             
             <!-- Phase 2: HTML 에셋 바 컨테이너 -->
             <div id="asset-bar-container" 
@@ -72,6 +93,10 @@ export function TutorialPage(container) {
     const practicePrompt = container.querySelector('#practice-prompt');
     const btnPracticeYes = container.querySelector('#btn-practice-yes');
     const btnPracticeNo = container.querySelector('#btn-practice-no');
+    // [신규] 튜토리얼 텍스트 참조
+    const tutorialTextContent = container.querySelector('#tutorial-text-content');
+    const tutorialImageContent = container.querySelector('#tutorial-image-content');
+
 
     const practiceStep = container.querySelector('#tutorial-practice-step');
     const btnPracticeDone = container.querySelector('#btn-practice-done');
@@ -275,7 +300,7 @@ export function TutorialPage(container) {
         }
     }
 
-    
+
     let video = VideoManager.getElement();
     // --- 초기 실행 ---
     async function initializePage() {
@@ -288,13 +313,13 @@ export function TutorialPage(container) {
                 VideoManager.init(document.body, window.innerWidth, window.innerHeight);
                 await VideoManager.startCamera();
                 video = VideoManager.getElement(); // 새로 생성된 비디오 가져오기
-                
+
                 if (!video) throw new Error("VideoManager가 비디오 요소를 생성하지 못했습니다.");
 
                 await GestureTracking.init(video);
                 VirtualMouse.init();
                 GestureTracking.start();
-                
+
                 console.log("TutorialPage에서 트래킹 모듈 초기화 완료.");
 
             } catch (err) {
@@ -323,7 +348,7 @@ export function TutorialPage(container) {
             // (이론상 catch 블록에서 걸러져야 하지만, 안전 장치)
             console.error("InitializePage: videoElement가 여전히 null입니다.");
             if (videoLoadingText) videoLoadingText.querySelector('h2').innerText = '웹캠 로드 실패';
-            return; 
+            return;
         }
 
         // Case 1, 2 모두 비디오가 준비되었으므로 비디오 단계를 표시
@@ -340,21 +365,59 @@ export function TutorialPage(container) {
         // 비디오가 배경에서 보이므로, 로딩 텍스트를 즉시 숨깁니다.
         if (videoLoadingText) videoLoadingText.style.display = 'none';
 
+        if (tutorialTextContent && tutorialImageContent) {
+
+            // 이미지 경로 정의 (Webpack이 process.env.PUBLIC_URL을 치환)
+            const img0 = `${process.env.PUBLIC_URL}image/tutorial0.png`;
+            const img1 = `${process.env.PUBLIC_URL}image/tutorial1.png`;
+            const img2 = `${process.env.PUBLIC_URL}image/tutorial2.png`;
+            const img3 = `${process.env.PUBLIC_URL}image/tutorial3.png`;
+
+            // 1. (즉시) 텍스트 1, 이미지 1 표시
+            tutorialTextContent.innerText = "          안녕하세요! 손을 화면에 흔들어보세요           ";
+            tutorialImageContent.src = img0;
+            tutorialTextContent.style.opacity = '1';
+            tutorialImageContent.style.opacity = '1';
+
+            // 2. (3초 후) 텍스트 2, 이미지 2로 변경
+            setTimeout(() => {
+                if (tutorialTextContent && tutorialImageContent) {
+                    tutorialTextContent.innerText = "최대한 손과 머리를 점선 안에서 움직여주세요.";
+                    tutorialImageContent.src = img1;
+                }
+            }, 3000); // 3초
+
+
+            // 2. (3초 후) 텍스트 2, 이미지 2로 변경
+            setTimeout(() => {
+                if (tutorialTextContent && tutorialImageContent) {
+                    tutorialTextContent.innerText = "사용자의 모션을 인식하여";
+                    tutorialImageContent.src = img2;
+                }
+            }, 6000); // 3초
+
+            // 3. (6초 후) 텍스트 3, 이미지 3로 변경
+            setTimeout(() => {
+                if (tutorialTextContent && tutorialImageContent) {
+                    tutorialTextContent.innerText = "연기를 생성하고 흐름을 만들어냅니다.";
+                    tutorialImageContent.src = img3;
+                }
+            }, 9000); // 3 + 3 = 6초
+
+            // 4. (9초 후) 텍스트와 이미지 숨기기
+            setTimeout(() => {
+                if (tutorialTextContent && tutorialImageContent) {
+                    tutorialTextContent.style.opacity = '0';
+                    tutorialImageContent.style.opacity = '0';
+                }
+            }, 12000); // 6 + 3 = 9초
+        }
+
         // 5초 후 프롬프트 표시 (점선 네모는 이미 보이고 있음)
         setTimeout(() => {
             if (practicePrompt) practicePrompt.style.display = 'block';
-        }, 10000); 
+        }, 13000);
     }
-    // function showVideoStep() {
-    //     if (videoStep) videoStep.style.display = 'flex';
-    //     if (practiceStep) practiceStep.style.display = 'none';
-
-    //     // 2초 후 영상 숨기고 프롬프트 표시
-    //     setTimeout(() => {
-    //         if (videoPlaceholder) videoPlaceholder.style.display = 'none';
-    //         if (practicePrompt) practicePrompt.style.display = 'block';
-    //     }, 2000);
-    // }
 
     function showPracticeStep() {
         video.style.opacity = '0';
@@ -385,7 +448,7 @@ export function TutorialPage(container) {
     btnPracticeNo.addEventListener('click', handlePracticeNo);
     btnPracticeDone.addEventListener('click', handlePracticeDone);
 
-    
+
 
     // --- 정리(cleanup) 함수 ---
     return () => {
