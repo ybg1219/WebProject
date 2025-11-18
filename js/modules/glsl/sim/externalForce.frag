@@ -11,6 +11,5 @@ void main(){
     float d = 1.0-min(length(circle), 1.0);
     d *= d;
     d = smoothstep(d, 0.0, 1.0);
-    force = normalize(force*d)*0.5;
-    gl_FragColor = vec4(force , 0.0, 1.0);
+    gl_FragColor = vec4(force*d , 0.0, 1.0);
 }

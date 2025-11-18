@@ -22,7 +22,7 @@ class Tracking {
         this.isWorkerReady = false;
         
         // FPS 제한 설정 (60fps)
-        this.fpsInterval = 1000 / 60;
+        this.fpsInterval = 1000 / 30;
         this.lastFrameTime = 0;
 
         this.canvasWidth = 0;
@@ -107,7 +107,7 @@ class Tracking {
         };
 
         // ✅ 비디오 크기 검증 후 OffscreenCanvas 생성
-        const scale = 0.2; // 해상도 조정 비율
+        const scale = 0.3; // 해상도 조정 비율
         const videoWidth = this.video.videoWidth;
         const videoHeight = this.video.videoHeight;
         
