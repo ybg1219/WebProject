@@ -28,9 +28,9 @@ class CanvasManager {
         this.canvas.style.position = 'absolute';
         this.canvas.style.top = '0';
         this.canvas.style.left = '0%';
-        this.canvas.style.transform = 'translateX(10%) translateY(10%)';
+        this.canvas.style.transform = 'translateX(10%) translateY(50%)';
         this.canvas.style.pointerEvents = 'none';
-        this.canvas.style.zIndex = '10';
+        this.canvas.style.zIndex = '9';
         this.canvas.style.objectFit = 'cover'
 
         this.setSize(width, height);

@@ -29,13 +29,13 @@ void main() {
     // --- 3. 색상 혼합 (Color Mapping) --- 
     vec3 finalColor;    
     // 0% ~ 30%: 보라색 (Purple) -> 파란색 (Blue)
-    finalColor = mix(colorA_Purple, colorB_Blue, smoothstep(0.0, 0.6, value)); 
+    finalColor = mix(colorA_Purple, colorB_Blue, smoothstep(0.0, 0.4, value)); 
     
     // 30% ~ 60%: 파란색 (Blue) -> 하늘색 (Cyan)
-    finalColor = mix(finalColor, colorC_Cyan, smoothstep(0.6, 0.9, value));
+    finalColor = mix(finalColor, colorC_Cyan, smoothstep(0.4, 0.65, value));
     
     // 60% ~ 100%: 하늘색 (Cyan) -> 흰색 (White)
-    finalColor = mix(finalColor, colorD_White, smoothstep(0.9, 1.0, value));
+    finalColor = mix(finalColor, colorD_White, smoothstep(0.65, 1.0, value));
     
     // 최종 색상 출력 (알파 값 포함)
     gl_FragColor = vec4(finalColor, alpha);
