@@ -31,21 +31,54 @@ export function TutorialPage(container) {
 
             <div id="video-container" class="relative w-full h-auto aspect-video rounded-lg shadow-xl overflow-hidden">
                 <!-- 점선 네모 (z-10) -->
-                <div class="absolute inset-8 border-4 border-dashed border-white opacity-75 rounded-lg pointer-events-none z-10"></div>
+                <div class="absolute inset-20 border-4 border-dashed border-white animation-purse opacity-75 rounded-lg pointer-events-none z-10"></div>
                 <!-- 로딩 텍스트 (z-0) -->
                 <div id="video-loading-text" class="absolute inset-0 flex flex-col items-center justify-center z-0">
-                    <h2 class="text-4xl font-bold text-indigo-400">웹캠 로드 중...</h2>
-                    <p class="text-gray-400 mt-4">(VideoManager.getElement() 대기 중)</p>
+                    <h2 class="text-3xl font-bold text-blue-800">웹캠을 가져오는 중...</h2>
+                    <p class="text-gray-200 mt-4"> 튜토리얼을 위해 영상을 가져오는 중입니다. 잠시만 기다려주세요.</p>
                 </div>
             </div>
             
 
-            <div id="practice-prompt" class="prompt z-20 absolute bg-white/10 backdrop-blur-lg border border-white/10 p-12 rounded-2xl shadow-xl max-w-2xl w-11/12 text-center" style="display: none;">
-                <h2 class="text-3xl font-bold mb-4 text-white">연습 페이지로 가시겠습니까?</h2>
-                <p class="text-gray-200 mb-20">방금 배운 손동작(클릭, 드래그)을 연습합니다.</p>
-                <div class="flex flex-col sm:flex-row gap-12 justify-center">
-                    <button id="btn-practice-yes" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-6 px-8 rounded-lg transition-colors duration-200">예 (연습하기)</button>
-                    <button id="btn-practice-no" class="w-full sm:w-auto bg-white/20 hover:bg-white/30 text-white font-semibold py-6 px-8 rounded-lg transition-colors duration-200">아니오 (바로 시작)</button>
+            <div id="practice-prompt" class="prompt z-20 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/30 backdrop-blur-xl border border-white/10 p-8 sm:p-10 rounded-3xl shadow-2xl max-w-2xl w-11/12 text-center" style="display: none;">
+                
+                <h2 class="text-xl sm:text-2xl font-semibold mb-6 text-indigo-100 leading-snug">
+                    이제 웹캠을 통해 제스처로 다양한 작업을 할 수 있습니다!
+                </h2>
+                
+                <div class="text-gray-200 mb-8 text-sm sm:text-base space-y-4 text-left bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner">
+                    
+                    <p class="text-lg sm:text-xl font-md text-white mb-4 text-center">
+                        연기의 흐름을 체험해보시겠습니까?
+                    </p>
+                    
+                    <div class="space-y-2 pl-4">
+                        <p class="flex items-start gap-2">
+                            <span>🔹</span>
+                            <span>
+                                <span class="font-bold text-white">"예"</span> : 전신 추적을 통해 <span class="text-indigo-500 font-semibold">연기의 흐름(Flow)</span>을 만들어냅니다.
+                            </span>
+                        </p>
+                        <p class="flex items-start gap-2">
+                            <span>🔹</span>
+                            <span>
+                                <span class="font-bold text-white">"아니요"</span> : 제스처 인식으로 물체를 옮기는 <span class="text-indigo-500 font-semibold">가상 공간(Playground)</span>을 체험합니다.
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 
+                   버튼 그룹 (박스 밖으로 이동)
+                   - py-4: 버튼 높이 적절하게 축소
+                -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button id="btn-practice-yes" class="w-full sm:w-auto bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 px-8 rounded-xl transition-all duration-200 shadow-lg transform hover:scale-105 hover:shadow-indigo-500/25">
+                        예 (연기 flow 체험)
+                    </button>
+                    <button id="btn-practice-no" class="w-full sm:w-auto bg-white/5 hover:bg-white/70 text-white font-semibold py-4 px-8 rounded-xl transition-colors duration-200 border border-white/10 hover:border-white/30 backdrop-blur-sm">
+                        아니오 (Playground)
+                    </button>
                 </div>
             </div>
         </div>
@@ -385,7 +418,7 @@ export function TutorialPage(container) {
                     tutorialTextContent.innerText = "최대한 손과 머리를 점선 안에서 움직여주세요.";
                     tutorialImageContent.src = img1;
                 }
-            }, 3000); // 3초
+            }, 4000); // 3초
 
 
             // 2. (3초 후) 텍스트 2, 이미지 2로 변경
@@ -394,7 +427,7 @@ export function TutorialPage(container) {
                     tutorialTextContent.innerText = "사용자의 모션을 인식하여";
                     tutorialImageContent.src = img2;
                 }
-            }, 6000); // 3초
+            }, 8000); // 3초
 
             // 3. (6초 후) 텍스트 3, 이미지 3로 변경
             setTimeout(() => {
@@ -402,7 +435,7 @@ export function TutorialPage(container) {
                     tutorialTextContent.innerText = "연기를 생성하고 흐름을 만들어냅니다.";
                     tutorialImageContent.src = img3;
                 }
-            }, 9000); // 3 + 3 = 6초
+            }, 11000); // 3 + 3 = 6초
 
             // 4. (9초 후) 텍스트와 이미지 숨기기
             setTimeout(() => {
@@ -410,7 +443,7 @@ export function TutorialPage(container) {
                     tutorialTextContent.style.opacity = '0';
                     tutorialImageContent.style.opacity = '0';
                 }
-            }, 12000); // 6 + 3 = 9초
+            }, 15000); // 6 + 3 = 9초
         }
 
         // 5초 후 프롬프트 표시 (점선 네모는 이미 보이고 있음)
@@ -444,8 +477,8 @@ export function TutorialPage(container) {
     };
 
     // --- 리스너 연결 ---
-    btnPracticeYes.addEventListener('click', handlePracticeYes);
-    btnPracticeNo.addEventListener('click', handlePracticeNo);
+    btnPracticeYes.addEventListener('click', handlePracticeNo);
+    btnPracticeNo.addEventListener('click', handlePracticeYes);
     btnPracticeDone.addEventListener('click', handlePracticeDone);
 
 
