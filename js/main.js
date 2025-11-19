@@ -8,10 +8,6 @@ import { TutorialPage } from "./pages/TutorialPage.js";
 import { PracticePage } from "./pages/PracticePage.js";
 import { PhotoBoothPage } from "./pages/PhotoBoothPage.js";
 
-
-// [추가] VideoManager 임포트
-import VideoManager from './modules/VideoManager.js';
-
 // 개발 환경 플래그 설정
 if (!window.isDev) window.isDev = false; // is dev 정의되어있지 않으면 개발환경을 끔. (디버그 용 코드드 한번에 꺼버리기)
 const publicUrl = process.env.PUBLIC_URL || '';
@@ -80,67 +76,7 @@ function MainPage(container) {
     // HTML을 컨테이너에 추가
     container.appendChild(disclaimerDiv);
 
-    // [로직 추가] 버튼 클릭 이벤트 리스너
-    const enableWebcamBtn = disclaimerDiv.querySelector('#btn-enable-webcam');
-    let isWebcamActive = false; // 현재 상태 추적 변수
-
-    enableWebcamBtn.addEventListener('click', async () => {
-        try {
-            let videoElement = VideoManager.getElement();
-
-            if (!isWebcamActive) {
-                // --- 켜기 (ON) ---
-                console.log("웹캠 켜기 시도...");
-
-                // 1. 비디오 요소가 없으면 초기화 및 시작
-                if (!videoElement) {
-                    console.log("VideoManager 초기화 및 카메라 시작...");
-                    VideoManager.init(document.body, window.innerWidth, window.innerHeight);
-                    await VideoManager.startCamera();
-                    videoElement = VideoManager.getElement();
-                }
-
-                // 2. 투명도를 1로 설정 (보이게 하기)
-                if (typeof VideoManager.setVideoOpacity === 'function') {
-                    VideoManager.setVideoOpacity('0.4'); 
-                }
-                // 3. 버튼 상태 업데이트 (끄기 모드로 전환)
-                // [중요] disabled = true를 하지 않습니다!
-                isWebcamActive = true;
-                enableWebcamBtn.textContent = "웹캠 배경 끄기";
-                enableWebcamBtn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
-                enableWebcamBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
-
-            } else {
-                // --- 끄기 (OFF) ---
-                console.log("웹캠 배경 끄기 시도...");
-
-                // 1. 투명도를 0으로 설정하여 숨김
-                if (typeof VideoManager.setVideoOpacity === 'function') {
-                    VideoManager.setVideoOpacity(0);
-                }
-                if (videoElement) {
-                    videoElement.style.opacity = '0';
-                    videoElement.classList.remove('opacity-100');
-                    videoElement.classList.add('opacity-0');
-                }
-
-                // 2. 버튼 상태 업데이트 (켜기 모드로 전환)
-                isWebcamActive = false;
-                enableWebcamBtn.textContent = "웹캠 배경 켜기";
-                enableWebcamBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
-                enableWebcamBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
-            }
-
-        } catch (error) {
-            console.error("웹캠 제어 실패:", error);
-            // 에러가 났을 때만 버튼을 비활성화합니다.
-            enableWebcamBtn.textContent = "웹캠 오류";
-            enableWebcamBtn.disabled = true;
-            enableWebcamBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        }
-    });
-
+    
 
     // 페이지 정리 함수
     return () => {
@@ -148,14 +84,6 @@ function MainPage(container) {
             webglInstance.destroy(); // WebGL 리소스 정리
         }
         webglInstance = null;
-        
-        // [중요] 페이지를 나갈 때 웹캠을 다시 숨김 (선택 사항)
-        // 다른 페이지(Tutorial 등)에서도 써야 한다면 끄지 않아도 되지만,
-        // 보통 메인 시뮬레이션 배경용으로 켰다면 끄는 게 깔끔합니다.
-        const video = VideoManager.getElement();
-        if (video) {
-            video.style.opacity = '0';
-        }
 
         container.innerHTML = '';
         container.classList.remove('relative', 'w-full', 'h-full');

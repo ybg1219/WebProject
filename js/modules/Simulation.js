@@ -74,13 +74,13 @@ export default class Simulation {
         this.options = { // reference 값으로 변경 하자마자 값이 바뀜.
             iterations_poisson: 32,
             iterations_viscous: 32,
-            mouse_force: 20,
+            mouse_force: 15,
             resolution: 0.5,
             cursor_size: 60,
-            buoyancy: 0.03,
+            buoyancy: 0.05,
             viscous: 250,
             isBounce: false,
-            dt: 0.014,
+            dt: 0.020,
             isViscous: false,
             BFECC: true,
             isMouse: false
@@ -444,21 +444,30 @@ export default class Simulation {
         });
 
         // allBodyCoords 배열을 MAX_PEOPLE 개수만큼 "자릅니다".
-        const limitedBodyCoords = allBodyCoords.slice(0, MAX_PEOPLE);
-
-        const allSourcePos = [];
-        limitedBodyCoords.forEach(person => {
-            const personSourcePos = Object.values(person).map(part => part.coords);
-            allSourcePos.push(...personSourcePos);
-        });
-
-        if (allSourcePos.length > 0) {
+        if (this.options.isMouse) {
             this.density.update({
-                cursor_size: this.options.cursor_size,
-                cellScale: this.cellScale,
-                sourcePos: allSourcePos,
-                numPeople: allBodyCoords.length,
+                    cursor_size: this.options.cursor_size,
+                    cellScale: this.cellScale,
+                    sourcePos: Mouse.coords,
+                    isAlone: true,
             });
+        }else{
+            const limitedBodyCoords = allBodyCoords.slice(0, MAX_PEOPLE);
+
+            const allSourcePos = [];
+            limitedBodyCoords.forEach(person => {
+                const personSourcePos = Object.values(person).map(part => part.coords);
+                allSourcePos.push(...personSourcePos);
+            });
+
+            if (allSourcePos.length > 0) {
+                this.density.update({
+                    cursor_size: this.options.cursor_size,
+                    cellScale: this.cellScale,
+                    sourcePos: allSourcePos,
+                    numPeople: allBodyCoords.length,
+                });
+            }
         }
 
         this.gradient.update()

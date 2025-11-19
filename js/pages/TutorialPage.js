@@ -162,19 +162,13 @@ export function TutorialPage(container) {
 
     enableWebcamBtn.addEventListener('click', async () => {
         try {
+            
+            // 1. 비디오 요소가 없으면 종료
             let videoElement = VideoManager.getElement();
 
             if (!isWebcamActive) {
                 // --- 켜기 (ON) ---
                 console.log("웹캠 켜기 시도...");
-
-                // 1. 비디오 요소가 없으면 초기화 및 시작
-                if (!videoElement) {
-                    console.log("VideoManager 초기화 및 카메라 시작...");
-                    VideoManager.init(document.body, window.innerWidth, window.innerHeight);
-                    await VideoManager.startCamera();
-                    videoElement = VideoManager.getElement();
-                }
 
                 // 2. 투명도를 1로 설정 (보이게 하기)
                 if (typeof VideoManager.setVideoOpacity === 'function') {

@@ -131,14 +131,14 @@ export default class Controls {
 
         // --- 3. 컨트롤 추가 (기존 코드) ---
         this.gui.add(this.params, "isMouse");
-        this.gui.add(this.params, "buoyancy", 0.0, 0.3);
-        this.gui.add(this.params, "mouse_force", 20, 200);
-        this.gui.add(this.params, "cursor_size", 30, 150);
+        this.gui.add(this.params, "buoyancy", 0.01, 0.3);
+        this.gui.add(this.params, "mouse_force", 5, 60);
+        this.gui.add(this.params, "cursor_size", 30, 120);
         this.gui.add(this.params, "isViscous");
-        this.gui.add(this.params, "viscous", 0, 500);
+        this.gui.add(this.params, "viscous", 0, 200);
         this.gui.add(this.params, "iterations_viscous", 1, 32);
         this.gui.add(this.params, "iterations_poisson", 1, 32);
-        this.gui.add(this.params, "dt", 1 / 200, 1 / 30);
+        this.gui.add(this.params, "dt", 1 / 100, 1 / 30);
         this.gui.add(this.params, 'BFECC');
         this.gui.close();
     }
