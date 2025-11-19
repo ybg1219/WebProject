@@ -29,9 +29,9 @@ export function TutorialPage(container) {
 
         <div id="tutorial-video-step" class="flex flex-col items-center justify-center w-full h-full">
 
-            <div id="video-container" class="relative w-full h-auto aspect-video rounded-lg shadow-xl overflow-hidden">
+            <div id="video-container" class="relative w-full h-auto aspect-video rounded-lg overflow-hidden">
                 <!-- 점선 네모 (z-10) -->
-                <div class="absolute inset-20 border-4 border-dashed border-white animation-purse opacity-75 rounded-lg pointer-events-none z-10"></div>
+                <div class="absolute inset-20 border-4 border-dashed border-blue opacity-75 rounded-lg pointer-events-none z-10"></div>
                 <!-- 로딩 텍스트 (z-0) -->
                 <div id="video-loading-text" class="absolute inset-0 flex flex-col items-center justify-center z-0">
                     <h2 class="text-3xl font-bold text-blue-800">웹캠을 가져오는 중...</h2>
@@ -40,13 +40,13 @@ export function TutorialPage(container) {
             </div>
             
 
-            <div id="practice-prompt" class="prompt z-20 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/30 backdrop-blur-xl border border-white/10 p-8 sm:p-10 rounded-3xl shadow-2xl max-w-2xl w-11/12 text-center" style="display: none;">
+            <div id="practice-prompt" class="prompt z-20 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-400/40 backdrop-blur-xl border border-white/10 p-8 sm:p-10 rounded-3xl shadow-2xl max-w-2xl w-11/12 text-center" style="display: none;">
                 
-                <h2 class="text-xl sm:text-2xl font-semibold mb-6 text-indigo-100 leading-snug">
+                <h2 class="text-xl sm:text-2xl font-semibold mb-6 text-indigo-500 leading-snug">
                     이제 웹캠을 통해 제스처로 다양한 작업을 할 수 있습니다!
                 </h2>
                 
-                <div class="text-gray-200 mb-8 text-sm sm:text-base space-y-4 text-left bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner">
+                <div class="text-gray-200/90 mb-8 text-sm sm:text-base space-y-4 text-left bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner">
                     
                     <p class="text-lg sm:text-xl font-md text-white mb-4 text-center">
                         연기의 흐름을 체험해보시겠습니까?
@@ -56,13 +56,13 @@ export function TutorialPage(container) {
                         <p class="flex items-start gap-2">
                             <span>🔹</span>
                             <span>
-                                <span class="font-bold text-white">"예"</span> : 전신 추적을 통해 <span class="text-indigo-500 font-semibold">연기의 흐름(Flow)</span>을 만들어냅니다.
+                                <span class="font-bold text-white">"예"</span> : 전신 추적을 통해 <span class="text-indigo-600 font-semibold">연기의 흐름(Flow)</span>을 만들어냅니다.
                             </span>
                         </p>
                         <p class="flex items-start gap-2">
                             <span>🔹</span>
                             <span>
-                                <span class="font-bold text-white">"아니요"</span> : 제스처 인식으로 물체를 옮기는 <span class="text-indigo-500 font-semibold">가상 공간(Playground)</span>을 체험합니다.
+                                <span class="font-bold text-white">"아니요"</span> : 제스처 인식으로 물체를 옮기는 <span class="text-indigo-600 font-semibold">가상 공간(Playground)</span>을 체험합니다.
                             </span>
                         </p>
                     </div>
