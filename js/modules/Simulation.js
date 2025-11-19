@@ -76,7 +76,7 @@ export default class Simulation {
             iterations_viscous: 32,
             mouse_force: 20,
             resolution: 0.5,
-            cursor_size: 80,
+            cursor_size: 60,
             buoyancy: 0.03,
             viscous: 250,
             isBounce: false,

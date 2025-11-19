@@ -133,7 +133,7 @@ export default class Controls {
         this.gui.add(this.params, "isMouse");
         this.gui.add(this.params, "buoyancy", 0.0, 0.3);
         this.gui.add(this.params, "mouse_force", 20, 200);
-        this.gui.add(this.params, "cursor_size", 10, 200);
+        this.gui.add(this.params, "cursor_size", 30, 150);
         this.gui.add(this.params, "isViscous");
         this.gui.add(this.params, "viscous", 0, 500);
         this.gui.add(this.params, "iterations_viscous", 1, 32);
