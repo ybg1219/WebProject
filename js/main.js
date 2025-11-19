@@ -8,6 +8,10 @@ import { TutorialPage } from "./pages/TutorialPage.js";
 import { PracticePage } from "./pages/PracticePage.js";
 import { PhotoBoothPage } from "./pages/PhotoBoothPage.js";
 
+
+// [추가] VideoManager 임포트
+import VideoManager from './modules/VideoManager.js';
+
 // 개발 환경 플래그 설정
 if (!window.isDev) window.isDev = false; // is dev 정의되어있지 않으면 개발환경을 끔. (디버그 용 코드드 한번에 꺼버리기)
 const publicUrl = process.env.PUBLIC_URL || '';
@@ -36,34 +40,124 @@ function MainPage(container) {
     disclaimerDiv.className = "absolute top-32 left-0 w-full flex justify-center z-10 pointer-events-none px-4";
     
     disclaimerDiv.innerHTML = `
-        <div class="bg-gray-900/40 backdrop-blur-sm p-4 rounded-xl text-center max-w-4xl border border-white/5 shadow-lg">
+        <div class="bg-gray-900/40 backdrop-blur-sm p-4 rounded-xl font-sans text-center max-w-4xl border border-white/5 shadow-lg">
+            <p class="text-gray-100 text-[10px] sm:text-xs font-bold leading-relaxed break-keep">
+                해당 페이지는 제스처 클릭을 지원하지 않습니다. 또한 모니터 사양이 낮아 느린 점 양해부탁드립니다!
+            </p>
             <p class="text-gray-100 text-[10px] sm:text-xs font-light leading-relaxed break-keep">
                 구현된 연기의 움직임은 아직 풀지 못한 문제들을 일컫는 밀레니엄 문제 중 하나인 
                 <span class="text-indigo-800 font-medium">나비에 스토크스 방정식</span>을 기반으로 합니다.<br class="hidden sm:block"/>
                 따라서 완벽한 '해', '정답' 대신 수치해석 기법을 사용하기 때문에 
                 마치 시간의 윤년처럼 아주 작은 오차들이 쌓여 시스템이 불안정해집니다.
             </p>
-            <p class="text-indigo-300 text-xs sm:text-sm font-medium mt-1 animate-pulse">
+            <p class="text-indigo-100 text-xs sm:text-sm font-medium mt-1 animate-pulse">
                 따라서 멈춰있다면, 새로고침하거나 상단 바의 타이틀 flowground를 눌러주세요.
             </p>
         </div>
+        <div class="absolute top-80 left-10 z-20 font-sans pointer-events-auto">
+            <div class="flex flex-col items-start gap-3 p-5 bg-gray-900/60 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl transition-transform hover:scale-105">
+                
+                <button id="btn-enable-webcam" class="group relative flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-6 py-3 rounded-xl shadow-lg transition-all duration-200 w-full overflow-hidden">
+                    <span class="relative z-10 flex items-center gap-2">
+                        <span>📷</span> 
+                        <span id="btn-text">웹캠 배경 켜기</span>
+                    </span>
+                    <!-- 호버 시 빛나는 효과 -->
+                    <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                </button>
+                
+                <div class="flex items-start gap-2 px-1">
+                    <span class="text-yellow-400 text-sm mt-0.5 animate-bounce">💡</span>
+                    <p class="text-indigo-100 text-xs font-medium leading-relaxed opacity-90">
+                        증강 현실 효과를 위해<br/>
+                        <span class="text-white border-b border-white/20 pb-0.5">웹캠 배경</span>을 켜보세요!
+                    </p>
+                </div>
+            </div>
+        </div>
     `;
     
-    // [중요] container 안에 넣습니다. 페이지가 바뀌면 container가 비워지므로 이 문구도 함께 사라집니다.
+    // HTML을 컨테이너에 추가
     container.appendChild(disclaimerDiv);
 
+    // [로직 추가] 버튼 클릭 이벤트 리스너
+    const enableWebcamBtn = disclaimerDiv.querySelector('#btn-enable-webcam');
+    let isWebcamActive = false; // 현재 상태 추적 변수
 
-    // 페이지가 변경될 때 호출될 정리(cleanup) 함수를 반환합니다.
+    enableWebcamBtn.addEventListener('click', async () => {
+        try {
+            let videoElement = VideoManager.getElement();
+
+            if (!isWebcamActive) {
+                // --- 켜기 (ON) ---
+                console.log("웹캠 켜기 시도...");
+
+                // 1. 비디오 요소가 없으면 초기화 및 시작
+                if (!videoElement) {
+                    console.log("VideoManager 초기화 및 카메라 시작...");
+                    VideoManager.init(document.body, window.innerWidth, window.innerHeight);
+                    await VideoManager.startCamera();
+                    videoElement = VideoManager.getElement();
+                }
+
+                // 2. 투명도를 1로 설정 (보이게 하기)
+                if (typeof VideoManager.setVideoOpacity === 'function') {
+                    VideoManager.setVideoOpacity('0.4'); 
+                }
+                // 3. 버튼 상태 업데이트 (끄기 모드로 전환)
+                // [중요] disabled = true를 하지 않습니다!
+                isWebcamActive = true;
+                enableWebcamBtn.textContent = "웹캠 배경 끄기";
+                enableWebcamBtn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
+                enableWebcamBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+
+            } else {
+                // --- 끄기 (OFF) ---
+                console.log("웹캠 배경 끄기 시도...");
+
+                // 1. 투명도를 0으로 설정하여 숨김
+                if (typeof VideoManager.setVideoOpacity === 'function') {
+                    VideoManager.setVideoOpacity(0);
+                }
+                if (videoElement) {
+                    videoElement.style.opacity = '0';
+                    videoElement.classList.remove('opacity-100');
+                    videoElement.classList.add('opacity-0');
+                }
+
+                // 2. 버튼 상태 업데이트 (켜기 모드로 전환)
+                isWebcamActive = false;
+                enableWebcamBtn.textContent = "웹캠 배경 켜기";
+                enableWebcamBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+                enableWebcamBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
+            }
+
+        } catch (error) {
+            console.error("웹캠 제어 실패:", error);
+            // 에러가 났을 때만 버튼을 비활성화합니다.
+            enableWebcamBtn.textContent = "웹캠 오류";
+            enableWebcamBtn.disabled = true;
+            enableWebcamBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    });
+
+
+    // 페이지 정리 함수
     return () => {
         if (webglInstance && webglInstance.destroy) {
             webglInstance.destroy(); // WebGL 리소스 정리
         }
         webglInstance = null;
         
-        // [중요] 여기서 container 내부를 싹 비웁니다 (캔버스 + 안내 문구 모두 삭제됨)
+        // [중요] 페이지를 나갈 때 웹캠을 다시 숨김 (선택 사항)
+        // 다른 페이지(Tutorial 등)에서도 써야 한다면 끄지 않아도 되지만,
+        // 보통 메인 시뮬레이션 배경용으로 켰다면 끄는 게 깔끔합니다.
+        const video = VideoManager.getElement();
+        if (video) {
+            video.style.opacity = '0';
+        }
+
         container.innerHTML = '';
-        
-        // 추가했던 클래스 제거 (선택사항, 깔끔한 상태 유지를 위해)
         container.classList.remove('relative', 'w-full', 'h-full');
     };
 }

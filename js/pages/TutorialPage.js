@@ -31,9 +31,9 @@ export function TutorialPage(container) {
 
             <div id="video-container" class="relative w-full h-auto aspect-video rounded-lg overflow-hidden">
                 <!-- 점선 네모 (z-10) -->
-                <div class="absolute inset-20 border-4 border-dashed border-blue opacity-75 rounded-lg pointer-events-none z-10"></div>
+                <div class="absolute inset-40 border-4 border-dashed border-blue opacity-75 rounded-lg pointer-events-none z-10"></div>
                 <!-- 로딩 텍스트 (z-0) -->
-                <div id="video-loading-text" class="absolute inset-0 flex flex-col items-center justify-center z-0">
+                <div id="video-loading-text" class="absolute inset-0 flex flex-col items-center justify-center z-10">
                     <h2 class="text-3xl font-bold text-blue-800">웹캠을 가져오는 중...</h2>
                     <p class="text-gray-200 mt-4"> 튜토리얼을 위해 영상을 가져오는 중입니다. 잠시만 기다려주세요.</p>
                 </div>
@@ -52,17 +52,17 @@ export function TutorialPage(container) {
                         연기의 흐름을 체험해보시겠습니까?
                     </p>
                     
-                    <div class="space-y-2 pl-4">
+                    <div class="space-y-2 pl-4 text-md">
                         <p class="flex items-start gap-2">
                             <span>🔹</span>
                             <span>
-                                <span class="font-bold text-white">"예"</span> : 전신 추적을 통해 <span class="text-indigo-600 font-semibold">연기의 흐름(Flow)</span>을 만들어냅니다.
+                                <span class="font-bold text-white">"예"</span> : 전신 추적을 통해 <span class="text-indigo-400 font-semibold">연기의 흐름(Flow)</span>을 만들어냅니다.
                             </span>
                         </p>
                         <p class="flex items-start gap-2">
                             <span>🔹</span>
                             <span>
-                                <span class="font-bold text-white">"아니요"</span> : 제스처 인식으로 물체를 옮기는 <span class="text-indigo-600 font-semibold">가상 공간(Playground)</span>을 체험합니다.
+                                <span class="font-bold text-white">"아니요"</span> : 제스처 인식으로 물체를 옮기는 <span class="text-indigo-400 font-semibold">가상 공간(Playground)</span>을 체험합니다.
                             </span>
                         </p>
                     </div>
@@ -106,7 +106,7 @@ export function TutorialPage(container) {
 
         <!-- --- 역할 2: 3D 연습 단계 --- -->
         <div id="tutorial-practice-step" class="relative w-full h-full" style="display: none;">
-            <p class="absolute top-80 left-1/2 -translate-x-1/2 z-10 text-gray-200 [text-shadow:_0_1px_2px_rgb(0_0_0_/_50%)]">(손으로 위의 바에서 물체를 잡아보세요. 잡고 물체를 이동한 후 바닥에 놓으면 됩니다.)</p>
+            <p class="absolute top-80 left-1/2 -translate-x-1/2 z-10 text-gray-200 [text-shadow:_0_1px_2px_rgb(0_0_0_/_50%)]">(손으로 위의 바에서 물체를 천천히 잡아보세요. 잡고 물체를 이동한 후 손바닥을 펴면 바닥에 놓아집니다.)</p>
             
             <!-- Phase 2: HTML 에셋 바 컨테이너 -->
             <div id="asset-bar-container" 
@@ -116,6 +116,29 @@ export function TutorialPage(container) {
 
             <!-- 버튼 스타일 (LandingPage와 통일) -->
             <button id="btn-practice-done" class="absolute top-32 left-1/2 -translate-x-1/2 z-10 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">연습 완료 (메인으로 이동)</button>
+        
+            <!--  웹캠 허용 버튼  -->
+            <div class="absolute top-80 left-10 z-20 pointer-events-auto">
+                <div class="flex flex-col items-start gap-3 p-5 bg-gray-900/60 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl transition-transform hover:scale-105">
+                    
+                    <button id="btn-enable-webcam" class="group relative flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-6 py-3 rounded-xl shadow-lg transition-all duration-200 w-full overflow-hidden">
+                        <span class="relative z-10 flex items-center gap-2">
+                            <span>📷</span> 
+                            <span id="btn-text">웹캠 배경 켜기</span>
+                        </span>
+                        <!-- 호버 시 빛나는 효과 -->
+                        <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                    </button>
+                    
+                    <div class="flex items-start gap-2 px-1">
+                        <span class="text-yellow-400 text-sm mt-0.5 animate-bounce">💡</span>
+                        <p class="text-indigo-100 text-xs font-medium leading-relaxed opacity-90">
+                            너무 어려우면<br/>
+                            <span class="text-white border-b border-white/20 pb-0.5">웹캠 배경</span>을 켜보세요!
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     `;
@@ -133,6 +156,66 @@ export function TutorialPage(container) {
 
     const practiceStep = container.querySelector('#tutorial-practice-step');
     const btnPracticeDone = container.querySelector('#btn-practice-done');
+
+    const enableWebcamBtn = container.querySelector('#btn-enable-webcam');
+    let isWebcamActive = false; // 현재 상태 추적 변수
+
+    enableWebcamBtn.addEventListener('click', async () => {
+        try {
+            let videoElement = VideoManager.getElement();
+
+            if (!isWebcamActive) {
+                // --- 켜기 (ON) ---
+                console.log("웹캠 켜기 시도...");
+
+                // 1. 비디오 요소가 없으면 초기화 및 시작
+                if (!videoElement) {
+                    console.log("VideoManager 초기화 및 카메라 시작...");
+                    VideoManager.init(document.body, window.innerWidth, window.innerHeight);
+                    await VideoManager.startCamera();
+                    videoElement = VideoManager.getElement();
+                }
+
+                // 2. 투명도를 1로 설정 (보이게 하기)
+                if (typeof VideoManager.setVideoOpacity === 'function') {
+                    VideoManager.setVideoOpacity('0.4');
+                }
+                // 3. 버튼 상태 업데이트 (끄기 모드로 전환)
+                // [중요] disabled = true를 하지 않습니다!
+                isWebcamActive = true;
+                enableWebcamBtn.textContent = "웹캠 배경 끄기";
+                enableWebcamBtn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
+                enableWebcamBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+
+            } else {
+                // --- 끄기 (OFF) ---
+                console.log("웹캠 배경 끄기 시도...");
+
+                // 1. 투명도를 0으로 설정하여 숨김
+                if (typeof VideoManager.setVideoOpacity === 'function') {
+                    VideoManager.setVideoOpacity(0);
+                }
+                if (videoElement) {
+                    videoElement.style.opacity = '0';
+                    videoElement.classList.remove('opacity-100');
+                    videoElement.classList.add('opacity-0');
+                }
+
+                // 2. 버튼 상태 업데이트 (켜기 모드로 전환)
+                isWebcamActive = false;
+                enableWebcamBtn.textContent = "웹캠 배경 켜기";
+                enableWebcamBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+                enableWebcamBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
+            }
+        } catch (error) {
+            console.error("웹캠 제어 실패:", error);
+            // 에러가 났을 때만 버튼을 비활성화합니다.
+            enableWebcamBtn.textContent = "웹캠 오류";
+            enableWebcamBtn.disabled = true;
+            enableWebcamBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    });
+
 
     // --- 3D 연습 씬 관련 함수 (역할 2) ---
     function initPracticeScene() {
@@ -373,10 +456,7 @@ export function TutorialPage(container) {
         }
 
         if (video) {
-            video.style.opacity = '1';
-            video.classList.add('opacity-100');
-            video.classList.remove('opacity-0');
-            console.log("웹캠 비디오 Opacity를 1로 설정.");
+            VideoManager.setVideoOpacity(1.0); // 비디오 불투명도 설정
         } else {
             // (이론상 catch 블록에서 걸러져야 하지만, 안전 장치)
             console.error("InitializePage: videoElement가 여전히 null입니다.");
@@ -385,7 +465,7 @@ export function TutorialPage(container) {
         }
 
         // Case 1, 2 모두 비디오가 준비되었으므로 비디오 단계를 표시
-        showVideoStep(video);
+        showVideoStep();
     }
     initializePage();
 
@@ -424,7 +504,7 @@ export function TutorialPage(container) {
             // 2. (3초 후) 텍스트 2, 이미지 2로 변경
             setTimeout(() => {
                 if (tutorialTextContent && tutorialImageContent) {
-                    tutorialTextContent.innerText = "사용자의 모션을 인식하여";
+                    tutorialTextContent.innerText = "사용자의 모션을 인식하면";
                     tutorialImageContent.src = img2;
                 }
             }, 8000); // 3초
@@ -453,7 +533,7 @@ export function TutorialPage(container) {
     }
 
     function showPracticeStep() {
-        video.style.opacity = '0';
+        VideoManager.setVideoOpacity(0.001); // 비디오 숨기기
         if (videoStep) videoStep.style.display = 'none';
         if (practiceStep) practiceStep.style.display = 'block';
         initPracticeScene(); // 3D 씬 시작

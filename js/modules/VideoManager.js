@@ -16,16 +16,23 @@ class VideoManager {
         this.video.id = 'input_video';
 
         this.video.autoplay = true;
+        this.video.muted = true;
         this.video.playsInline = true;
         this.video.style.position = 'absolute';
         this.video.style.top = '0';
         this.video.style.left = '0';
-        this.video.style.zIndex = '2';
-        this.video.style.opacity = '0'; 
+        this.video.style.zIndex = '0';
+        this.video.style.opacity = '0.001'; 
         this.video.style.transform = 'scaleX(-1)';
         this.video.style.pointerEvents = 'none';
         this.setSize(width, height);
         $wrapper.appendChild(this.video);
+    }
+
+    setVideoOpacity(opacity) {
+        if (this.video) {
+            this.video.style.opacity = opacity.toString();
+        }
     }
 
     /**
