@@ -23,6 +23,10 @@ import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.j
 export function LandingPage(container) {
 
     let shouldCleanupTracking = true; // 트래킹 모듈 정리 여부 플래그
+
+    const navBar = document.querySelector('nav');
+    if (navBar) navBar.style.display = 'none';
+
     // 1. HTML 뼈대 렌더링
     container.innerHTML = `
         <!-- 
@@ -94,6 +98,8 @@ export function LandingPage(container) {
     const btnNo = container.querySelector('#btn-tutorial-no');
     const permMessage = container.querySelector('.permission-message');
     const permDenied = container.querySelector('.permission-denied');
+
+
 
     // 3. 이벤트 핸들러 정의
     const handleYes = () => {
@@ -379,6 +385,10 @@ function runParticleAnimation(container, titleElement) {
 
                 // 창 크기 조절 리스너 제거
                 window.removeEventListener('resize', onWindowResize);
+
+                
+                const navBar = document.querySelector('nav');
+                if (navBar) navBar.style.display = 'block'; 
 
                 resolve(); // Promise 완료!
                 return; // 함수 종료
