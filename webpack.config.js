@@ -76,6 +76,10 @@ module.exports = {
                         // index.html은 HtmlWebpackPlugin이 처리하므로 복사 대상에서 제외
                         ignore: ['**/index.html']
                     }
+                },
+                {
+                    from: path.resolve(__dirname, 'node_modules/three/examples/fonts/helvetiker_regular.typeface.json'),
+                    to: 'fonts/helvetiker_regular.typeface.json'
                 }
             ]
         }),

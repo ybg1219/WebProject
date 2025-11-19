@@ -42,7 +42,7 @@ export function TutorialPage(container) {
 
             <div id="practice-prompt" class="prompt z-20 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-400/40 backdrop-blur-xl border border-white/10 p-8 sm:p-10 rounded-3xl shadow-2xl max-w-2xl w-11/12 text-center" style="display: none;">
                 
-                <h2 class="text-xl sm:text-2xl font-semibold mb-6 text-indigo-500 leading-snug">
+                <h2 class="text-xl sm:text-2xl font-semibold mb-6 text-white leading-snug">
                     이제 웹캠을 통해 제스처로 다양한 작업을 할 수 있습니다!
                 </h2>
                 

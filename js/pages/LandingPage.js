@@ -1,6 +1,6 @@
 import { router } from '../router.js';
-import VideoManager from '../modules/VideoManager.js'; // 1. VideoManager 임포트
-import GestureTracking from '../modules/GestureTracking.js';       // 2. GestureTracking 모듈 임포트
+import VideoManager from '../modules/VideoManager.js';          // 1. VideoManager 임포트
+import GestureTracking from '../modules/GestureTracking.js';    // 2. GestureTracking 모듈 임포트
 import VirtualMouse from '../modules/VirtualMouse.js';          // 3. VirtualMouse 모듈 임포트
 
 // Three.js 모듈 임포트 (Webpack/npm 경로로 수정)
@@ -10,7 +10,9 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js';
 
-import helvetikerFontData from 'three/examples/fonts/helvetiker_regular.typeface.json';
+// [★수정★] JSON import 제거 (파일 로딩 방식으로 변경)
+// import helvetikerFontData from 'three/examples/fonts/helvetiker_regular.typeface.json';
+
 /**
  * Phase 1: 랜딩 페이지 컴포넌트
  * - 타이틀 애니메이션
@@ -82,6 +84,8 @@ export function LandingPage(container) {
         </div>
     `;
 
+
+
     // 2. DOM 요소 참조
     const landingContainer = container.querySelector('.landing-container');
     const title = container.querySelector('.title-animation');
@@ -131,7 +135,6 @@ export function LandingPage(container) {
                 throw new Error("VideoManager에서 video 요소를 가져오지 못했습니다.");
             }
 
-
             // GestureTracking.gestureRecognizer가 null일 때만 (즉, 초기화 안 됐을 때만) init을 호출
             if (!GestureTracking.gestureRecognizer) {
                 console.log("LandingPage: GestureTracking.init()을 처음 호출합니다.");
@@ -139,14 +142,11 @@ export function LandingPage(container) {
             } else {
                 console.log("LandingPage: GestureTracking이 이미 초기화되어 있으므로 init()을 건너뜁니다.");
                 // 비디오 엘리먼트가 바뀌었을 수 있으니 비디오만 업데이트
-                GestureTracking.start(videoElement);
+                // [★수정★] start()는 인자를 받지 않습니다. videoElement 업데이트는 수동으로.
                 GestureTracking.video = videoElement;
-            }VirtualMouse.init();
-
-
-            // (임시) 2초 후 성공했다고 가정
-            // await new Promise(resolve => setTimeout(resolve, 1000));
-            // console.log("카메라 권한 획득 (가상)");
+                GestureTracking.start();
+            }
+            VirtualMouse.init();
 
             if (permMessage) permMessage.style.display = 'none';
 
@@ -188,21 +188,17 @@ export function LandingPage(container) {
     };
 }
 
-
-
 /**
  * 3D 타이틀 파티클 애니메이션을 실행하는 함수
  * @param {HTMLElement} container - 캔버스를 추가할 부모 컨테이너
- * @param {HTMLElement} titleElement - 숨길 H1 타이틀 요소
+ * @param {HTMLElement} titleElement - 숨길 H1 요소
  * @returns {Promise<void>} 애니메이션이 완료되면 resolve되는 Promise
  */
 function runParticleAnimation(container, titleElement) {
-
     // true: 연기 텍스처 / false: 기본 파티클(점)
     const USE_SMOKE = true;
 
     return new Promise((resolve, reject) => {
-
         // H1 타이틀 숨기기
         titleElement.style.display = 'none';
 
@@ -223,17 +219,7 @@ function runParticleAnimation(container, titleElement) {
         container.appendChild(renderer.domElement); // <body>가 아닌 지정된 컨테이너에 추가
 
         const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true; 
-        controls.enableZoom = false; // 줌 비활성화
-        controls.enablePan = false; // 패닝 비활성화
-
-        // 자동 궤도(Orbital) 애니메이션 활성화
-        controls.autoRotate = true;
-        controls.autoRotateSpeed = 1.0; // 궤도 속도 (1.0
-
-        // 수직 회전 각도 제한 (너무 위아래로 돌지 않도록)
-        controls.minPolarAngle = Math.PI / 2.4; // (약 81도)
-        controls.maxPolarAngle = Math.PI / 1.6; // (약 100도)
+        // controls.enableDamping = true;
 
         // 3. 폰트 로드 및 텍스트 지오메트리 생성
         const fontLoader = new FontLoader();
@@ -242,9 +228,8 @@ function runParticleAnimation(container, titleElement) {
         let particleVelocities;
         let textMesh;
         const clock = new THREE.Clock();
-        // 폰트 경로 수정: Webpack으로 빌드할 경우, 폰트 파일은 정적 에셋으로 제공되어야 합니다.
-        // 우선 'three/examples/fonts/' 경로를 사용, 에러 시 import 된 폰트 데이터 사용
-        const fontPath = 'three/examples/fonts/helvetiker_regular.typeface.json';
+        // [★수정★] 폰트 파일 경로 (Webpack CopyPlugin이 dist/fonts/로 복사했다고 가정)
+        const fontPath = 'fonts/helvetiker_regular.typeface.json';
 
         // 애니메이션 지속 시간 (반복 없음)
         const scaleDuration = 1.2;
@@ -257,8 +242,8 @@ function runParticleAnimation(container, titleElement) {
                 // 4. 텍스트 지오메트리 생성 (이전과 동일)
                 const textGeometry = new TextGeometry('flowground', {
                     font: font,
-                    size: 1.5,
-                    height: 0.4,
+                    size: 2,
+                    height: 0.5,
                     curveSegments: 12,
                     bevelEnabled: true,
                     bevelThickness: 0.03,
@@ -285,8 +270,8 @@ function runParticleAnimation(container, titleElement) {
                 textGeometry.dispose();
 
                 // 4. 파티클 개수를 정합니다. (꼭짓점 개수와 상관없이 원하는 만큼)
-                //    숫자를 늘릴수록 텍스트가 빽빽해집니다.
-                const particleCount = 20000;
+                //    숫자를 늘릴수록 텍스트가 빽빽해집니다.
+                const particleCount = 15000;
 
                 // 5. 새 파티클 개수에 맞게 배열을 초기화합니다.
                 originalPositions = new Float32Array(particleCount * 3);
@@ -339,6 +324,7 @@ function runParticleAnimation(container, titleElement) {
             }
         }
 
+        // [★수정★] loadAsync 사용
         fontLoader.load(fontPath,
             // 3-2. (성공 시)
             (font) => {
