@@ -383,33 +383,33 @@ export default class Simulation {
                 const { leftHand, rightHand, leftElbow, rightElbow } = person;
 
                 // // 양손이 모두 감지되고 움직였을 때만 와류를 생성합니다.
-                // if ((leftHand.coords.x !== INACTIVE_VEC2.x || leftHand.coords.y !== INACTIVE_VEC2.y) &&
-                //     (leftElbow.coords.x !== INACTIVE_VEC2.x || leftElbow.coords.y !== INACTIVE_VEC2.y)) {
+                if ((leftHand.coords.x !== INACTIVE_VEC2.x || leftHand.coords.y !== INACTIVE_VEC2.y) &&
+                    (leftElbow.coords.x !== INACTIVE_VEC2.x || leftElbow.coords.y !== INACTIVE_VEC2.y)) {
 
-                //     this.swirlLeft.update({
-                //         left: leftHand,
-                //         right: leftElbow,
-                //         cursor_size: this.options.cursor_size,
-                //         dt: this.options.dt,
-                //         cellScale: this.cellScale,
-                //         mouse_force: this.options.mouse_force // 힘의 세기 조절
-                //     });
-                // }
-                // if ((rightHand.coords.x !== INACTIVE_VEC2.x || rightHand.coords.y !== INACTIVE_VEC2.y)
-                //     && (rightElbow.coords.x !== INACTIVE_VEC2.x || rightElbow.coords.y !== INACTIVE_VEC2.y)) {
+                    this.swirlLeft.update({
+                        left: leftHand,
+                        right: leftElbow,
+                        cursor_size: this.options.cursor_size,
+                        dt: this.options.dt,
+                        cellScale: this.cellScale,
+                        mouse_force: this.options.mouse_force // 힘의 세기 조절
+                    });
+                }
+                if ((rightHand.coords.x !== INACTIVE_VEC2.x || rightHand.coords.y !== INACTIVE_VEC2.y)
+                    && (rightElbow.coords.x !== INACTIVE_VEC2.x || rightElbow.coords.y !== INACTIVE_VEC2.y)) {
 
-                //     this.swirlRight.update({
-                //         left: rightHand,
-                //         right: rightElbow,
-                //         cursor_size: this.options.cursor_size,
-                //         dt : this.options.dt,
-                //         cellScale: this.cellScale,
-                //         mouse_force: this.options.mouse_force // 힘의 세기 조절
-                //     });
-                // }
+                    this.swirlRight.update({
+                        left: rightHand,
+                        right: rightElbow,
+                        cursor_size: this.options.cursor_size,
+                        dt : this.options.dt,
+                        cellScale: this.cellScale,
+                        mouse_force: this.options.mouse_force // 힘의 세기 조절
+                    });
+                }
             });
         }
-        // this.vortex.update({ fboSize: this.fboSize });
+        this.vortex.update({ fboSize: this.fboSize });
         this.buoyancy.update({
             density: this.fbos.density_0,
             buoyancy: this.options.buoyancy, // (부력 강도)

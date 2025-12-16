@@ -36,7 +36,7 @@ function MainPage(container) {
     disclaimerDiv.className = "absolute top-32 left-0 w-full flex justify-center z-10 pointer-events-none px-4";
     
     disclaimerDiv.innerHTML = `
-        <div class="bg-gray-900/40 backdrop-blur-sm p-4 rounded-xl font-sans text-center max-w-4xl border border-white/5 shadow-lg">
+        <!--<div class="bg-gray-900/40 backdrop-blur-sm p-4 rounded-xl font-sans text-center max-w-4xl border border-white/5 shadow-lg">
             <p class="text-gray-100 text-[10px] sm:text-xs font-bold leading-relaxed break-keep">
                 해당 페이지는 제스처 클릭을 지원하지 않습니다. 또한 모니터 사양이 낮아 느린 점 양해부탁드립니다!
             </p>
@@ -49,8 +49,8 @@ function MainPage(container) {
             <p class="text-indigo-100 text-xs sm:text-sm font-medium mt-1 animate-pulse">
                 따라서 멈춰있다면, 새로고침하거나 상단 바의 타이틀 flowground를 눌러주세요.
             </p>
-        </div>
-        <!--<div class="absolute top-80 left-10 z-20 font-sans pointer-events-auto">
+        </div>-->
+        <div class="absolute top-80 left-10 z-20 font-sans pointer-events-auto">
             <div class="flex flex-col items-start gap-3 p-5 bg-gray-900/60 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl transition-transform hover:scale-105">
                 
                 <button id="btn-enable-webcam" class="group relative flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-6 py-3 rounded-xl shadow-lg transition-all duration-200 w-full overflow-hidden">
@@ -70,11 +70,11 @@ function MainPage(container) {
                     </p>
                 </div>
             </div>
-        </div> -->
+        </div>
     `;
     
     // HTML을 컨테이너에 추가
-    // container.appendChild(disclaimerDiv);
+    container.appendChild(disclaimerDiv);
 
     
 
