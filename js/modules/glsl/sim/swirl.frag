@@ -37,8 +37,9 @@ uniform float radius;   // 힘이 영향을 미치는 반경
  */
 float harmonic(float x) {
     // 기본 주파수와 4배 주파수의 곱
-    return cos(x) * sin(4.0 * x);
+    return (cos(x) * sin(4.0 * x)+2.0)/2.0;
 }
+
 
 // 1D 해시 함수 (0.0 ~ 1.0 반환)
 float rand(float n) {
@@ -61,7 +62,7 @@ float noise(float t) {
 void main() {
 
     float hands_dist = distance(p0, p1);
-    float dist_threshold = 0.6;
+    float dist_threshold = 0.4;
 
     // --- 1. 보간 파라미터 t 계산 ---
     vec2 p0_uv = p0 * 0.5 + 0.5;
@@ -69,7 +70,7 @@ void main() {
     vec2 lineSegment = p1_uv - p0_uv;
     float lineLengthSq = max(0.0001, dot(lineSegment, lineSegment));
     float t = dot(uv - p0_uv, lineSegment) / lineLengthSq;
-    t = clamp(t, 0.0, 1.0);
+    t = clamp(t, 0.1, 0.9);
 
     // 1. t값에 따라 0.0 ~ 1.0 사이의 부드러운 노이즈 값을 생성
     float noise_val = noise(t * noise_frequency);
@@ -81,20 +82,21 @@ void main() {
 
     // --- 2. 선형 보간된 점(linePos)과 벡터(v_lin) 계산 ---
     vec2 linePos = mix(p0_uv, p1_uv, t);
-    //vec2 v_lin = mix(v0, v1, t); // 기본 흐름
-    vec2 v_lin = mix(v0, v1, noisy_t);
+    vec2 v_lin = mix(v0, v1, t); // 기본 흐름
+    //vec2 v_lin = mix(v0, v1, noisy_t);
 
     // --- 3. 가중치 함수 계산 (f, g) ---
+    vec2 dir = uv - linePos; // 중심선에서 픽셀로 향하는 벡터
+    // vec2 dir = uv - (p0_uv+p1_uv)/2.0;
     float f = 4.0 * t * (1.0 - t); // 선분 중앙에서 최대
-    float dist = distance(uv, linePos);
+    float dist = length(dir);
     float g = exp(-pow(dist / radius, 2.0) * 1.0); // 선분에서 멀어지면 감소
 
     // --- 4. 회전 성분(rot) 계산 ---
-    vec2 dir = uv - linePos; // 중심선에서 픽셀로 향하는 벡터
     vec2 perpendicular_dir = vec2(-dir.y, dir.x);
     float cross_product_z = v0.x * v1.y - v0.y * v1.x;
-    float rotation_direction = sign(cross_product_z);
-    vec2 rot = strength * f * g * perpendicular_dir * rotation_direction;
+    // float rotation_direction = sign(cross_product_z);
+    vec2 rot = strength* f * g * perpendicular_dir;// * rotation_direction;
 
     // --- 5. 조화 진동(Harmonic Oscillation) 성분 계산 ---
     
@@ -107,12 +109,9 @@ void main() {
 
     // noise()는 0~1 반환 -> -1~1 범위로 변경
     float noisy_offset_normalized = noise(time_input) * 2.0 - 1.0;
-
-    // 최종 시간 오프셋 = 정규화된 노이즈값 * 진폭
-    float time_offset = noisy_offset_normalized; //u_osc_amplitude;
     
     // 5-3. 최종 입력 = 공간 위치 + 시간 오프셋
-    float harmonic_input = spatial_input + time_offset;
+    float harmonic_input = spatial_input + noisy_offset_normalized;
     
     // 5-4. harmonic 함수 호출
     float osc_val = harmonic(harmonic_input);
@@ -120,18 +119,18 @@ void main() {
     vec2 dir_normalized = vec2(0.0); // 기본값 NaN 방지 (dir가 0일 때)
     float dir_len = length(dir);
 
-    if (dir_len > 0.0001) {
+    if (dir_len > 0.001) {
         dir_normalized = dir / dir_len;
     }
     
     // 5-5. 진동 성분 벡터 계산
     vec2 osc = vec2(0.0); // 기본값은 0
     if (hands_dist >= dist_threshold) {
-        osc = u_osc_strength * f * g * dir_normalized * osc_val;
+        osc = u_osc_strength * g * dir_normalized * osc_val;
     }
 
     // --- 6. 최종 힘 = 선형 흐름 + 회전 + 진동 ---
-    vec2 force = v_lin*g + osc; // + rot
+    vec2 force = osc; // + rot
 
 
     // 최종 외력을 색상으로 출력합니다. (실제 시뮬레이션에서는 velocity FBO에 기록됩니다)

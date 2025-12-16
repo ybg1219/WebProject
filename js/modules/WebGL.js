@@ -54,10 +54,10 @@ export default class Webgl {
         console.log("PUBLIC_URL:", process.env.PUBLIC_URL);
 
         // 시뮬레이션 아웃풋 초기화 및 입력 모듈 초기화
-        await VideoManager.startCamera();
+        //await VideoManager.startCamera();
         // await VideoManager.loadVideoFile("/videos/house.mp4"); // 여기에 mp4 파일 경로
-        const videoPath = `${process.env.PUBLIC_URL}videos/hiphop.mp4`;
-        // await VideoManager.loadVideoFile(videoPath);
+        const videoPath = `${process.env.PUBLIC_URL}videos/image.mp4`;
+        await VideoManager.loadVideoFile(videoPath);
 
         Mouse.init();
         // --- 옵션에 따라 적절한 트래커를 초기화하고 activeTracker에 할당 ---

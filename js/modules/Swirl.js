@@ -20,16 +20,12 @@ export default class Swirl extends ShaderPass {
                     p1: { value: new THREE.Vector2() },     // 오른손 위치
                     v0: { value: new THREE.Vector2() },     // 왼손의 움직임 벡터
                     v1: { value: new THREE.Vector2() },     // 오른손의 움직임 벡터
-                    strength: { value: 6.0 },  
+                    strength: { value: 10.0 },  
                     radius: { value: 10.0 },
-                    // px: { value: simProps.cellScale },
-                    noise_frequency: { value: 4.0 },
-                    noise_strength: { value: 0.8 },
-                    u_osc_frequency: { value: 3.141592*1.5 },
-                    u_osc_strength: { value: 0.001  },
-                    dt : { value: simProps.dt },
+                    u_osc_frequency: { value: 3.141592*0.5},
+                    u_osc_strength: { value: 0.1  },
                     u_time: { value: simProps.timeSeed }, // 기본 time seed + dt 누적
-                    u_osc_speed: { value: 0.3  }
+                    u_osc_speed: { value: 0.2  }
                 }
             },
             output: simProps.dst
@@ -48,7 +44,7 @@ export default class Swirl extends ShaderPass {
      * @param {number} mouse_force - 외력 크기 조정 파라미터
      */
     update(props) {
-        const { left, right, cursor_size, cellScale, mouse_force } = props;
+        const { left, right, cursor_size, dt, cellScale, mouse_force } = props;
 
         // 입력 데이터가 유효한지 확인합니다.
         if (!left || !right) return;
@@ -62,12 +58,12 @@ export default class Swirl extends ShaderPass {
         this.uniforms.v1.value.copy( right.diff ).multiplyScalar(forceScale);
         
         // 힘의 세기는 force 벡터의 길이에 비례하도록 설정합니다.
-        this.uniforms.strength.value = mouse_force * 0.1; // 세기를 증폭시켜 효과를 명확하게 합니다.
+        this.uniforms.strength.value = mouse_force/1000.0; // 세기를 증폭시켜 효과를 명확하게 합니다.
         
         // 와류의 영향 반경은 cursor_size에 비례하도록 설정합니다.
         this.uniforms.radius.value = cursor_size / 1000.0; // 반경 스케일을 적절히 조절합니다.
 
-        this.uniforms.u_time.value += this.uniforms.dt.value;
+        this.uniforms.u_time.value += dt;
 
         // 셰이더를 렌더링합니다.
         super.update();

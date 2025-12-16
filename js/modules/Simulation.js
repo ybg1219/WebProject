@@ -380,34 +380,36 @@ export default class Simulation {
                 // console.log("right", person.rightHand.coords, "diff", person.rightHand.diff);
 
                 // --- 양손을 이용한 Swirl 효과 적용 ---
-                // const { leftHand, rightHand, leftShoulder, rightShoulder } = person;
+                const { leftHand, rightHand, leftElbow, rightElbow } = person;
 
                 // // 양손이 모두 감지되고 움직였을 때만 와류를 생성합니다.
-                // if ((leftHand.coords.x !== INACTIVE_VEC2.x || leftHand.coords.y !== INACTIVE_VEC2.y) &&
-                //     (leftShoulder.coords.x !== INACTIVE_VEC2.x || leftShoulder.coords.y !== INACTIVE_VEC2.y)) {
+                if ((leftHand.coords.x !== INACTIVE_VEC2.x || leftHand.coords.y !== INACTIVE_VEC2.y) &&
+                    (leftElbow.coords.x !== INACTIVE_VEC2.x || leftElbow.coords.y !== INACTIVE_VEC2.y)) {
 
-                //     this.swirlLeft.update({
-                //         left: leftHand,
-                //         right: leftShoulder,
-                //         cursor_size: this.options.cursor_size,
-                //         cellScale: this.cellScale,
-                //         mouse_force: this.options.mouse_force // 힘의 세기 조절
-                //     });
-                // }
-                // if ((rightHand.coords.x !== INACTIVE_VEC2.x || rightHand.coords.y !== INACTIVE_VEC2.y)
-                //     && (rightShoulder.coords.x !== INACTIVE_VEC2.x || rightShoulder.coords.y !== INACTIVE_VEC2.y)) {
+                    this.swirlLeft.update({
+                        left: leftHand,
+                        right: leftElbow,
+                        cursor_size: this.options.cursor_size,
+                        dt: this.options.dt,
+                        cellScale: this.cellScale,
+                        mouse_force: this.options.mouse_force // 힘의 세기 조절
+                    });
+                }
+                if ((rightHand.coords.x !== INACTIVE_VEC2.x || rightHand.coords.y !== INACTIVE_VEC2.y)
+                    && (rightElbow.coords.x !== INACTIVE_VEC2.x || rightElbow.coords.y !== INACTIVE_VEC2.y)) {
 
-                //     this.swirlRight.update({
-                //         left: rightHand,
-                //         right: rightShoulder,
-                //         cursor_size: this.options.cursor_size,
-                //         cellScale: this.cellScale,
-                //         mouse_force: this.options.mouse_force // 힘의 세기 조절
-                //     });
-                // }
+                    this.swirlRight.update({
+                        left: rightHand,
+                        right: rightElbow,
+                        cursor_size: this.options.cursor_size,
+                        dt : this.options.dt,
+                        cellScale: this.cellScale,
+                        mouse_force: this.options.mouse_force // 힘의 세기 조절
+                    });
+                }
             });
         }
-        this.vortex.update({ fboSize: this.fboSize });
+        // this.vortex.update({ fboSize: this.fboSize });
         this.buoyancy.update({
             density: this.fbos.density_0,
             buoyancy: this.options.buoyancy, // (부력 강도)
