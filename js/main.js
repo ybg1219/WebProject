@@ -50,7 +50,7 @@ function MainPage(container) {
                 따라서 멈춰있다면, 새로고침하거나 상단 바의 타이틀 flowground를 눌러주세요.
             </p>
         </div>
-        <div class="absolute top-80 left-10 z-20 font-sans pointer-events-auto">
+        <!--<div class="absolute top-80 left-10 z-20 font-sans pointer-events-auto">
             <div class="flex flex-col items-start gap-3 p-5 bg-gray-900/60 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl transition-transform hover:scale-105">
                 
                 <button id="btn-enable-webcam" class="group relative flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-6 py-3 rounded-xl shadow-lg transition-all duration-200 w-full overflow-hidden">
@@ -70,11 +70,11 @@ function MainPage(container) {
                     </p>
                 </div>
             </div>
-        </div>
+        </div> -->
     `;
     
     // HTML을 컨테이너에 추가
-    container.appendChild(disclaimerDiv);
+    // container.appendChild(disclaimerDiv);
 
     
 

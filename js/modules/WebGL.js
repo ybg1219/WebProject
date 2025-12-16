@@ -77,57 +77,57 @@ export default class Webgl {
         });
 
         // [로직 추가] 버튼 클릭 이벤트 리스너
-        const enableWebcamBtn = this.props.$wrapper.querySelector('#btn-enable-webcam');
-        let isWebcamActive = false; // 현재 상태 추적 변수
+        // const enableWebcamBtn = this.props.$wrapper.querySelector('#btn-enable-webcam');
+        // let isWebcamActive = false; // 현재 상태 추적 변수
 
-        enableWebcamBtn.addEventListener('click', async () => {
-            try {
-                let videoElement = VideoManager.getElement();
+        // enableWebcamBtn.addEventListener('click', async () => {
+        //     try {
+        //         let videoElement = VideoManager.getElement();
 
-                if (!isWebcamActive) {
-                    // --- 켜기 (ON) ---
-                    console.log("웹캠 켜기 시도...");
+        //         if (!isWebcamActive) {
+        //             // --- 켜기 (ON) ---
+        //             console.log("웹캠 켜기 시도...");
 
-                    // 2. 투명도를 1로 설정 (보이게 하기)
-                    if (typeof VideoManager.setVideoOpacity === 'function') {
-                        VideoManager.setVideoOpacity('0.4');
-                    }
-                    // 3. 버튼 상태 업데이트 (끄기 모드로 전환)
-                    // [중요] disabled = true를 하지 않습니다!
-                    isWebcamActive = true;
-                    enableWebcamBtn.textContent = "웹캠 배경 끄기";
-                    enableWebcamBtn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
-                    enableWebcamBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+        //             // 2. 투명도를 1로 설정 (보이게 하기)
+        //             if (typeof VideoManager.setVideoOpacity === 'function') {
+        //                 VideoManager.setVideoOpacity('0.4');
+        //             }
+        //             // 3. 버튼 상태 업데이트 (끄기 모드로 전환)
+        //             // [중요] disabled = true를 하지 않습니다!
+        //             isWebcamActive = true;
+        //             enableWebcamBtn.textContent = "웹캠 배경 끄기";
+        //             enableWebcamBtn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
+        //             enableWebcamBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
 
-                } else {
-                    // --- 끄기 (OFF) ---
-                    console.log("웹캠 배경 끄기 시도...");
+        //         } else {
+        //             // --- 끄기 (OFF) ---
+        //             console.log("웹캠 배경 끄기 시도...");
 
-                    // 1. 투명도를 0으로 설정하여 숨김
-                    if (typeof VideoManager.setVideoOpacity === 'function') {
-                        VideoManager.setVideoOpacity(0);
-                    }
-                    if (videoElement) {
-                        videoElement.style.opacity = '0';
-                        videoElement.classList.remove('opacity-100');
-                        videoElement.classList.add('opacity-0');
-                    }
+        //             // 1. 투명도를 0으로 설정하여 숨김
+        //             if (typeof VideoManager.setVideoOpacity === 'function') {
+        //                 VideoManager.setVideoOpacity(0);
+        //             }
+        //             if (videoElement) {
+        //                 videoElement.style.opacity = '0';
+        //                 videoElement.classList.remove('opacity-100');
+        //                 videoElement.classList.add('opacity-0');
+        //             }
 
-                    // 2. 버튼 상태 업데이트 (켜기 모드로 전환)
-                    isWebcamActive = false;
-                    enableWebcamBtn.textContent = "웹캠 배경 켜기";
-                    enableWebcamBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
-                    enableWebcamBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
-                }
+        //             // 2. 버튼 상태 업데이트 (켜기 모드로 전환)
+        //             isWebcamActive = false;
+        //             enableWebcamBtn.textContent = "웹캠 배경 켜기";
+        //             enableWebcamBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+        //             enableWebcamBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
+        //         }
 
-            } catch (error) {
-                console.error("웹캠 제어 실패:", error);
-                // 에러가 났을 때만 버튼을 비활성화합니다.
-                enableWebcamBtn.textContent = "웹캠 오류";
-                enableWebcamBtn.disabled = true;
-                enableWebcamBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-        });
+        //     } catch (error) {
+        //         console.error("웹캠 제어 실패:", error);
+        //         // 에러가 났을 때만 버튼을 비활성화합니다.
+        //         enableWebcamBtn.textContent = "웹캠 오류";
+        //         enableWebcamBtn.disabled = true;
+        //         enableWebcamBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        //     }
+        // });
 
     }
 
