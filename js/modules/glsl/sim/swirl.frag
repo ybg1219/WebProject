@@ -60,17 +60,21 @@ float noise(float t) {
 }
 
 void main() {
-
-    float hands_dist = distance(p0, p1);
-    float dist_threshold = 0.4;
+    
+    vec2 ratio = max(fboSize.x, fboSize.y) / fboSize;
 
     // --- 1. 보간 파라미터 t 계산 ---
-    vec2 p0_uv = p0 * 0.5 + 0.5;
-    vec2 p1_uv = p1 * 0.5 + 0.5;
+    vec2 uv_corr = uv*ratio;
+    vec2 p0_uv = p0*ratio;
+    vec2 p1_uv = p1*ratio;
+
+    float hands_dist = distance(p0_uv, p1);
+    float dist_threshold = 0.1;
+
     vec2 lineSegment = p1_uv - p0_uv;
     float lineLengthSq = max(0.0001, dot(lineSegment, lineSegment));
-    float t = dot(uv - p0_uv, lineSegment) / lineLengthSq;
-    t = clamp(t, 0.1, 0.9);
+    float t = dot(uv_corr - p0_uv, lineSegment) / lineLengthSq;
+    t = clamp(t, 0.05, 0.95);
 
     // 1. t값에 따라 0.0 ~ 1.0 사이의 부드러운 노이즈 값을 생성
     float noise_val = noise(t * noise_frequency);
@@ -86,17 +90,11 @@ void main() {
     //vec2 v_lin = mix(v0, v1, noisy_t);
 
     // --- 3. 가중치 함수 계산 (f, g) ---
-    vec2 dir = uv - linePos; // 중심선에서 픽셀로 향하는 벡터
+    vec2 dir = uv_corr - linePos; // 중심선에서 픽셀로 향하는 벡터
     // vec2 dir = uv - (p0_uv+p1_uv)/2.0;
     float f = 4.0 * t * (1.0 - t); // 선분 중앙에서 최대
     float dist = length(dir);
     float g = exp(-pow(dist / radius, 2.0) * 1.0); // 선분에서 멀어지면 감소
-
-    // --- 4. 회전 성분(rot) 계산 ---
-    vec2 perpendicular_dir = vec2(-dir.y, dir.x);
-    float cross_product_z = v0.x * v1.y - v0.y * v1.x;
-    // float rotation_direction = sign(cross_product_z);
-    vec2 rot = strength* f * g * perpendicular_dir;// * rotation_direction;
 
     // --- 5. 조화 진동(Harmonic Oscillation) 성분 계산 ---
     

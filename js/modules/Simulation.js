@@ -409,7 +409,7 @@ export default class Simulation {
                 }
             });
         }
-        this.vortex.update({ fboSize: this.fboSize });
+        // this.vortex.update({ fboSize: this.fboSize });
         this.buoyancy.update({
             density: this.fbos.density_0,
             buoyancy: this.options.buoyancy, // (부력 강도)

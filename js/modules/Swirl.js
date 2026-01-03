@@ -14,16 +14,16 @@ export default class Swirl extends ShaderPass {
                 fragmentShader: swirl_frag,
                 blending: THREE.AdditiveBlending,
                 uniforms: {
-                    //fboSize: { value: new THREE.Vector2(simProps.src.width, simProps.src.height) },
+                    fboSize: { value : simProps.fboSize },
                     // GLSL 셰이더로 전달할 유니폼 변수들
                     p0: { value: new THREE.Vector2() },     // 왼손 위치
                     p1: { value: new THREE.Vector2() },     // 오른손 위치
                     v0: { value: new THREE.Vector2() },     // 왼손의 움직임 벡터
                     v1: { value: new THREE.Vector2() },     // 오른손의 움직임 벡터
-                    strength: { value: 10.0 },  
+                    strength: { value: 1.0 },  
                     radius: { value: 10.0 },
-                    u_osc_frequency: { value: 3.141592*0.5},
-                    u_osc_strength: { value: 0.1  },
+                    u_osc_frequency: { value: 3.141592*0.7},
+                    u_osc_strength: { value: 0.1 },
                     u_time: { value: simProps.timeSeed }, // 기본 time seed + dt 누적
                     u_osc_speed: { value: 0.2  }
                 }
@@ -48,9 +48,10 @@ export default class Swirl extends ShaderPass {
 
         // 입력 데이터가 유효한지 확인합니다.
         if (!left || !right) return;
-
-        this.uniforms.p0.value.copy(left.coords);
-        this.uniforms.p1.value.copy(right.coords);
+        let p0 = left.coords.clone().multiplyScalar(0.5).addScalar(0.5);
+        let p1 = right.coords.clone().multiplyScalar(0.5).addScalar(0.5);
+        this.uniforms.p0.value.copy(p0);
+        this.uniforms.p1.value.copy(p1);
 
         const forceScale = 1.0;
 
@@ -62,7 +63,7 @@ export default class Swirl extends ShaderPass {
         
         // 와류의 영향 반경은 cursor_size에 비례하도록 설정합니다.
         this.uniforms.radius.value = cursor_size / 1000.0; // 반경 스케일을 적절히 조절합니다.
-
+        this.uniforms.fboSize.value = cellScale;
         this.uniforms.u_time.value += dt;
 
         // 셰이더를 렌더링합니다.
